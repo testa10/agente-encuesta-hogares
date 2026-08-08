@@ -145,9 +145,8 @@ respaldado o mostrarlo en tu portafolio), pedíselo directamente al agente:
 
 El agente te va a mostrar qué va a subir y te va a pedir confirmación antes
 de hacerlo — nunca publica nada sin que se lo pidas explícitamente. Si
-tenés un sitio de portafolio (como `testa10.github.io`) y querés que el
-análisis nuevo aparezca ahí como proyecto, decíselo y te va a ayudar con
-eso también.
+tenés un sitio de portafolio y querés que el análisis nuevo aparezca ahí
+como proyecto, decíselo y te va a ayudar con eso también.
 
 ---
 
