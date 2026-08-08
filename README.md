@@ -14,11 +14,6 @@ pregunta lo que necesite saber en el camino. También podés pedirle preguntas
 nuevas, que no estaban en el análisis original, y él te va a decir si tienen
 sentido estadísticamente antes de construirlas.
 
-Podés ver el análisis original (2019) como referencia de lo que vas a
-obtener:
-- Repositorio: https://github.com/testa10/narrativa-datos
-- Informe: https://testa10.github.io/narrativa-datos-informe.html
-
 No hace falta que entiendas el resto de este documento técnicamente — está
 escrito para que lo sigas paso a paso, incluso si nunca programaste.
 
@@ -102,7 +97,7 @@ Claude va a reconocer que este pedido corresponde al agente de este
 proyecto y va a empezar a trabajar con ese método. Si en algún momento no
 se activa solo, podés pedirlo de forma explícita:
 
-> Usá el agente narrativa-datos para analizar los datos de 2024
+> Usá el agente encuesta-hogares para analizar los datos de 2024
 
 ## Paso 6: Responder las preguntas que te haga
 
@@ -198,7 +193,7 @@ barra lateral).
 agente-encuesta-hogares/
 ├── .claude/
 │   └── agents/
-│       └── narrativa-datos.md   # El agente: sus instrucciones de trabajo
+│       └── encuesta-hogares.md  # El agente: sus instrucciones de trabajo
 ├── docs/
 │   └── METODOLOGIA.md           # Reglas de rigor estadístico y claridad
 ├── src/

@@ -2,7 +2,7 @@
 
 Los nombres de columna (HOGARES_COLUMNS, PERSONAS_COLUMNS,
 CONDICIONES_VIVIENDA_COLUMNS) reflejan los códigos de variable de la ECH 2019.
-Antes de usar datos de otro año, el agente (ver .claude/agents/narrativa-datos.md)
+Antes de usar datos de otro año, el agente (ver .claude/agents/encuesta-hogares.md)
 verifica con pyreadstat que esos códigos sigan existiendo y con el mismo
 significado; si algo cambió, actualiza este archivo y lo deja documentado en
 docs/METODOLOGIA.md.
