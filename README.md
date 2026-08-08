@@ -3,8 +3,8 @@
 Este proyecto te permite repetir, cada vez que consigas un nuevo año de
 datos de la Encuesta Continua de Hogares del INE Uruguay, el mismo análisis
 de penetración tecnológica (TV cable, internet, computadora, streaming) en
-hogares de Montevideo que se hizo originalmente con los datos de 2019 — sin
-tener que volver a explicar desde cero cómo se hace, ni programar vos mismo.
+hogares de Montevideo — sin tener que volver a explicar desde cero cómo se
+hace, ni programar vos mismo.
 
 En vez de un análisis fijo, este proyecto incluye un **agente**: un asistente
 de inteligencia artificial (Claude) al que le mostrás dónde están tus datos
