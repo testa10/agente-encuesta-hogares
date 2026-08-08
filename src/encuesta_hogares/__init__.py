@@ -1,0 +1,4 @@
+"""Paquete reutilizable para analizar la Encuesta Continua de Hogares (ECH) del
+INE Uruguay, año a año. Ver docs/METODOLOGIA.md para las reglas de análisis y
+el agente en .claude/agents/narrativa-datos.md para el flujo guiado.
+"""

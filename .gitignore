@@ -1,0 +1,27 @@
+# Microdatos del INE: no se redistribuyen (ver Terminos y condiciones del INE).
+# Cada usuario debe descargarlos por su cuenta - ver data/README.md.
+data/*.sav
+data/*.xlsx
+data/*.csv
+
+# Notebooks generados por el agente para un año de datos específico. El
+# repositorio se distribuye sin notebooks ejecutados; cada usuario genera
+# el suyo a partir de sus propios datos.
+notebooks/*.ipynb
+
+# Entornos
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Editor
+*.log
