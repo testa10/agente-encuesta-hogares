@@ -29,6 +29,7 @@ tenés alguno instalado, saltealo.
 | **Git** | Para descargar y actualizar este proyecto | https://git-scm.com/downloads |
 | **Anaconda** | Trae Python y las librerías de análisis de datos | https://www.anaconda.com/download |
 | **Visual Studio Code** | El editor donde vas a abrir el proyecto | https://code.visualstudio.com/ |
+| **Node.js** | Lo necesita Claude Code para funcionar | https://nodejs.org (versión LTS) |
 | **Claude Code** | La herramienta que ejecuta al agente | https://claude.com/claude-code (instrucciones de instalación ahí mismo) |
 | **Cuenta de GitHub** | Para guardar y publicar tus análisis | https://github.com/join |
 | **7-Zip** | Para abrir el archivo comprimido (.RAR) que baja el INE | https://www.7-zip.org/ |
@@ -50,13 +51,26 @@ cd agente-encuesta-hogares
 
 Esto crea una carpeta `agente-encuesta-hogares` con todo el proyecto adentro.
 
-## Paso 2: Instalar las dependencias del proyecto
+## Paso 2: Instalar todo lo que falta (Node.js, Claude Code y las
+dependencias de Python)
 
-Desde la misma terminal, dentro de la carpeta del proyecto:
+La forma más simple: andá a la carpeta `agente-encuesta-hogares` en el
+Explorador de Windows y hacé **doble clic en `instalar.bat`**. Se abre una
+ventana negra que revisa qué te falta y lo instala solo. Si te pide
+instalar Node.js, va a abrir la página de descarga en el navegador — instalá
+ese programa con las opciones por defecto y después volvé a hacer doble
+clic en `instalar.bat` para que continúe donde quedó.
+
+Si preferís hacerlo a mano (o el `.bat` no te funciona por algún motivo),
+desde una terminal, dentro de la carpeta del proyecto:
 
 ```bash
 pip install -e ".[dev]"
 ```
+
+Y asegurate de tener [Node.js](https://nodejs.org) y Claude Code
+instalados (`npm install -g @anthropic-ai/claude-code`) — ver la tabla de
+prerrequisitos más arriba.
 
 Esto instala las librerías de Python que el análisis necesita (para leer los
 datos, hacer las gráficas, etc.). Puede tardar uno o dos minutos.
