@@ -93,6 +93,12 @@ que te guíe mientras lo hacés (ver Paso 5).
 
 ## Paso 4: Abrir el proyecto en Claude Code
 
+La forma más simple: hacé doble clic en **`abrir_agente.bat`** (está en esta
+misma carpeta). Se abre una terminal ya parada en el proyecto y lanza
+Claude Code directo — listo para el Paso 5.
+
+Si preferís hacerlo a mano, o vas a editar algo del proyecto de paso:
+
 1. Abrí Visual Studio Code y abrí la carpeta `agente-encuesta-hogares`
    (`Archivo > Abrir Carpeta...`).
 2. Abrí una terminal integrada (`Terminal > Nueva Terminal`, o `` Ctrl+` ``).
