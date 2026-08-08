@@ -127,14 +127,20 @@ gráfica sin más.
 
 ## Paso 8: Revisar los resultados
 
-Vas a encontrar dos archivos nuevos:
+Vas a encontrar tres archivos nuevos:
 - Un notebook en `notebooks/` (por ejemplo `Analisis_ECH_2024.ipynb`), con
   todo el análisis, código incluido — para quien quiera ver el detalle.
 - Un informe en HTML, sin código, pensado para compartir con cualquier
   persona (por ejemplo `informe_ECH_2024.html`).
+- Un **informe en PDF**, con formato de documento profesional (portada,
+  tipografía cuidada, gráficas ajustadas a la hoja), que el agente copia
+  automáticamente a tu **carpeta de Descargas** — no hace falta que lo
+  busques dentro del proyecto, aparece ahí solo, como cualquier archivo que
+  descargarías normalmente.
 
 Podés abrir el informe HTML haciendo doble clic sobre el archivo — se abre
-en el navegador, como una página web normal.
+en el navegador, como una página web normal. El PDF se abre igual, con
+cualquier lector de PDF.
 
 ## Paso 9 (opcional): Publicar el análisis
 

@@ -1,0 +1,130 @@
+/* Hoja de estilos de impresión para el informe PDF (formato A4).
+   Se inyecta en el HTML del informe (sin código) antes de convertirlo a PDF.
+   No depende de "@page { @top-center / @bottom-center }" para encabezados o
+   numeración de página: Chromium (el motor que usa Playwright para imprimir
+   a PDF) no soporta esas cajas de margen de CSS. La numeración de página y
+   el encabezado/pie se arman aparte, con las opciones header_template /
+   footer_template de Playwright — ver docs/METODOLOGIA.md sección 8. */
+
+@page {
+  size: A4;
+  margin: 20mm 18mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11pt;
+  line-height: 1.55;
+  color: #24292f;
+  max-width: 100%;
+}
+
+/* Portada: el agente antepone un <div class="portada"> al contenido del
+   notebook con título, año de los datos y fecha de generación. */
+.portada {
+  min-height: 240mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  break-after: page;
+  page-break-after: always;
+  text-align: center;
+}
+.portada .subtitulo {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 13pt;
+  color: #57606a;
+  margin-top: 8pt;
+}
+.portada .meta {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5pt;
+  color: #8b949e;
+  margin-top: 40pt;
+}
+.portada h1 {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 26pt;
+  color: #1a1a2e;
+  border-bottom: none;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: #1a1a2e;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+h1 {
+  font-size: 20pt;
+  border-bottom: 2px solid #66a182;
+  padding-bottom: 6pt;
+  margin-top: 26pt;
+}
+h2 {
+  font-size: 15pt;
+  margin-top: 22pt;
+  border-bottom: 1px solid #d0d7de;
+  padding-bottom: 3pt;
+}
+h3, h4 {
+  font-size: 12.5pt;
+  margin-top: 16pt;
+}
+
+p, li {
+  orphans: 3;
+  widows: 3;
+}
+
+/* Celdas de notebook (nbconvert HTML) e imágenes: nunca cortar una gráfica
+   entre dos páginas, y nunca dejar que se salga del ancho de la hoja. */
+.jp-Cell, .cell, .jp-OutputArea-output {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+img, .jp-RenderedImage img, .output_png img {
+  max-width: 100% !important;
+  max-height: 230mm !important;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+  margin: 10pt auto;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 9.5pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+table th, table td {
+  border: 1px solid #d0d7de;
+  padding: 4pt 6pt;
+  text-align: left;
+}
+table th {
+  background: #f6f8fa;
+}
+
+code, pre {
+  font-family: "Consolas", "SFMono-Regular", monospace;
+  font-size: 9pt;
+}
+
+blockquote {
+  border-left: 3px solid #66a182;
+  margin: 10pt 0;
+  padding: 4pt 12pt;
+  color: #57606a;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}

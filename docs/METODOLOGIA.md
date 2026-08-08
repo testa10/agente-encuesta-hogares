@@ -129,21 +129,103 @@ barrio y la otra del hogar.
    - `jupyter nbconvert --to html --no-input <copia>.ipynb`
    - Corregir el `<title>` del HTML generado (por defecto queda con el
      nombre del archivo).
-9. Publicar (ver sección 6).
+9. Generar el informe PDF profesional a partir de ese HTML, y copiarlo a la
+   carpeta de Descargas del usuario (ver sección 6). Este paso es parte del
+   resultado estándar que se le entrega al usuario — no es opcional ni algo
+   que solo se hace si lo pide.
+10. Publicar (ver sección 7).
 
-## 6. Publicación
+## 6. Generación del informe PDF profesional
+
+El objetivo es un PDF con aspecto de informe real (portada, tipografía
+cuidada, gráficas que nunca se cortan ni se salen de la hoja), no una
+impresión cruda del notebook. Se arma en base al HTML sin código del paso 8,
+así no hay que mantener dos fuentes de verdad.
+
+**Por qué no usar `jupyter nbconvert --to pdf`:** ese exportador depende de
+una instalación de LaTeX completa, que es pesada, lenta de instalar y
+frágil en Windows — mala idea para un usuario no técnico. En su lugar se
+usa Chromium sin interfaz (a través de Playwright) para "imprimir" el HTML
+a PDF, igual que haría un navegador común.
+
+Pasos:
+
+1. Asegurate de tener Playwright listo (una sola vez por instalación):
+   `playwright install chromium`. Si no está, instalalo vos mismo con Bash
+   — es la descarga de un componente del propio paquete Python que ya está
+   en las dependencias del proyecto, no un programa externo nuevo que el
+   usuario tenga que gestionar.
+2. Tomá el HTML sin código ya generado (paso 8 de la sección 5) y anteponé
+   al `<body>` un bloque de portada:
+   ```html
+   <div class="portada">
+     <h1>Encuesta Continua de Hogares — Informe {AÑO}</h1>
+     <div class="subtitulo">Penetración tecnológica en hogares de Montevideo</div>
+     <div class="meta">Generado el {fecha de hoy}</div>
+   </div>
+   ```
+3. Inyectá `docs/informe_estilo.css` dentro de un `<style>` en el `<head>`
+   del HTML (o enlazalo con `<link>` si vas a mantener el archivo al lado).
+   Esa hoja de estilos ya define tamaño A4, márgenes, tipografía, y sobre
+   todo `max-width`/`max-height` + `page-break-inside: avoid` en las
+   imágenes — es lo que evita que una gráfica quede cortada entre dos
+   páginas o se salga del ancho de la hoja. No la reinventes ni la
+   simplifiques: cada regla ahí resuelve un problema real de paginación.
+4. Convertí ese HTML a PDF con Playwright (script corto, vía Bash con
+   `python -c` o un archivo temporal):
+   ```python
+   from playwright.sync_api import sync_playwright
+
+   with sync_playwright() as p:
+       browser = p.chromium.launch()
+       page = browser.new_page()
+       page.goto(f"file:///{ruta_html_absoluta}")
+       page.pdf(
+           path=ruta_pdf_salida,
+           format="A4",
+           print_background=True,
+           display_header_footer=True,
+           header_template="<span></span>",
+           footer_template=(
+               '<div style="font-size:8pt; width:100%; text-align:center; '
+               'color:#8b949e;">Página <span class="pageNumber"></span> '
+               'de <span class="totalPages"></span></div>'
+           ),
+           margin={"top": "20mm", "bottom": "16mm", "left": "18mm", "right": "18mm"},
+       )
+       browser.close()
+   ```
+   Usá `header_template` / `footer_template` (no CSS `@page { @bottom-center }`)
+   para la numeración de página: Chromium no soporta las cajas de margen de
+   `@page` en su motor de impresión, solo esas plantillas HTML de Playwright.
+5. Nombrá el archivo de forma clara, ej. `Informe_ECH_{AÑO}.pdf`.
+6. Copiá el PDF a la carpeta de Descargas del usuario, además de dejarlo en
+   el proyecto:
+   ```python
+   from pathlib import Path
+   import shutil
+   shutil.copy(ruta_pdf_salida, Path.home() / "Downloads" / "Informe_ECH_{AÑO}.pdf")
+   ```
+   `Path.home() / "Downloads"` funciona igual en Windows y en Mac. Si esa
+   carpeta no existe (poco común, pero puede pasar), avisale al usuario en
+   vez de fallar en silencio.
+7. Abrí el PDF resultante (o al menos revisá la cantidad de páginas y que
+   el tamaño de archivo sea razonable) antes de darlo por terminado — no
+   asumas que la conversión salió bien solo porque no tiró error.
+
+## 7. Publicación
 
 - Nunca commitear los archivos `.sav` (ya están en `.gitignore`).
 - Antes de hacer `git push`, **preguntar explícitamente al usuario si
   quiere publicar los cambios** — no asumir que sí.
-- Si el usuario tiene el repo de portafolio (`testa10.github.io`) y quiere
-  mostrar el nuevo análisis ahí, copiar el informe HTML generado y agregar
-  o actualizar la tarjeta del proyecto correspondiente.
+- Si el usuario tiene un sitio de portafolio y quiere mostrar el nuevo
+  análisis ahí, copiar el informe HTML generado y agregar o actualizar la
+  tarjeta del proyecto correspondiente.
 - Usar Plotly con `pio.renderers.default = "png"` (requiere el paquete
   `kaleido`) desde la primera celda del notebook — si no, las gráficas
   interactivas no se ven en GitHub ni en el HTML exportado.
 
-## 7. Cómo manejar un año de datos nuevo (lo específico de este proyecto)
+## 8. Cómo manejar un año de datos nuevo (lo específico de este proyecto)
 
 1. Confirmar con el usuario qué archivos `.sav` puso en `data/` y de qué
    año son.

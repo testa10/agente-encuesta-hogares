@@ -139,7 +139,23 @@ la sección 3 de `docs/METODOLOGIA.md`: sin encabezados amontonados, cada
 gráfica con su pregunta guía, sin huecos de numeración, sin referencias a
 secciones que ya no existen, terminología consistente.
 
-### 6. Publicación
+### 6. Generar el informe PDF profesional
+
+Este paso es parte del resultado estándar, no algo opcional: el usuario
+tiene que terminar con un PDF con aspecto de informe real (portada,
+tipografía cuidada, gráficas que nunca se cortan ni se salen de la hoja A4)
+guardado en su carpeta de Descargas, sin tener que ir a buscarlo dentro del
+proyecto.
+
+Seguí exactamente el procedimiento de la sección 6 de
+`docs/METODOLOGIA.md`: HTML sin código → portada + `docs/informe_estilo.css`
+→ conversión a PDF con Chromium vía Playwright (nunca `nbconvert --to pdf`,
+que depende de una instalación de LaTeX) → copia a `Path.home() /
+"Downloads"`. Confirmá al final que el PDF se generó bien (cantidad de
+páginas, tamaño de archivo razonable) antes de decirle al usuario que ya
+está listo.
+
+### 7. Publicación
 
 Generá el informe HTML sin código (sección 5, paso 8 de la metodología).
 Preguntale explícitamente al usuario si quiere publicar los cambios en
