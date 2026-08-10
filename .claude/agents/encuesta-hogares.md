@@ -310,29 +310,35 @@ la sección 3 de `docs/METODOLOGIA.md`: sin encabezados amontonados, cada
 gráfica con su pregunta guía, sin huecos de numeración, sin referencias a
 secciones que ya no existen, terminología consistente.
 
-### 9. Generar el informe PDF profesional
+### 9. Entregar el informe: PDF o HTML en el navegador
 
-Hacé esto solo si el usuario respondió que sí a la pregunta del PDF en el
-formulario del paso 5 — ya sabés de antemano si corresponde, no hace falta
-volver a preguntar acá. Si en el paso 5 no quedó claro o el usuario no
-contestó esa parte, preguntaselo ahora antes de generar nada.
+Primero, siempre: generá el informe HTML sin código (sección 5, paso 8 de
+`docs/METODOLOGIA.md`) — esto pasa sin importar la respuesta sobre el PDF,
+es la base de la que sale cualquiera de los dos formatos finales.
 
-Cuando corresponda, el resultado tiene que ser un PDF con aspecto de
-informe real (portada, tipografía cuidada, gráficas que nunca se cortan ni
-se salen de la hoja A4) guardado en su carpeta de Descargas, sin que el
-usuario tenga que ir a buscarlo dentro del proyecto.
+A partir de ahí, ramificá según lo que el usuario contestó en el
+formulario del paso 5 (si en su momento no quedó claro, preguntaselo ahora
+antes de seguir):
 
-Seguí exactamente el procedimiento de la sección 6 de
-`docs/METODOLOGIA.md`: HTML sin código → portada + `docs/informe_estilo.css`
-→ conversión a PDF con Chromium vía Playwright (nunca `nbconvert --to pdf`,
-que depende de una instalación de LaTeX) → copia a `Path.home() /
-"Downloads"`. Confirmá al final que el PDF se generó bien (cantidad de
-páginas, tamaño de archivo razonable) antes de decirle al usuario que ya
-está listo.
+- **Si eligió PDF**: seguí exactamente el procedimiento de la sección 6 de
+  `docs/METODOLOGIA.md` — portada + `docs/informe_estilo.css` → conversión
+  con Chromium vía Playwright (nunca `nbconvert --to pdf`, que depende de
+  una instalación de LaTeX) → copia a `Path.home() / "Downloads"`. Confirmá
+  al final que el PDF se generó bien (cantidad de páginas, tamaño de
+  archivo razonable) antes de decirle al usuario que ya está listo.
+- **Si no eligió PDF**: abrile directamente el informe HTML en su
+  navegador — no lo dejes esperando dentro de la carpeta del proyecto.
+  En Windows alcanza con:
+  ```bash
+  start "" "ruta\completa\al\informe.html"
+  ```
+  Nunca generes ni ofrezcas el informe en JSON ni en ningún otro formato
+  técnico — para alguien sin conocimientos de programación un archivo
+  JSON es ilegible. El HTML ya tiene el mismo contenido y diseño que el
+  PDF, solo que se ve en el navegador en vez de como archivo descargado.
 
 ### 10. Publicación
 
-Generá el informe HTML sin código (sección 5, paso 8 de la metodología).
 Preguntale explícitamente al usuario si quiere publicar los cambios en
 GitHub antes de hacer cualquier `git push` — nunca lo asumas. Si tiene el
 repositorio del portafolio (`testa10.github.io`) y quiere que el análisis
