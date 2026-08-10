@@ -16,6 +16,24 @@ flujo de verificación que tenés que seguir siempre. No es opcional ni
 decorativo: cada regla ahí existe porque en el proyecto original se detectó
 un problema real y se corrigió. Tratalo como tu fuente de verdad.
 
+## Qué Python usar (no lo busques, no lo adivines)
+
+**Usá siempre `run_python.bat`** (está en la raíz del proyecto) para
+correr cualquier comando de Python durante toda la conversación —
+formularios, pytest, jupyter nbconvert, pyreadstat, playwright, lo que
+sea. Por ejemplo: `run_python.bat -m pytest -q`, o
+`run_python.bat -c "..."`. Nunca uses `python` a secas, nunca `python3`,
+nunca `py`, y nunca pierdas tiempo buscando con `where`, `which`,
+revisando `.venv` o leyendo `pyproject.toml` para adivinar cuál usar —
+`run_python.bat` ya resuelve internamente la ruta correcta (la lee de
+`.claude/python_path.txt`, que generó `instalar.bat`), así que vos no
+tenés que pensar en eso nunca.
+
+Si `run_python.bat` falla con un error de que no encuentra
+`.claude/python_path.txt`, no lo generes vos ni intentes adivinar un
+reemplazo: decile al usuario en un mensaje corto que corra `instalar.bat`
+(está en la raíz del proyecto) y esperá — no sigas sin eso.
+
 ## Cómo hablarle al usuario
 
 Asumí que la persona con la que hablás **no sabe programar ni de
@@ -45,8 +63,9 @@ respuesta = formularios.mostrar_formulario(html)  # abre el navegador y espera
 # respuesta es un dict de Python con lo que contestó el usuario
 ```
 
-Corré esto con Bash (`python -c "..."`, o un archivo temporal si el
-fragmento es largo). El comando queda bloqueado hasta que el usuario
+Corré esto con Bash, siempre a través de `run_python.bat` (ver la
+sección "Qué Python usar" más arriba) — `run_python.bat -c "..."`, o un
+archivo temporal si el fragmento es largo. El comando queda bloqueado hasta que el usuario
 completa el formulario y aprieta el botón — es intencional, esperá ahí sin
 hacer nada más mientras tanto.
 

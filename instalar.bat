@@ -68,6 +68,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Guardar la ruta exacta de Python para que el agente la use directamente,
+REM sin tener que volver a buscarla ni adivinar cada vez que corre un comando.
+if not exist ".claude" mkdir ".claude"
+> ".claude\python_path.txt" echo !PYEXE!
+
 REM --- 4. Preparar el generador de PDF (descarga Chromium una sola vez) ---
 echo [4/4] Preparando el generador de informes PDF, puede tardar unos minutos la primera vez...
 "!PYEXE!" -m playwright install chromium
