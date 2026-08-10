@@ -214,20 +214,43 @@ PDF. Guardá los tres datos de la respuesta (`metricas`, `otra_metrica`,
 
 ### 5. Construir el informe con las métricas elegidas
 
-Generá un notebook nuevo en `notebooks/` (ej. `Analisis_ECH_2024.ipynb`)
-usando `nbformat` (nunca escribas el JSON del notebook a mano). Incluí
-siempre las secciones base (preparación de datos, panorama general,
-distribución por barrio, composición del hogar — ver sección 1 de
-`docs/METODOLOGIA.md`), y agregá como "Ampliación" solo las métricas que el
-usuario eligió del catálogo del paso 4, en el mismo orden en que aparecen
-ahí. Los textos que citan cifras (cuartiles, cortes, promedios) tenés que
+**Esto se hace con UN SOLO script de Python que arma el notebook
+completo de una vez — nunca con muchos comandos sueltos ni archivos
+"para ir viendo qué pasa" con los datos.** Si te encontrás escribiendo un
+tercer o cuarto archivo temporal para explorar, o "confirmando" a mano
+algo que ya podés leer directo del código, es señal de que te fuiste del
+método — parate y volvé a este proceso:
+
+1. **Leé** (con la herramienta Read, no ejecutando Python) `analysis.py`
+   y `visualization.py` **una sola vez**, para saber qué funciones existen
+   y qué parámetros reciben. No hace falta "probarlas" antes con datos de
+   prueba — ya tienen tests en `tests/` que las validan; confiá en eso.
+2. Escribí **un único archivo** Python que arma la lista de celdas con
+   `nbformat.v4.new_notebook()`, `new_markdown_cell()` y `new_code_cell()`
+   — secciones base (preparación de datos, panorama general, distribución
+   por barrio, composición del hogar — sección 1 de `docs/METODOLOGIA.md`)
+   siempre, más una celda de markdown (pregunta guía + justificación del
+   tipo de gráfica) y una de código por cada métrica que el usuario eligió
+   del catálogo del paso 4, en ese orden, llamando directo a las funciones
+   que ya identificaste en el paso 1. Termina escribiendo el notebook a
+   disco con `nbformat.write(...)`.
+3. Corré ese único script **una vez** con `run_python.bat`.
+4. Ejecutá el notebook completo con `run_python.bat -m jupyter nbconvert
+   --to notebook --execute --inplace <notebook>` — eso es lo que corre
+   los cálculos de verdad. No necesitás correrlos vos mismo por separado
+   antes ni verificar los números a mano en el camino.
+5. Ahí sí, revisá errores y gráficas como indica el flujo de verificación
+   (sección 5 de `docs/METODOLOGIA.md`).
+
+Los textos que citan cifras (cuartiles, cortes, promedios) tenés que
 recalcularlos con los datos del año nuevo — nunca copiar los números del
 notebook de 2019.
 
 La mayoría de las métricas del catálogo ya tienen una función lista en
-`src/encuesta_hogares/analysis.py` / `visualization.py` (reutilizalas). Las
-que no, construilas siguiendo el mismo criterio de rigor del paso 6 antes
-de darlas por buenas.
+`src/encuesta_hogares/analysis.py` / `visualization.py` (reutilizalas tal
+cual). Para las pocas que no, generá primero la función correspondiente
+—siguiendo el mismo criterio de rigor del paso 6— y su test, y recién
+después sumala al script del punto 2.
 
 **Cada gráfica lleva, además de su pregunta guía, una frase corta que
 justifique por qué se eligió ese tipo de gráfica** (barras horizontales,
