@@ -94,15 +94,22 @@ button[type=submit] {
 button[type=submit]:hover { background: #559874; }
 .listo { text-align: center; padding: 60px 0; }
 .listo .check { font-size: 48px; margin-bottom: 12px; }
+.spinner {
+  width: 40px; height: 40px; margin: 0 auto 16px;
+  border: 4px solid #eef1f4; border-top: 4px solid var(--verde);
+  border-radius: 50%; animation: girar 0.8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
 """
 
 _SCRIPT_LISTO = """
 function mostrarListo() {
   document.getElementById('tarjeta').innerHTML = `
     <div class="listo">
-      <div class="check">✅</div>
-      <h1>¡Listo!</h1>
-      <p>Ya podés volver a la ventana de Claude Code — seguimos ahí.</p>
+      <div class="spinner"></div>
+      <h1>Aguardá un momento...</h1>
+      <p>Estamos procesando tu solicitud. Cuando esté listo el siguiente
+      paso, se va a abrir solo en una pestaña nueva — podés cerrar esta.</p>
     </div>`;
 }
 """
@@ -130,9 +137,9 @@ _CATEGORIAS_METRICAS = [
         (15, "Detalle de los barrios más y menos conectados", "una tabla puntual para consultar barrio por barrio."),
     ]),
     ("4 · Hogar y demografía", [
-        (16, "Tamaño y composición del hogar", "cantidad de personas, menores de 14 y ocupados, según conectividad."),
-        (17, "Edad promedio según conectividad", "compara edades en hogares con y sin TV cable."),
-        (18, "Composición por sexo según conectividad", "proporción de hombres y mujeres."),
+        (16, "Tamaño y composición del hogar según TV cable", "cantidad de personas, menores de 14 y ocupados, según conectividad."),
+        (17, "Ingreso del hogar según conectividad a TV cable", "el ingreso típico del hogar (sin valor locativo), comparado entre hogares con y sin cable."),
+        (18, "Tamaño y composición del hogar según internet", "la misma comparación del punto 16, pero según acceso a internet en vez de TV cable."),
         (19, "Situación ocupacional según TV cable", "ocupados/desocupados/inactivos, según conectividad."),
         (20, "Situación ocupacional según celular e internet", "la misma comparación, para esas tecnologías."),
     ]),

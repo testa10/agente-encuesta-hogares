@@ -126,19 +126,22 @@ def condiciones_vivienda_diferencia(resumen: pd.DataFrame, col_sin: str, col_con
     return (tabla[col_con] - tabla[col_sin]).round(2)
 
 
-def composicion_hogar_por_conectividad(df_extendido: pd.DataFrame) -> pd.DataFrame:
-    """Tamaño promedio del hogar, y promedio de menores de 14 y de ocupados, según conectividad."""
+def composicion_hogar_por(df_extendido: pd.DataFrame, columna_grupo: str, etiquetas: dict) -> pd.DataFrame:
+    """Tamaño promedio del hogar, y promedio de menores de 14 y de ocupados,
+    agrupado por una columna booleana cualquiera (ej. `tiene_cable`,
+    `tiene_internet`).
+    """
     resumen = (
-        df_extendido.groupby("tiene_cable")
+        df_extendido.groupby(columna_grupo)
         .agg(
             tamano_promedio=("total_personas", "mean"),
             promedio_menores_14=("menores_14", "mean"),
             promedio_ocupados=("ocupados_hogar", "mean"),
         )
         .round(2)
-        .rename(index={False: "Sin cable", True: "Con cable"})
+        .rename(index=etiquetas)
         .reset_index()
-        .rename(columns={"tiene_cable": "tipo_abonado"})
+        .rename(columns={columna_grupo: "grupo"})
     )
     return resumen
 

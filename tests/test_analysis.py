@@ -1,6 +1,7 @@
 import pandas as pd
 
 from encuesta_hogares.analysis import (
+    composicion_hogar_por,
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
     filtrar_segmento,
@@ -91,3 +92,20 @@ def test_situacion_ocupacional_excluye_menores():
     # Con cable: 1 ocupado + 1 inactivo (el menor de 14 se excluye) -> 50/50
     assert tabla.loc["Con cable", "Ocupados"] == 50.0
     assert tabla.loc["Con cable", "Inactivos"] == 50.0
+
+
+def test_composicion_hogar_por_agrupa_por_cualquier_columna():
+    df = pd.DataFrame(
+        {
+            "tiene_internet": [True, True, False, False],
+            "total_personas": [4.0, 2.0, 3.0, 1.0],
+            "menores_14": [2.0, 0.0, 1.0, 0.0],
+            "ocupados_hogar": [1.0, 2.0, 1.0, 1.0],
+        }
+    )
+    resumen = composicion_hogar_por(
+        df, "tiene_internet", {False: "Sin internet", True: "Con internet"}
+    )
+    fila_con = resumen[resumen["grupo"] == "Con internet"].iloc[0]
+    assert fila_con["tamano_promedio"] == 3.0
+    assert fila_con["promedio_menores_14"] == 1.0

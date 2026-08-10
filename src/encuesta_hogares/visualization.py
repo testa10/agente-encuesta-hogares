@@ -312,10 +312,10 @@ def plot_condiciones_vivienda_diferencia(diferencias: pd.DataFrame):
     return fig
 
 
-def plot_composicion_hogar(resumen_composicion: pd.DataFrame):
-    """Barras agrupadas: composición promedio del hogar según conectividad."""
+def plot_composicion_hogar(resumen_composicion: pd.DataFrame, titulo: str, color_map: dict):
+    """Barras agrupadas: composición promedio del hogar según un criterio de conectividad cualquiera."""
     df_plot = resumen_composicion.melt(
-        id_vars="tipo_abonado",
+        id_vars="grupo",
         value_vars=["tamano_promedio", "promedio_menores_14", "promedio_ocupados"],
         var_name="metrica", value_name="promedio",
     )
@@ -326,9 +326,9 @@ def plot_composicion_hogar(resumen_composicion: pd.DataFrame):
     }
     df_plot["metrica"] = df_plot["metrica"].map(etiquetas)
     fig = px.bar(
-        df_plot, x="metrica", y="promedio", color="tipo_abonado", barmode="group",
-        title="Composición promedio del hogar según conectividad a TV cable",
-        color_discrete_map={"Sin cable": "#d1495b", "Con cable": "#66a182"},
+        df_plot, x="metrica", y="promedio", color="grupo", barmode="group",
+        title=titulo,
+        color_discrete_map=color_map,
     )
     fig.update_layout(xaxis_title="", yaxis_title="Promedio por hogar", legend_title="",
                        width=800, height=450, title_x=0.5)
