@@ -152,8 +152,9 @@ Vas a encontrar tres archivos nuevos:
   todo el análisis, código incluido — para quien quiera ver el detalle.
 - Un informe en HTML, sin código, pensado para compartir con cualquier
   persona (por ejemplo `informe_ECH_2024.html`).
-- Un **informe en PDF**, con formato de documento profesional (portada,
-  tipografía cuidada, gráficas ajustadas a la hoja), que el agente copia
+- Si elegiste esa opción al completar el formulario inicial, un **informe
+  en PDF**, con formato de documento profesional (portada, tipografía
+  cuidada, gráficas ajustadas a la hoja), que el agente copia
   automáticamente a tu **carpeta de Descargas** — no hace falta que lo
   busques dentro del proyecto, aparece ahí solo, como cualquier archivo que
   descargarías normalmente.

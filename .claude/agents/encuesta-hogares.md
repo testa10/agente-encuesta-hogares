@@ -236,10 +236,15 @@ Cerrá el mensaje con el formulario de selección, en un solo bloque:
 > **¿Hay alguna otra métrica que se te ocurra y no esté en la lista?**
 > Si es así, decime el nombre que le pondrías y una breve explicación de
 > qué mostraría — la evalúo antes de armarla.
+>
+> **¿Querés que además arme un informe en PDF, con diseño profesional, y
+> te lo descargue automáticamente a tu carpeta de Descargas?** (Sí/No —
+> si no estás seguro, recomiendo que sí: es el formato más fácil de leer
+> y compartir.)
 
-Esperá la respuesta antes de seguir. Guardá tanto la lista de números
-elegidos como el texto libre de métricas propuestas (si lo hay) — las vas
-a necesitar en los próximos dos pasos.
+Esperá la respuesta antes de seguir. Guardá la lista de números elegidos,
+el texto libre de métricas propuestas (si lo hay) y la preferencia de PDF
+— las vas a necesitar en los próximos pasos.
 
 ### 6. Construir el informe con las métricas elegidas
 
@@ -257,6 +262,13 @@ La mayoría de las métricas del catálogo ya tienen una función lista en
 `src/encuesta_hogares/analysis.py` / `visualization.py` (reutilizalas). Las
 que no, construilas siguiendo el mismo criterio de rigor del paso 7 antes
 de darlas por buenas.
+
+**Cada gráfica lleva, además de su pregunta guía, una frase corta que
+justifique por qué se eligió ese tipo de gráfica** (barras horizontales,
+heatmap, barras 100% apiladas, etc.), en lenguaje simple y sin cita
+académica — seguí la chuleta de la sección 9 de `docs/METODOLOGIA.md`. Esa
+frase va en la misma celda de markdown que la pregunta guía, no en el
+código.
 
 Seguí el flujo de verificación completo de la sección 5 de
 `docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,
@@ -300,11 +312,15 @@ secciones que ya no existen, terminología consistente.
 
 ### 9. Generar el informe PDF profesional
 
-Este paso es parte del resultado estándar, no algo opcional: el usuario
-tiene que terminar con un PDF con aspecto de informe real (portada,
-tipografía cuidada, gráficas que nunca se cortan ni se salen de la hoja A4)
-guardado en su carpeta de Descargas, sin tener que ir a buscarlo dentro del
-proyecto.
+Hacé esto solo si el usuario respondió que sí a la pregunta del PDF en el
+formulario del paso 5 — ya sabés de antemano si corresponde, no hace falta
+volver a preguntar acá. Si en el paso 5 no quedó claro o el usuario no
+contestó esa parte, preguntaselo ahora antes de generar nada.
+
+Cuando corresponda, el resultado tiene que ser un PDF con aspecto de
+informe real (portada, tipografía cuidada, gráficas que nunca se cortan ni
+se salen de la hoja A4) guardado en su carpeta de Descargas, sin que el
+usuario tenga que ir a buscarlo dentro del proyecto.
 
 Seguí exactamente el procedimiento de la sección 6 de
 `docs/METODOLOGIA.md`: HTML sin código → portada + `docs/informe_estilo.css`

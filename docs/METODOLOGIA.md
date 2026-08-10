@@ -241,6 +241,50 @@ Pasos:
 4. Una vez validado el mapeo, correr el pipeline estándar (secciones 1 a 6)
    y regenerar los cortes/cuartiles reales para ese año — nunca reusar los
    cortes del año anterior, van a haber cambiado.
-5. Preguntar si además de reproducir el análisis estándar, el usuario quiere
-   explorar preguntas nuevas (ver la guía de "Cómo agregar un análisis
-   nuevo" en el archivo del agente).
+5. Presentarle el catálogo de métricas por categoría para que elija qué
+   incluir en la Ampliación, y dejar espacio para que proponga una métrica
+   propia si ninguna del catálogo le sirve (ver el paso 5 del archivo del
+   agente).
+
+## 9. Justificar el tipo de gráfica elegido, en lenguaje simple
+
+Cada gráfica del informe va acompañada de una frase corta (una sola
+oración, sin jerga) que explica por qué se eligió ese tipo de gráfica y no
+otro. No es una cita académica ni un párrafo técnico — es una explicación
+para alguien sin formación en estadística, apoyada en principios de
+visualización de datos bien establecidos (Cleveland & McGill sobre qué
+tan fácil es comparar visualmente distintas formas; Wilke, *Fundamentals
+of Data Visualization*; Stephen Few sobre simplicidad). Usá esta chuleta
+como referencia rápida, adaptando la frase al caso concreto:
+
+- **Barras horizontales** (en vez de verticales): cuando las categorías
+  tienen nombres largos (barrios, condiciones de vivienda) — se leen sin
+  tener que inclinar la cabeza.
+  > *"Usamos barras horizontales porque los nombres de los barrios son
+  > largos y así se leen de corrido."*
+- **Barras agrupadas** (en vez de una sola barra con todo mezclado): para
+  comparar el mismo dato entre 2 o más grupos lado a lado.
+  > *"Ponemos las barras de 'con' y 'sin' una al lado de la otra para que
+  > la comparación sea directa."*
+- **Nunca gráfico de torta con más de 3-4 categorías**: el ojo humano
+  compara largos y posiciones mucho mejor que ángulos — con muchas
+  porciones, un gráfico de torta se vuelve difícil de leer.
+- **Heatmap (mapa de calor)**: cuando se cruzan dos variables categóricas
+  y lo que importa es ver de un vistazo dónde se concentran los valores
+  altos y bajos, no leer cifras exactas.
+  > *"Usamos un mapa de calor porque cruza dos categorías a la vez, y los
+  > colores muestran de un vistazo dónde se concentran los valores más
+  > altos."*
+- **Gráfico de puntos/dispersión ordenado**: cuando hay muchas categorías
+  (ej. 62 barrios) y lo que importa es el orden y la distancia entre
+  ellas, no compararlas de a pares.
+- **Barras 100% apiladas**: cuando cada categoría se reparte en partes que
+  suman exactamente 100% (ej. ocupados/desocupados/inactivos) — deja ver
+  la composición completa en una sola barra por grupo.
+- **Barras de diferencia** (puntos porcentuales, no barras apiladas):
+  cuando se comparan varios grupos que NO suman 100% entre sí — apilarlos
+  daría una impresión de proporción que no existe (ver sección 2).
+
+Si una gráfica no encaja claramente en ninguno de estos patrones, aplicá
+el mismo criterio general igual: preferí siempre la forma que un lector
+sin formación técnica entienda más rápido, y decilo en una frase.
