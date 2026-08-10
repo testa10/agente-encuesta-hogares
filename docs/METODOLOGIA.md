@@ -222,10 +222,16 @@ repositorio, y mezclar código puntual de sesiones de usuario con el
 repositorio compartido lo llenaría de funciones muy específicas que no le
 sirven a nadie más.
 
-Publicar cambios, y decidir qué código o qué métrica de una sesión vale
-la pena incorporar al catálogo permanente, es una tarea de mantenimiento
-que hace el dueño del proyecto **manualmente, por fuera del flujo
-guiado** — con los mismos cuidados de siempre si se hace:
+Decidir qué código o qué métrica de una sesión vale la pena incorporar al
+catálogo permanente es una decisión del dueño del proyecto — pero no una
+tarea que tenga que hacer a mano: se lo puede pedir directamente al
+agente por chat (nunca a través de un formulario, ver "Curación del
+catálogo" en `.claude/agents/encuesta-hogares.md`), y el agente hace el
+trabajo de generalizar el código, agregarlo al catálogo y testearlo. Esa
+posibilidad no existe para nadie más que esté usando el flujo guiado.
+
+Publicar cambios en GitHub, en cambio, es siempre una acción aparte, con
+sus propios cuidados:
 
 - Nunca commitear los archivos `.sav` (ya están en `.gitignore`).
 - Nunca hacer `git push` sin confirmarlo explícitamente antes.

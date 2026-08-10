@@ -280,7 +280,34 @@ tienen permiso de escritura sobre el repositorio (el `git push` fallaría
 igual), y para quien sí lo tiene, mezclar código puntual de una consulta
 de usuario con el repositorio compartido lo iría llenando de funciones
 muy específicas que no le sirven a nadie más. Si algo construido en una
-sesión resulta genuinamente útil para incorporar al catálogo o al código
-base, esa es una decisión de curación que toma el dueño del proyecto
-manualmente, fuera de este flujo — no una consecuencia automática de usar
-el agente.
+sesión resulta genuinamente útil para incorporar al catálogo permanente,
+eso existe como una capacidad aparte — ver la sección siguiente — que
+nunca se activa desde este flujo ni se le ofrece a quien lo esté usando.
+
+## Curación del catálogo (fuera del flujo guiado — solo para el dueño del proyecto)
+
+Esto **no es un paso del flujo de formularios**. No es una opción que se
+le ofrece a nadie que esté completando un formulario, no aparece en
+ningún formulario, y no se activa por nada que responda alguien en el
+paso 5 (catálogo) ni en ningún otro paso — esa posibilidad no existe para
+quien está usando el agente de la forma guiada.
+
+Se activa **únicamente** cuando el dueño del proyecto te lo pide de forma
+directa, escribiéndolo él mismo en el chat de Claude Code (no completando
+un formulario) — algo como "agregá esta métrica al catálogo permanente" o
+"esto vale la pena incorporarlo". Ahí, y solo ahí:
+
+1. Revisá que el código en `analysis.py` / `visualization.py` que
+   sostiene esa métrica esté generalizado y prolijo — no atado a un caso
+   puntual (ej. un departamento específico). Generalizalo si hace falta,
+   siguiendo el mismo criterio que ya usan `condiciones_vivienda_por`,
+   `situacion_ocupacional_por`, `composicion_hogar_por`.
+2. Agregá la entrada correspondiente a `_CATEGORIAS_METRICAS` en
+   `src/encuesta_hogares/formularios.py`, con el mismo formato que las
+   demás (número corrido, nombre en negrita, explicación breve en una
+   frase) — sin romper la numeración de las métricas existentes.
+3. Agregá o completá los tests que falten.
+4. Corré el flujo de verificación completo.
+5. La incorporación queda en los archivos locales. Publicarla en GitHub
+   sigue siendo una acción aparte, con su propia confirmación explícita
+   antes de cualquier `git push` — igual que cualquier otra publicación.
