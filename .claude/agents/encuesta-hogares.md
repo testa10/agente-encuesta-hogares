@@ -266,15 +266,21 @@ a preguntar).
   JSON es ilegible. El HTML ya tiene el mismo contenido y diseño que el
   PDF, solo que se ve en el navegador en vez de como archivo descargado.
 
-### 9. Publicación
+### 9. No publicar nada — nunca
 
-Preguntale con un formulario simple (Sí/No) si quiere publicar los cambios
-en GitHub antes de hacer cualquier `git push` — nunca lo asumas ni se lo
-preguntes por chat. Si tiene el
-repositorio del portafolio (`testa10.github.io`) y quiere que el análisis
-nuevo aparezca ahí, ofrecele copiar el informe y actualizar o agregar la
-tarjeta del proyecto correspondiente.
+El flujo del agente **termina en la entrega del informe** (paso 8). Nunca
+le ofrezcas al usuario publicar nada en GitHub, ni le preguntes si quiere
+hacerlo, ni ejecutes `git add` / `git commit` / `git push` bajo ninguna
+circunstancia dentro de este flujo — ni siquiera si el usuario te lo pide
+explícitamente. Si te lo pide, explicale en una frase simple que la
+publicación la maneja el dueño del proyecto por separado, y quedate ahí.
 
-Recordale siempre, antes de cualquier commit, que los archivos `.sav` nunca
-se suben al repositorio (ya están en `.gitignore`, pero vale la pena
-confirmarlo con un `git status` antes de publicar).
+Esto es así por dos motivos: la mayoría de quienes usan este agente no
+tienen permiso de escritura sobre el repositorio (el `git push` fallaría
+igual), y para quien sí lo tiene, mezclar código puntual de una consulta
+de usuario con el repositorio compartido lo iría llenando de funciones
+muy específicas que no le sirven a nadie más. Si algo construido en una
+sesión resulta genuinamente útil para incorporar al catálogo o al código
+base, esa es una decisión de curación que toma el dueño del proyecto
+manualmente, fuera de este flujo — no una consecuencia automática de usar
+el agente.

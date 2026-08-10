@@ -33,7 +33,6 @@ tenés alguno instalado, saltealo.
 | **Visual Studio Code** | El editor donde vas a abrir el proyecto | https://code.visualstudio.com/ |
 | **Node.js** | Lo necesita Claude Code para funcionar | https://nodejs.org (versión LTS) |
 | **Claude Code** | La herramienta que ejecuta al agente | https://claude.com/claude-code (instrucciones de instalación ahí mismo) |
-| **Cuenta de GitHub** | Para guardar y publicar tus análisis | https://github.com/join |
 | **7-Zip** | Para abrir el archivo comprimido (.RAR) que baja el INE | https://www.7-zip.org/ |
 
 Instalá cada uno con las opciones por defecto del instalador — no hace
@@ -157,17 +156,9 @@ Podés abrir el informe HTML haciendo doble clic sobre el archivo — se abre
 en el navegador, como una página web normal. El PDF se abre igual, con
 cualquier lector de PDF.
 
-## Paso 8 (opcional): Publicar el análisis
-
-Si querés guardar el análisis en tu cuenta de GitHub (para tenerlo
-respaldado o mostrarlo en tu portafolio), pedíselo directamente al agente:
-
-> Publicá este análisis en GitHub
-
-El agente te va a mostrar qué va a subir y te va a pedir confirmación antes
-de hacerlo — nunca publica nada sin que se lo pidas explícitamente. Si
-tenés un sitio de portafolio y querés que el análisis nuevo aparezca ahí
-como proyecto, decíselo y te va a ayudar con eso también.
+Con eso el trabajo del agente termina — el análisis queda guardado en tu
+propia computadora, nada se sube a ningún lado automáticamente ni el
+agente te lo va a ofrecer.
 
 ---
 

@@ -213,14 +213,22 @@ Pasos:
    el tamaño de archivo sea razonable) antes de darlo por terminado — no
    asumas que la conversión salió bien solo porque no tiró error.
 
-## 7. Publicación
+## 7. Publicación (no es parte del flujo del agente)
+
+El agente **nunca** publica nada en GitHub ni se lo ofrece al usuario —
+ver el paso 9 de `.claude/agents/encuesta-hogares.md`. La mayoría de
+quienes usan el agente no tienen permiso de escritura sobre el
+repositorio, y mezclar código puntual de sesiones de usuario con el
+repositorio compartido lo llenaría de funciones muy específicas que no le
+sirven a nadie más.
+
+Publicar cambios, y decidir qué código o qué métrica de una sesión vale
+la pena incorporar al catálogo permanente, es una tarea de mantenimiento
+que hace el dueño del proyecto **manualmente, por fuera del flujo
+guiado** — con los mismos cuidados de siempre si se hace:
 
 - Nunca commitear los archivos `.sav` (ya están en `.gitignore`).
-- Antes de hacer `git push`, **preguntar explícitamente al usuario si
-  quiere publicar los cambios** — no asumir que sí.
-- Si el usuario tiene un sitio de portafolio y quiere mostrar el nuevo
-  análisis ahí, copiar el informe HTML generado y agregar o actualizar la
-  tarjeta del proyecto correspondiente.
+- Nunca hacer `git push` sin confirmarlo explícitamente antes.
 - Usar Plotly con `pio.renderers.default = "png"` (requiere el paquete
   `kaleido`) desde la primera celda del notebook — si no, las gráficas
   interactivas no se ven en GitHub ni en el HTML exportado.
