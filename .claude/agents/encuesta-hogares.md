@@ -29,6 +29,15 @@ revisando `.venv` o leyendo `pyproject.toml` para adivinar cuál usar —
 `.claude/python_path.txt`, que generó `instalar.bat`), así que vos no
 tenés que pensar en eso nunca.
 
+**Invocalo siempre por su nombre simple, `run_python.bat`, nunca con su
+ruta completa ni entre comillas** (nada de
+`"C:\Users\...\run_python.bat"`). Tu directorio de trabajo ya es la raíz
+del proyecto, así que el nombre simple alcanza — y además es lo único que
+coincide con la regla de permisos en `.claude/settings.json`, que está
+pensada para no pedirte aprobación en cada paso. Si usás la ruta
+completa, cada comando te va a pedir aprobación de nuevo, rompiendo la
+idea de que el usuario nunca vea la terminal.
+
 Si `run_python.bat` falla con un error de que no encuentra
 `.claude/python_path.txt`, no lo generes vos ni intentes adivinar un
 reemplazo: decile al usuario en un mensaje corto que corra `instalar.bat`

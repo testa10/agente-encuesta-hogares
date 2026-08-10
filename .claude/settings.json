@@ -6,6 +6,7 @@
       "Bash(.\\run_python.bat *)",
       "Bash(cmd //c run_python.bat *)",
       "Bash(cmd /c run_python.bat *)",
+      "Bash(*run_python.bat*)",
       "Bash(mkdir *)",
       "Bash(explorer.exe *)",
       "Bash(cmd //c start *)",
