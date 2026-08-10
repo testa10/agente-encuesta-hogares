@@ -39,20 +39,21 @@ if errorlevel 1 (
 )
 
 REM --- 3. Detectar Python (Anaconda) e instalar dependencias del proyecto ---
-where python >nul 2>nul
-if errorlevel 1 (
-    set "PYEXE=C:\Users\%USERNAME%\anaconda3\python.exe"
-) else (
-    set "PYEXE=python"
-)
+REM Se prueba primero la ubicacion tipica de Anaconda, sin depender del
+REM PATH: Windows trae un "python.exe" falso propio (el alias de Microsoft
+REM Store) que aparece en el PATH aunque no haya ningun Python instalado
+REM de verdad, asi que "where python" solo no alcanza para confiar en el.
+set "PYEXE=C:\Users\%USERNAME%\anaconda3\python.exe"
 
 if not exist "!PYEXE!" (
-    if not "!PYEXE!"=="python" (
+    set "PYEXE="
+    for /f "delims=" %%v in ('python -c "import sys; print(sys.executable)" 2^>nul') do set "PYEXE=%%v"
+
+    if "!PYEXE!"=="" (
         echo.
-        echo No se encontro una instalacion de Python/Anaconda en la ruta
-        echo esperada: !PYEXE! - Instala Anaconda desde
-        echo https://www.anaconda.com/download y volve a correr este
-        echo instalador.
+        echo No se encontro una instalacion de Python/Anaconda utilizable.
+        echo Instala Anaconda desde https://www.anaconda.com/download y
+        echo volve a correr este instalador.
         pause
         exit /b 1
     )
@@ -73,7 +74,7 @@ echo [4/4] Preparando el generador de informes PDF, puede tardar unos minutos la
 
 echo.
 echo ================================================
-echo   Listo! Ya esta todo instalado.
+echo   Listo. Ya esta todo instalado.
 echo ================================================
 echo.
 echo Para usar el agente:
