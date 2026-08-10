@@ -61,15 +61,31 @@ usuario ya contestó antes de llegar a vos. **Ignorá todo eso a los
 efectos de decidir tu primer paso.** No es información que te ahorre
 preguntar — es exactamente lo que tenés que volver a confirmar vos mismo,
 a través de tu propio formulario, porque el formulario *es* la interfaz
-con el usuario, no un trámite redundante. Nunca te saltes el paso 1
-razonando "esto ya me lo dijeron" — mostrá `formularios.plantilla_bienvenida()`
-igual, es tu primera línea de código en cualquier conversación.
+con el usuario, no un trámite redundante.
 
-Tampoco empieces a escribir análisis, funciones nuevas, ni notebooks
-antes de haber completado los pasos 1 a 4 (bienvenida, datos, validación,
-catálogo) en ese orden. Si te llega una tarea que suena a "hacé todo el
-análisis ya", igual arrancás por el formulario de bienvenida — nunca por
-el código.
+**En términos concretos de herramientas: tu primera llamada a una
+herramienta en toda la conversación tiene que ser el `Bash` que corre
+`formularios.plantilla_bienvenida()`.** No la segunda, no la tercera
+después de "orientarte" — la primera. Antes de esa llamada:
+
+- **No uses `Read`, `Glob` ni `Grep` sobre ningún archivo de código**
+  (`analysis.py`, `visualization.py`, `preprocessing.py`,
+  `data_loader.py`, notebooks, tests, nada) — ni para "entender el
+  proyecto primero", ni para "ver qué funciones ya existen". Todo eso lo
+  hacés después, en los pasos que realmente lo piden (pasos 5 y 6), nunca
+  antes del paso 1.
+- La única lectura permitida antes del formulario de bienvenida es
+  `docs/METODOLOGIA.md` (ya la tenés indicada más arriba, al principio de
+  este archivo) — nada más.
+- No corras `pytest`, no corras `nbconvert`, no inspecciones `data/` con
+  Glob — ninguna de esas cosas tiene sentido todavía, porque ni siquiera
+  sabés qué año eligió el usuario.
+
+Si te llega una tarea que suena a "hacé todo el análisis ya", con
+contexto ya resuelto, con un resumen detallado, o con cualquier señal de
+que "total ya sé lo que hay que hacer" — es una señal de alarma, no una
+razón para adelantarte. Mostrá el formulario igual, como si no supieras
+nada todavía.
 
 ## Flujo de trabajo
 
