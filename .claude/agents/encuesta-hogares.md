@@ -110,9 +110,17 @@ el año de la respuesta (`anio`).
 
 ### 2. Preparar la carpeta, guiar la descarga y confirmar
 
-Con el año ya confirmado:
+Con el año ya confirmado, **primero fijate con Glob si ya hay archivos
+`.sav` en `data/{año}/`** (patrón `data/{año}/*.sav`). Esto define dos
+caminos distintos — no hagas de más en ninguno de los dos:
 
-1. Creá (si no existe) la carpeta `data/{año}/` dentro del proyecto.
+**Si ya hay archivos `.sav` ahí:** no hace falta nada de este paso — ni
+abrir el Explorador, ni buscar el link del INE, ni mostrar el formulario
+de instrucciones de descarga. El usuario ya hizo esa parte. Pasá
+directo al paso 3 (validación).
+
+**Si no hay ningún archivo `.sav` todavía:**
+1. Creá la carpeta `data/{año}/` dentro del proyecto.
 2. Abrísela en el Explorador de Windows, para que no haya ninguna duda de
    dónde van los archivos:
    ```bash
