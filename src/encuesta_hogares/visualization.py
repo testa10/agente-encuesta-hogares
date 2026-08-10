@@ -265,6 +265,23 @@ def plot_ingreso_hogar_barras(df_extendido: pd.DataFrame):
     return fig
 
 
+def plot_ingreso_hogar_departamento(serie: pd.Series):
+    """Barras simples: ingreso típico del hogar por departamento."""
+    fig = px.bar(
+        x=serie.index, y=serie.values,
+        title="Ingreso típico del hogar por departamento",
+        color=serie.index,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:,.0f}" for v in serie.values],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="", yaxis_title="Ingreso típico del hogar (UYU, sin valor locativo)",
+        showlegend=False, width=650, height=500, title_x=0.5,
+    )
+    return fig
+
+
 def plot_condiciones_vivienda(resumen_condiciones: pd.DataFrame, columnas: list, titulo: str, color_map: dict):
     """Barras horizontales agrupadas y ordenadas: condiciones estructurales de la vivienda según un grupo cualquiera."""
     df_plot = resumen_condiciones.melt(

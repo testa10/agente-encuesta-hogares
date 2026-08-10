@@ -5,6 +5,7 @@ from encuesta_hogares.analysis import (
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
     filtrar_segmento,
+    ingreso_hogar_mediano_por_departamento,
     proporcion_cruzada,
     resumen_conectividad,
     situacion_ocupacional_por,
@@ -109,3 +110,16 @@ def test_composicion_hogar_por_agrupa_por_cualquier_columna():
     fila_con = resumen[resumen["grupo"] == "Con internet"].iloc[0]
     assert fila_con["tamano_promedio"] == 3.0
     assert fila_con["promedio_menores_14"] == 1.0
+
+
+def test_ingreso_hogar_mediano_por_departamento():
+    hogares = pd.DataFrame(
+        {
+            "departamento": ["RIVERA", "RIVERA", "RIVERA", "MONTEVIDEO", "MONTEVIDEO", "SALTO"],
+            "ingreso_hogar": [10000.0, 20000.0, 30000.0, 50000.0, 70000.0, 999999.0],
+        }
+    )
+    resultado = ingreso_hogar_mediano_por_departamento(hogares, ["RIVERA", "MONTEVIDEO"])
+    assert resultado["RIVERA"] == 20000.0
+    assert resultado["MONTEVIDEO"] == 60000.0
+    assert "SALTO" not in resultado.index

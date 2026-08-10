@@ -146,6 +146,16 @@ def composicion_hogar_por(df_extendido: pd.DataFrame, columna_grupo: str, etique
     return resumen
 
 
+def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos: list) -> pd.Series:
+    """Ingreso típico (mediana, más robusta a valores extremos que el
+    promedio) del hogar, sin valor locativo, para los departamentos
+    indicados. No requiere filtrar a Montevideo — usa la tabla de hogares
+    completa.
+    """
+    subset = hogares[hogares["departamento"].isin(departamentos)]
+    return subset.groupby("departamento")["ingreso_hogar"].median().round(0)
+
+
 def situacion_ocupacional_por(df_combinado: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
     """% de personas por condición de actividad (Ocupados/Desocupados/Inactivos),
     agrupado por una columna cualquiera (ej. `tipo_abonado`, o una columna de
