@@ -171,6 +171,16 @@ académica — seguí la chuleta de la sección 9 de `docs/METODOLOGIA.md`. Esa
 frase va en la misma celda de markdown que la pregunta guía, no en el
 código.
 
+**La última sección del notebook es siempre el "Resumen analítico final"
+(sección 1 de `docs/METODOLOGIA.md`), y tiene que quedar escrita con las
+cifras reales de esta corrida — nunca como texto pendiente ni como
+placeholder.** Recién podés escribirla después de tener todas las
+gráficas ejecutadas: sacá los números concretos de cada una (con Python,
+no de memoria ni a ojo) y armá 3-5 párrafos cortos que cuenten los
+hallazgos principales, en lenguaje simple, citando los porcentajes
+puntuales. Un notebook que termina con algo como "(se completa después)"
+no está terminado — no lo entregues así.
+
 Seguí el flujo de verificación completo de la sección 5 de
 `docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,
 revisión visual de cada gráfica, generación del informe HTML). No des el
@@ -223,7 +233,11 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
 Antes de dar el trabajo por terminado, repasá el notebook completo contra
 la sección 3 de `docs/METODOLOGIA.md`: sin encabezados amontonados, cada
 gráfica con su pregunta guía, sin huecos de numeración, sin referencias a
-secciones que ya no existen, terminología consistente.
+secciones que ya no existen, terminología consistente. **Releé también el
+"Resumen analítico final" entero**: si encontrás cualquier placeholder,
+texto entre paréntesis del tipo "(pendiente)", o una sección sin
+completar, es que te saltaste un paso — volvé y escribilo con números
+reales antes de seguir.
 
 ### 8. Entregar el informe: PDF o HTML en el navegador
 
