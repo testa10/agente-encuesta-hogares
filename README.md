@@ -7,12 +7,14 @@ hogares de Montevideo — sin tener que volver a explicar desde cero cómo se
 hace, ni programar vos mismo.
 
 En vez de un análisis fijo, este proyecto incluye un **agente**: un asistente
-de inteligencia artificial (Claude) al que le mostrás dónde están tus datos
-y con el que podés conversar, y él hace el trabajo — carga los datos, arma
-las gráficas, redacta las conclusiones, verifica que todo esté bien, y te
-pregunta lo que necesite saber en el camino. También podés pedirle preguntas
-nuevas, que no estaban en el análisis original, y él te va a decir si tienen
-sentido estadísticamente antes de construirlas.
+de inteligencia artificial (Claude) que hace el trabajo — carga los datos,
+arma las gráficas, redacta las conclusiones, verifica que todo esté bien —
+y te va guiando con **formularios visuales que se abren solos en tu
+navegador** (nada de comandos ni pantallas negras): elegís el año, marcás
+qué métricas te interesan de un catálogo, y confirmás con un clic. También
+podés proponer una métrica propia que no esté en el catálogo, y el agente
+te va a avisar si encuentra algún problema estadístico antes de
+construirla, ofreciéndote una alternativa.
 
 No hace falta que entiendas el resto de este documento técnicamente — está
 escrito para que lo sigas paso a paso, incluso si nunca programaste.
@@ -119,33 +121,25 @@ se activa solo, podés pedirlo de forma explícita:
 
 > Usá el agente encuesta-hogares para analizar los datos de 2024
 
-## Paso 6: Responder las preguntas que te haga
+## Paso 6: Completar los formularios que te va mostrando
 
-El agente te va a preguntar cosas como:
-- Qué año de datos vas a usar y si ya están en `data/`.
-- Si querés reproducir el análisis estándar (el mismo del 2019, con los
-  mismos temas) o si además querés explorar preguntas nuevas.
+A partir de acá, **no hace falta que escribas nada más en la terminal**:
+el agente te va a ir abriendo el navegador con una serie de pantallas
+(bienvenida, dónde poner los datos, qué querés incluir en el informe,
+etc.) — vas completando cada una con clics y algún campo de texto corto,
+y apenas confirmás una, sigue con la siguiente. La terminal de Claude Code
+queda de fondo, trabajando; no hace falta que la mires.
 
-Respondé con tranquilidad, en lenguaje simple — no hace falta que uses
-términos técnicos. Si en algún momento el agente encuentra algo que cambió
-en los datos (por ejemplo, que el INE renombró una pregunta de la encuesta),
-te lo va a explicar y te va a pedir que confirmes antes de seguir.
+Una de esas pantallas te deja elegir, de un catálogo, qué métricas querés
+que tenga tu informe (organizadas por tema, cada una con una explicación
+breve), y también proponer una que no esté en la lista si se te ocurre
+algo puntual. Si el agente encuentra un problema con algo que propusiste
+(por ejemplo, un cruce que no se puede hacer de forma confiable con los
+datos disponibles), te lo va a mostrar en otra pantalla, con una
+alternativa que sí funcione — ahí elegís si la aceptás, proponés otra
+cosa, o la dejás afuera del informe.
 
-## Paso 7 (opcional): Pedir análisis adicionales
-
-Podés pedirle al agente que explore preguntas que no estaban en el análisis
-original, en cualquier momento — durante la primera conversación o más
-adelante. Por ejemplo:
-
-> ¿Podemos ver si el acceso a computadora cambia según el tamaño del hogar?
-
-El agente va a revisar si la pregunta tiene sentido estadísticamente antes
-de construir la gráfica, y si encuentra algún problema (por ejemplo, muy
-pocos casos para comparar, o una posible conclusión engañosa) te lo va a
-avisar y proponer una alternativa, en vez de simplemente generar una
-gráfica sin más.
-
-## Paso 8: Revisar los resultados
+## Paso 7: Revisar los resultados
 
 Vas a encontrar tres archivos nuevos:
 - Un notebook en `notebooks/` (por ejemplo `Analisis_ECH_2024.ipynb`), con
@@ -163,7 +157,7 @@ Podés abrir el informe HTML haciendo doble clic sobre el archivo — se abre
 en el navegador, como una página web normal. El PDF se abre igual, con
 cualquier lector de PDF.
 
-## Paso 9 (opcional): Publicar el análisis
+## Paso 8 (opcional): Publicar el análisis
 
 Si querés guardar el análisis en tu cuenta de GitHub (para tenerlo
 respaldado o mostrarlo en tu portafolio), pedíselo directamente al agente:
@@ -180,8 +174,9 @@ como proyecto, decíselo y te va a ayudar con eso también.
 ## Preguntas frecuentes
 
 **¿Necesito saber programar?**
-No. Toda la interacción es conversando en español con el agente. El código
-existe, pero no necesitás tocarlo ni entenderlo.
+No. Toda la interacción es a través de formularios en el navegador, en
+español — nunca ves código ni comandos. El código existe, pero no
+necesitás tocarlo ni entenderlo.
 
 **¿Qué pasa si el INE cambió el formato o los nombres de las preguntas de la
 encuesta entre 2019 y el año que estoy usando?**

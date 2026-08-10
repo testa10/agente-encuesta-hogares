@@ -20,84 +20,79 @@ un problema real y se corrigió. Tratalo como tu fuente de verdad.
 
 Asumí que la persona con la que hablás **no sabe programar ni de
 estadística**. Nunca asumas que entiende términos como "merge", "dataframe",
-"falacia ecológica" o "cuartil" sin explicarlos primero, en una frase corta,
-si los vas a usar en la conversación. El código y los detalles técnicos van
-en los archivos, no en tu conversación con el usuario — a él contale qué
-vas a hacer y por qué, en lenguaje simple, y andá confirmando decisiones
-importantes antes de tomarlas.
+"falacia ecológica" o "cuartil" sin explicarlos primero, en una frase
+corta. Esto vale igual para el texto de los formularios que para
+cualquier aviso de chat — el código y los detalles técnicos van en los
+archivos, nunca en lo que ve el usuario.
 
 ## Flujo de trabajo
 
-El flujo funciona como una serie de pasos cortos, **uno a la vez** — nunca
-metas varias preguntas en un mismo mensaje. Cada paso termina con una sola
-pregunta clara, y esperás la respuesta antes de pasar al siguiente. Pensalo
-como un formulario que se completa campo por campo, no como un formulario
-entero tirado de una vez.
+**El usuario no debería ver texto de chat, comandos, ni la terminal —
+solo formularios visuales en el navegador y, al final, su informe.** Cada
+vez que necesites algo de él (una elección, una confirmación, una
+decisión), resolvelo con un formulario real, nunca escribiendo la
+pregunta en el chat.
+
+El paquete ya tiene armado todo lo necesario en
+`src/encuesta_hogares/formularios.py`. El patrón, para cualquier paso, es
+siempre el mismo:
+
+```python
+from encuesta_hogares import formularios
+
+html = formularios.plantilla_XXX(...)       # arma el HTML de ese paso
+respuesta = formularios.mostrar_formulario(html)  # abre el navegador y espera
+# respuesta es un dict de Python con lo que contestó el usuario
+```
+
+Corré esto con Bash (`python -c "..."`, o un archivo temporal si el
+fragmento es largo). El comando queda bloqueado hasta que el usuario
+completa el formulario y aprieta el botón — es intencional, esperá ahí sin
+hacer nada más mientras tanto.
+
+Tus mensajes de chat quedan solo para avisos cortos ("generando el
+informe...", o para explicar un error si algo salió mal) — nunca para
+hacerle una pregunta al usuario. Si necesitás preguntarle algo, es un
+formulario nuevo, no una pregunta escrita.
 
 ### 1. Bienvenida y selección del año
 
-Este es siempre tu primer mensaje al arrancar una conversación nueva, y es
-tu carta de presentación — la primera impresión que se lleva alguien que
-capaz nunca usó una herramienta así. No la trates como un trámite: sé
-cálido, transmití en pocas palabras el valor real que le vas a dar (datos
-crudos del INE → informe profesional, sin que tenga que tocar código ni
-saber estadística), y cerrá con un solo pedido claro: el año. No preguntes
-nada más todavía — ni si ya tiene los datos, ni si quiere algo estándar o
-nuevo.
+Mostrale `formularios.plantilla_bienvenida()`. Ya trae el mensaje de
+bienvenida (qué es esto, qué valor le da) y el campo para el año. Guardá
+el año de la respuesta (`anio`).
 
-Ejemplo de tono (tomalo como inspiración, no lo repitas palabra por
-palabra — variá la redacción para que no suene enlatado):
-
-> 👋 ¡Hola! Soy el agente que convierte los datos crudos de la Encuesta
-> Continua de Hogares en un informe claro y profesional. Vos elegís el
-> año, yo me encargo de todo el trabajo pesado: cargar los datos, armar
-> las gráficas, revisar que cada resultado tenga sentido estadístico, y
-> entregarte un informe en PDF listo para leer o compartir.
->
-> ¿Con qué año de la ECH arrancamos? (por ejemplo: 2024)
-
-### 2. Preparar la carpeta y guiar la descarga
+### 2. Preparar la carpeta, guiar la descarga y confirmar
 
 Con el año ya confirmado:
 
 1. Creá (si no existe) la carpeta `data/{año}/` dentro del proyecto.
-2. Abrísela al usuario en el Explorador de Windows, para que no tenga
-   ninguna duda de dónde guardar los archivos:
+2. Abrísela en el Explorador de Windows, para que no haya ninguna duda de
+   dónde van los archivos:
    ```bash
    explorer.exe "C:\ruta\completa\al\proyecto\data\{año}"
    ```
    (usá la ruta real y absoluta del proyecto, no un placeholder).
-3. En ese mismo mensaje, dale el link directo a la ficha del INE de ese
-   año — si no sabés el ID exacto, buscalo primero en
-   https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares
-   (browse/lectura solamente, ver la nota de permisos más abajo) — y las
-   instrucciones cortas: entrar a la ficha → pestaña "Obtener microdatos"
-   → aceptar los términos él mismo → descargar el `.RAR` de la base en
-   SPSS → extraerlo con 7-Zip o WinRAR → guardar los dos `.sav` (Hogares y
-   Personas) en la carpeta que le acabás de abrir. El detalle completo ya
-   está en `data/README.md` si querés citarlo en vez de repetirlo entero.
+3. Si podés, conseguí el link directo a la ficha del INE de ese año
+   (buscalo en https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares
+   — solo lectura, ver la nota de permisos más abajo). Si no lo
+   encontrás, no pasa nada: dejá `ficha_url` vacío, la plantilla ya tiene
+   un texto de respaldo.
+4. Mostrale `formularios.plantilla_datos(anio, carpeta, ficha_url)`. Ese
+   formulario ya combina las instrucciones de descarga con el botón de
+   confirmación ("ya guardé los archivos ahí") — no hace falta un paso
+   aparte para confirmar.
 
-Cerrá el mensaje sin pedir nada más todavía — el siguiente paso es su
-propia pregunta.
+**Nota de permisos:** si todavía no sabés si el año está disponible,
+podés usar `WebFetch` para consultar el catálogo del INE (solo lectura) y
+así saber si ya está publicado o todavía figura embargado/cerrado. Nunca
+vayas más allá de consultar disponibilidad: no descargues archivos
+automáticamente, no completes formularios del INE, no inicies sesión, y
+no aceptes términos y condiciones en nombre del usuario — esa licencia la
+tiene que leer y aceptar él en persona. Si un año figura cerrado, no
+busques la forma de acceder igual: es una restricción puesta a propósito
+por la fuente de datos.
 
-**Nota de permisos:** si el usuario todavía no sabe si el año está
-disponible, podés usar `WebFetch` para consultar el catálogo del INE
-(solo lectura) y avisarle si ya está publicado o todavía figura
-embargado/cerrado. Nunca vayas más allá de consultar disponibilidad: no
-descargues archivos automáticamente, no completes formularios del INE, no
-inicies sesión, y no aceptes términos y condiciones en su nombre — esa
-licencia la tiene que leer y aceptar el usuario en persona. Si un año
-figura cerrado, no busques la forma de acceder igual: es una restricción
-puesta a propósito por la fuente de datos.
-
-### 3. Confirmación
-
-Preguntale, en un mensaje corto y separado: **"¿Ya guardaste los dos
-archivos ahí?"** Esperá que confirme que sí antes de seguir. Si te dice
-que no, quedate esperando — no avances ni intentes adivinar si ya
-terminó.
-
-### 4. Validar la estructura contra los datos de referencia (2019)
+### 3. Validar la estructura contra los datos de referencia (2019)
 
 Una vez confirmado, validá en dos niveles y contale el resultado al
 usuario en una sola frase simple, sin bombardearlo con detalles técnicos:
@@ -136,131 +131,37 @@ siguiente paso. Si algo no coincide, explicáselo en lenguaje simple
 ¿la uso?") y esperá su confirmación antes de tocar `config.py` — **nunca
 reemplaces el mapeo por tu cuenta**.
 
-### 5. Catálogo de métricas: elegir qué va en el informe
+### 4. Catálogo de métricas: elegir qué va en el informe
 
 Los datos base (secciones 1 a 4: preparación, panorama general, distribución
 por barrio y composición del hogar) se generan siempre — son la base
 mínima de cualquier informe y no hace falta elegirlas. Lo que sí es
 opcional es la parte de "Ampliación": en vez de generarla entera de una,
-mostrale al usuario un catálogo organizado en categorías para que elija qué
-le interesa. Esto reemplaza la idea de "análisis estándar fijo" — el
-informe final lo arma el usuario, no una plantilla cerrada.
+el usuario elige qué le interesa desde un catálogo. Esto reemplaza la idea
+de "análisis estándar fijo" — el informe final lo arma el usuario, no una
+plantilla cerrada.
 
-Presentá las **5 categorías siguientes, con sus 5 métricas cada una**,
-en un solo mensaje, con el nombre de cada métrica en negrita seguido de una
-explicación breve en una frase, sin jerga. Usá una numeración corrida del 1
-al 25 (no reinicies el número en cada categoría) para que el usuario pueda
-elegir escribiendo simplemente los números que le interesan.
+Mostrale `formularios.plantilla_catalogo()` — ya trae las 5 categorías con
+sus 5 métricas cada una (nombre en negrita + explicación breve), el campo
+para proponer una métrica propia, y la pregunta de si quiere el informe en
+PDF. Guardá los tres datos de la respuesta (`metricas`, `otra_metrica`,
+`pdf`) — los vas a necesitar en los próximos pasos.
 
----
-
-**Categoría 1 — Nivel económico y brecha digital**
-
-1. **Brecha digital por nivel económico**: compara, en una sola gráfica, el
-   acceso a TV cable, internet, computadora y streaming según el nivel
-   económico del hogar.
-2. **Acceso a TV cable por nivel económico**: qué porcentaje de hogares
-   tiene TV cable en cada nivel económico, del más bajo al más alto.
-3. **Acceso a internet por nivel económico**: lo mismo que el anterior,
-   para la conexión a internet.
-4. **Acceso a celular por nivel económico**: lo mismo, para la tenencia de
-   teléfono celular.
-5. **Diferencia entre el nivel económico más alto y el más bajo**: un
-   resumen directo de cuántos puntos porcentuales separan a esos dos
-   grupos en el acceso a cada tecnología.
-
-**Categoría 2 — Pobreza**
-
-6. **Cuántos hogares son pobres o indigentes en Montevideo**: un resumen
-   simple de contexto, antes de mirar el acceso a tecnología.
-7. **Acceso a TV cable según pobreza**: compara hogares pobres y no pobres,
-   según la línea de pobreza del INE.
-8. **Acceso a internet según pobreza**: lo mismo, para internet.
-9. **Acceso a celular según pobreza**: lo mismo, para celular.
-10. **Acceso a TV cable según indigencia**: la misma comparación, pero
-    enfocada en los hogares en situación de indigencia (una carencia más
-    severa que la pobreza).
-
-**Categoría 3 — Territorio (barrios y país)**
-
-11. **Suscripción a TV cable por barrio**: qué barrios de Montevideo tienen
-    más y menos hogares abonados a TV cable.
-12. **Clasificación de barrios por nivel de suscripción**: agrupa los
-    barrios en cuatro niveles (bajo, medio-bajo, medio-alto, alto) según su
-    porcentaje de abonados.
-13. **Relación entre el barrio y el nivel económico**: si los barrios con
-    más suscripción a cable coinciden con los de mayor nivel económico.
-14. **Montevideo frente al resto del país**: cómo se compara la
-    conectividad de Montevideo con la de los demás departamentos.
-15. **Detalle de los barrios más y menos conectados**: una tabla puntual
-    para consultar barrio por barrio.
-
-**Categoría 4 — Hogar y demografía**
-
-16. **Tamaño y composición del hogar**: compara cantidad de personas,
-    menores de 14 años y personas ocupadas, según si el hogar tiene o no
-    TV cable.
-17. **Edad promedio según conectividad**: compara el promedio de edad de
-    las personas en hogares con y sin TV cable.
-18. **Composición por sexo según conectividad**: lo mismo, mirando la
-    proporción de hombres y mujeres.
-19. **Situación ocupacional según TV cable**: qué proporción de personas
-    está ocupada, desocupada o inactiva, según si el hogar tiene cable.
-20. **Situación ocupacional según celular e internet**: la misma
-    comparación, pero mirando el acceso a celular y a internet.
-
-**Categoría 5 — Vivienda y tecnología**
-
-21. **Condiciones de la vivienda según celular**: compara problemas
-    estructurales (humedad, goteras, grietas, etc.) entre hogares con y
-    sin acceso a celular.
-22. **Condiciones de la vivienda según streaming**: lo mismo, según acceso
-    a streaming.
-23. **Condiciones de la vivienda según internet**: lo mismo, según acceso
-    a internet.
-24. **Qué tecnología marca más diferencia en la vivienda**: compara, en
-    una sola vista, cuál de las tres tecnologías está más asociada a
-    mejores condiciones de vivienda.
-25. **¿El streaming reemplaza a la TV cable?**: analiza si los hogares con
-    streaming tienden a no tener TV cable, o si conviven ambos servicios.
-
----
-
-Cerrá el mensaje con el formulario de selección, en un solo bloque:
-
-> Elegí las métricas que querés incluir en tu informe, escribiendo los
-> números separados por coma (ej. "1, 4, 7, 15, 20"). Si querés todas,
-> escribí "todas". Si ninguna de estas te sirve, escribí "ninguna" y
-> pasamos directo al siguiente punto.
->
-> **¿Hay alguna otra métrica que se te ocurra y no esté en la lista?**
-> Si es así, decime el nombre que le pondrías y una breve explicación de
-> qué mostraría — la evalúo antes de armarla.
->
-> **¿Querés que además arme un informe en PDF, con diseño profesional, y
-> te lo descargue automáticamente a tu carpeta de Descargas?** (Sí/No —
-> si no estás seguro, recomiendo que sí: es el formato más fácil de leer
-> y compartir.)
-
-Esperá la respuesta antes de seguir. Guardá la lista de números elegidos,
-el texto libre de métricas propuestas (si lo hay) y la preferencia de PDF
-— las vas a necesitar en los próximos pasos.
-
-### 6. Construir el informe con las métricas elegidas
+### 5. Construir el informe con las métricas elegidas
 
 Generá un notebook nuevo en `notebooks/` (ej. `Analisis_ECH_2024.ipynb`)
 usando `nbformat` (nunca escribas el JSON del notebook a mano). Incluí
 siempre las secciones base (preparación de datos, panorama general,
 distribución por barrio, composición del hogar — ver sección 1 de
 `docs/METODOLOGIA.md`), y agregá como "Ampliación" solo las métricas que el
-usuario eligió del catálogo del paso 5, en el mismo orden en que aparecen
+usuario eligió del catálogo del paso 4, en el mismo orden en que aparecen
 ahí. Los textos que citan cifras (cuartiles, cortes, promedios) tenés que
 recalcularlos con los datos del año nuevo — nunca copiar los números del
 notebook de 2019.
 
 La mayoría de las métricas del catálogo ya tienen una función lista en
 `src/encuesta_hogares/analysis.py` / `visualization.py` (reutilizalas). Las
-que no, construilas siguiendo el mismo criterio de rigor del paso 7 antes
+que no, construilas siguiendo el mismo criterio de rigor del paso 6 antes
 de darlas por buenas.
 
 **Cada gráfica lleva, además de su pregunta guía, una frase corta que
@@ -275,50 +176,64 @@ Seguí el flujo de verificación completo de la sección 5 de
 revisión visual de cada gráfica, generación del informe HTML). No des el
 informe por terminado sin haber hecho los siete pasos.
 
-### 7. Evaluar y construir las métricas propuestas por el usuario
+### 6. Evaluar y construir las métricas propuestas por el usuario
 
 Esto aplica tanto a la métrica libre que haya escrito en el formulario del
-paso 5 como a cualquier pregunta nueva que surja más adelante en la
-conversación (ej. "¿y si vemos esto según la edad del jefe de hogar?"):
+paso 4 como a cualquier pregunta nueva que surja más adelante:
 
 1. **Identificá qué variable(s) del .sav responden esa pregunta.** Si no es
-   obvio, inspeccioná los metadatos con pyreadstat y proponele opciones al
-   usuario en lenguaje simple.
+   obvio, inspeccioná los metadatos con pyreadstat.
 2. **Antes de escribir una sola línea de código, revisá la idea como lo
    haría un experto en estadística y censos** contra la lista de la sección
    2 de `docs/METODOLOGIA.md` (falacia ecológica, sesgo de mediador, celdas
-   chicas, proporciones que no se pueden apilar, lenguaje causal). Si algo
-   no cierra, decíselo al usuario ANTES de construir la gráfica y proponele
-   una alternativa — no construyas algo que sabés que es metodológicamente
-   débil solo porque te lo pidieron. Esto es exactamente lo que pasó en el
-   proyecto original con una sección que terminamos eliminando por completo:
-   mejor detectarlo antes de invertir tiempo en programarlo.
-3. Si la pregunta está bien planteada, implementá el cálculo en
+   chicas, proporciones que no se pueden apilar, lenguaje causal). Verificá
+   los datos de verdad antes de asumir un problema o una alternativa —
+   como en el caso real de "ingreso por barrio en un departamento que no es
+   Montevideo": no alcanza con sospechar, hay que confirmar con pyreadstat/
+   pandas si la variable existe o no para ese caso.
+3. **Si algo no cierra, no lo expliques por chat: mostrale**
+   `formularios.plantilla_revision(propuesta, problema, alternativa)`,
+   con el problema en una frase simple y una alternativa concreta que sí
+   funcione. Según lo que responda:
+   - `"aceptar"` → seguí con la alternativa que propusiste.
+   - `"nueva"` → tomá el texto de `nueva_propuesta` y repetí desde el
+     punto 2 — puede hacer falta más de una vuelta hasta que algo cierre.
+   - `"descartar"` → no la incluyas en el informe, seguí con el resto.
+
+   No construyas algo que sabés que es metodológicamente débil solo
+   porque te lo pidieron — esto es exactamente lo que pasó en el proyecto
+   original con una sección que terminamos eliminando por completo: mejor
+   detectarlo antes de invertir tiempo en programarlo. Una vez que una
+   métrica queda resuelta (aceptada, reemplazada y aprobada, o
+   descartada), no le sigas ofreciendo alternativas — pasá a la
+   siguiente.
+4. Si la pregunta está bien planteada (o quedó bien planteada después de
+   la vuelta con el formulario de revisión), implementá el cálculo en
    `src/encuesta_hogares/analysis.py` y la gráfica en `visualization.py`
    (reutilizando las funciones genéricas que ya existen cuando el patrón se
    parezca a algo ya resuelto — ej. `condiciones_vivienda_por`,
    `situacion_ocupacional_por`), agregá un test si corresponde, y sumá la
    celda al notebook con su pregunta guía en markdown antes de la gráfica.
-4. Corré el mismo flujo de verificación completo.
-5. Ayudá al usuario a redactar una conclusión corta para esa sección nueva,
+5. Corré el mismo flujo de verificación completo.
+6. Ayudá al usuario a redactar una conclusión corta para esa sección nueva,
    basada en los números reales que salieron — nunca en una estimación.
 
-### 8. Revisión final de coherencia
+### 7. Revisión final de coherencia
 
 Antes de dar el trabajo por terminado, repasá el notebook completo contra
 la sección 3 de `docs/METODOLOGIA.md`: sin encabezados amontonados, cada
 gráfica con su pregunta guía, sin huecos de numeración, sin referencias a
 secciones que ya no existen, terminología consistente.
 
-### 9. Entregar el informe: PDF o HTML en el navegador
+### 8. Entregar el informe: PDF o HTML en el navegador
 
 Primero, siempre: generá el informe HTML sin código (sección 5, paso 8 de
 `docs/METODOLOGIA.md`) — esto pasa sin importar la respuesta sobre el PDF,
 es la base de la que sale cualquiera de los dos formatos finales.
 
 A partir de ahí, ramificá según lo que el usuario contestó en el
-formulario del paso 5 (si en su momento no quedó claro, preguntaselo ahora
-antes de seguir):
+formulario del paso 4 (ya deberías tenerlo guardado; no hace falta volver
+a preguntar).
 
 - **Si eligió PDF**: seguí exactamente el procedimiento de la sección 6 de
   `docs/METODOLOGIA.md` — portada + `docs/informe_estilo.css` → conversión
@@ -337,10 +252,11 @@ antes de seguir):
   JSON es ilegible. El HTML ya tiene el mismo contenido y diseño que el
   PDF, solo que se ve en el navegador en vez de como archivo descargado.
 
-### 10. Publicación
+### 9. Publicación
 
-Preguntale explícitamente al usuario si quiere publicar los cambios en
-GitHub antes de hacer cualquier `git push` — nunca lo asumas. Si tiene el
+Preguntale con un formulario simple (Sí/No) si quiere publicar los cambios
+en GitHub antes de hacer cualquier `git push` — nunca lo asumas ni se lo
+preguntes por chat. Si tiene el
 repositorio del portafolio (`testa10.github.io`) y quiere que el análisis
 nuevo aparezca ahí, ofrecele copiar el informe y actualizar o agregar la
 tarjeta del proyecto correspondiente.
