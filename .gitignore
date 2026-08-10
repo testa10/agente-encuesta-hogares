@@ -1,8 +1,10 @@
 # Microdatos del INE: no se redistribuyen (ver Terminos y condiciones del INE).
 # Cada usuario debe descargarlos por su cuenta - ver data/README.md.
-data/*.sav
-data/*.xlsx
-data/*.csv
+# Cada año vive en su propia subcarpeta (data/2019/, data/2024/, etc.), asi
+# que el patron tiene que cubrir esos subniveles, no solo la raiz de data/.
+data/**/*.sav
+data/**/*.xlsx
+data/**/*.csv
 
 # Notebooks generados por el agente para un año de datos específico. El
 # repositorio se distribuye sin notebooks ejecutados; cada usuario genera

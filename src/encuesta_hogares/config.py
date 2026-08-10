@@ -13,20 +13,44 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 
+# Cada año de datos vive en su propia subcarpeta: data/{año}/H_....sav y
+# data/{año}/P_....sav. El agente crea esa subcarpeta antes de pedirle al
+# usuario que guarde los archivos ahí (ver .claude/agents/encuesta-hogares.md).
+
 
 def _resolve_data_file(prefix: str, fallback_name: str) -> Path:
-    """Busca en data/ el archivo más reciente que siga la convención de
-    nombres del INE (ej. H_2024_Terceros.sav). Si hay más de un año
-    disponible, usa el más nuevo. Si no hay ninguno todavía, devuelve una
-    ruta de referencia (no falla al importar el módulo, solo al intentar
-    leer el archivo).
+    """Busca en data/{año}/ el archivo más reciente que empiece con `prefix`
+    (H o P). Si hay más de un año disponible, usa el más nuevo (los nombres
+    de subcarpeta son años, así que ordenan cronológicamente). Si no hay
+    ninguno todavía, devuelve una ruta de referencia (no falla al importar
+    el módulo, solo al intentar leer el archivo).
     """
-    candidatos = sorted(DATA_DIR.glob(f"{prefix}_*.sav"))
+    candidatos = sorted(DATA_DIR.glob(f"*/{prefix}_*.sav"))
     return candidatos[-1] if candidatos else DATA_DIR / fallback_name
 
 
-HOGARES_FILE = _resolve_data_file("H", "H_AAAA.sav")
-PERSONAS_FILE = _resolve_data_file("P", "P_AAAA.sav")
+HOGARES_FILE = _resolve_data_file("H", "AAAA/H_AAAA.sav")
+PERSONAS_FILE = _resolve_data_file("P", "AAAA/P_AAAA.sav")
+
+# Año de referencia: los datos con los que se construyó y validó todo el
+# análisis original. Nunca se borran ni se mueven — sirven para comparar
+# la estructura de cualquier año nuevo contra un caso ya conocido y
+# confiable, además de contra la lista fija de columnas de más abajo.
+REFERENCE_YEAR = 2019
+
+
+def _reference_file(prefix: str) -> Path:
+    carpeta = DATA_DIR / str(REFERENCE_YEAR)
+    candidatos = sorted(carpeta.glob(f"{prefix}_*.sav"))
+    return candidatos[0] if candidatos else carpeta / f"{prefix}_{REFERENCE_YEAR}.sav"
+
+
+def reference_hogares_file() -> Path:
+    return _reference_file("H")
+
+
+def reference_personas_file() -> Path:
+    return _reference_file("P")
 
 # Columnas relevantes de la base de Hogares (H) y su nuevo nombre legible
 HOGARES_COLUMNS = {

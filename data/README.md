@@ -29,13 +29,23 @@ para que nunca se suban por accidente.
    **Hogares** y la base de **Personas** (los nombres exactos pueden variar
    de un año a otro; suelen empezar con `H` para Hogares y `P` para
    Personas).
-8. Copiá esos dos archivos `.sav` a esta carpeta (`data/`) de este
-   proyecto.
+8. Copiá esos dos archivos `.sav` a la subcarpeta de ese año dentro de
+   `data/` — por ejemplo, `data/2024/`. Si le pediste el análisis al
+   agente, él ya te va a haber creado esa carpeta y abierto en el
+   Explorador antes de este paso, así que solo tenés que soltar los
+   archivos ahí.
 
 Si no estás seguro de cuál archivo es cuál, no pasa nada — contale al
 agente qué archivos extrajiste y él te va a ayudar a identificarlos y
-renombrarlos si hace falta (el código busca automáticamente cualquier
-archivo que empiece con `H_` o `P_` y termine en `.sav` en esta carpeta).
+renombrarlos si hace falta (el código busca automáticamente, dentro de
+cada subcarpeta de año, cualquier archivo que empiece con `H_` o `P_` y
+termine en `.sav`).
+
+## Carpeta `2019/`
+
+Es el año con el que se construyó y validó todo el análisis original —
+sirve como referencia para comparar la estructura de cualquier año nuevo.
+**No la borres ni la muevas**, aunque estés analizando otro año.
 
 ## Cita requerida
 
