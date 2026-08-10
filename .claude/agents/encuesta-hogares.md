@@ -306,13 +306,24 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
    descartada), no le sigas ofreciendo alternativas — pasá a la
    siguiente.
 4. Si la pregunta está bien planteada (o quedó bien planteada después de
-   la vuelta con el formulario de revisión), implementá el cálculo en
-   `src/encuesta_hogares/analysis.py` y la gráfica en `visualization.py`
-   (reutilizando las funciones genéricas que ya existen cuando el patrón se
-   parezca a algo ya resuelto — ej. `condiciones_vivienda_por`,
-   `situacion_ocupacional_por`), agregá un test si corresponde, y sumá la
-   celda al notebook con su pregunta guía en markdown antes de la gráfica.
-5. Corré el mismo flujo de verificación completo.
+   la vuelta con el formulario de revisión), **antes de escribir código
+   nuevo, leé `analysis.py` y `visualization.py` enteros (con Read) y
+   preguntate: ¿alguna función ya existente resuelve esto con otros
+   argumentos?** Pasa más seguido de lo que parece — por ejemplo, una
+   función que ya recibe una lista de categorías (departamentos, grupos,
+   lo que sea) puede responder una pregunta "nueva" con la misma llamada y
+   una lista distinta, sin cambiar una sola línea de código. Si es así, no
+   escribas nada: andá directo a sumar la celda al notebook.
+
+   Si de verdad hace falta código nuevo, escribilo **una sola vez, bien**,
+   basándote en el patrón de una función parecida que ya exista (ej.
+   `condiciones_vivienda_por`, `situacion_ocupacional_por`) — no lo escribas
+   a los tumbos, corrigiendo y volviendo a correr `pytest` en un ciclo de
+   prueba y error. Si te encontrás editando el mismo archivo de test tres
+   o cuatro veces seguidas, pará: significa que no leíste bien el patrón
+   existente antes de empezar. Agregale su test, y sumá la celda al
+   notebook con su pregunta guía en markdown antes de la gráfica.
+5. Corré el flujo de verificación completo **una vez**, no en un bucle.
 6. Ayudá al usuario a redactar una conclusión corta para esa sección nueva,
    basada en los números reales que salieron — nunca en una estimación.
 
