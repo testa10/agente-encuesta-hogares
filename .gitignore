@@ -16,6 +16,10 @@ notebooks/*.ipynb
 # distinta en cada computadora, nunca se comparte entre usuarios.
 .claude/python_path.txt
 
+# Material de referencia personal (con copyright de terceros) que Claude usa
+# como guía interna - nunca se redistribuye, se queda solo en esta máquina.
+.claude/referencias_privadas/
+
 # Entornos
 .venv/
 venv/

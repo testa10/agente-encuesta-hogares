@@ -56,6 +56,11 @@ def plot_penetracion_por_barrio(penetracion_por_barrio: pd.DataFrame):
         xaxis_title="Barrio",
         yaxis_title="Porcentaje (%)",
         xaxis={"categoryorder": "total descending", "tickangle": -60, "tickfont": {"size": 9}},
+        # El eje de un valor (acá, %) siempre tiene que arrancar en cero y no
+        # recortarse -- a diferencia de las barras, que Plotly ya ancla en
+        # cero solas, un scatter autoescala al rango de los datos y exagera
+        # visualmente las diferencias si no se fija el rango a mano.
+        yaxis_range=[0, penetracion_por_barrio["pct_abonados"].max() * 1.1],
         width=1190,
         height=620,
         margin=dict(b=160),
@@ -495,6 +500,9 @@ def plot_penetracion_nacional(resumen_departamentos: pd.DataFrame, resaltar: str
     fig.update_layout(
         xaxis_title="% de hogares con TV cable", yaxis_title="",
         yaxis={"categoryorder": "total ascending"},
+        # Mismo motivo que en plot_penetracion_por_barrio: un scatter no
+        # arranca en cero solo, hay que fijarlo a mano.
+        xaxis_range=[0, df_plot["pct_cable"].max() * 1.1],
         showlegend=False, width=800, height=550, title_x=0.5,
     )
     promedio = df_plot["pct_cable"].mean()

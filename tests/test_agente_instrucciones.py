@@ -1,0 +1,42 @@
+"""Chequeos estructurales sobre .claude/agents/encuesta-hogares.md.
+
+No valida contenido (eso lo hace un humano leyéndolo) - valida que la
+estructura no se rompa por una edición futura, como pasó una vez: el paso
+3.5 quedó físicamente después del paso 4 en el archivo, aunque el texto
+decía "antes del paso 4". Un test no puede evitar una mala instrucción,
+pero sí puede evitar que el orden de los pasos quede contradictorio.
+"""
+
+import re
+from pathlib import Path
+
+AGENTE_MD = Path(__file__).resolve().parents[1] / ".claude" / "agents" / "encuesta-hogares.md"
+
+
+def _pasos_en_orden_de_aparicion() -> list[float]:
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+    numeros = re.findall(r"^### (\d+(?:\.\d+)?)\. ", texto, flags=re.MULTILINE)
+    return [float(n) for n in numeros]
+
+
+def test_el_archivo_del_agente_existe():
+    assert AGENTE_MD.exists(), f"No se encontró {AGENTE_MD}"
+
+
+def test_los_pasos_aparecen_en_orden_numerico_ascendente():
+    pasos = _pasos_en_orden_de_aparicion()
+    assert pasos, "No se encontró ningún paso con el patrón '### N. ...' en el archivo"
+    assert pasos == sorted(pasos), (
+        f"Los pasos no están en orden ascendente en el archivo: {pasos}. "
+        "Esto es exactamente el bug que hizo que una corrida real se saltara "
+        "el formulario de áreas y se fuera a explorar código - revisá el "
+        "orden físico de las secciones '### N. Título', no solo el texto."
+    )
+
+
+def test_el_paso_de_bienvenida_es_el_primero():
+    pasos = _pasos_en_orden_de_aparicion()
+    assert pasos[0] == 1.0, (
+        "El paso 1 (bienvenida) tiene que ser la primera sección numerada "
+        "del archivo - es la regla innegociable de todo el flujo."
+    )
