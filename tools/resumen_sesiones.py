@@ -2,7 +2,10 @@
 
 Lee logs/bitacora.jsonl (si existe) y muestra un resumen legible de cada
 sesión detectada: cuándo empezó y terminó, cuántos formularios se
-mostraron, si hubo timeouts o errores.
+mostraron, si hubo timeouts o errores, y cuánto tardó cada paso pesado
+medido con bitacora.medir()/medir_comando() (carga de datos, ejecución
+del notebook, conversión a PDF) - ordenado de mayor a menor duración,
+para ver de un vistazo dónde se fue el tiempo de la corrida.
 
 Pensado para cuando alguien sin conocimientos técnicos reporta que "algo
 no funcionó": en vez de depender de que describa bien lo que vio, pedile
@@ -36,6 +39,10 @@ def main() -> None:
         )
         for err in r.errores:
             print(f"    [{err['timestamp']}] {err['tipo']}: {err.get('mensaje', '')}")
+        if r.pasos_medidos:
+            print("  pasos medidos (de mayor a menor duración):")
+            for paso in r.pasos_medidos:
+                print(f"    {paso['nombre']}: {paso['duracion_segundos']}s")
         print()
 
 

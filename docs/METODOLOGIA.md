@@ -116,8 +116,18 @@ barrio y la otra del hogar.
    `tests/`.
 3. Correr `pytest -q` y confirmar que todo pasa.
 4. Editar el notebook con `nbformat` (no pegar JSON a mano).
-5. Re-ejecutar el notebook completo:
-   `jupyter nbconvert --to notebook --execute --inplace <notebook>.ipynb`
+5. Re-ejecutar el notebook completo, cronometrando cuánto tarda (para
+   poder ver después, con `tools/resumen_sesiones.py`, si el cuello de
+   botella real está acá o en otro paso) — en vez de invocar `jupyter
+   nbconvert` directo por Bash, envolvelo con `bitacora.medir_comando()`:
+   ```python
+   import sys
+   from encuesta_hogares import bitacora
+   bitacora.medir_comando("ejecucion_notebook", [
+       sys.executable, "-m", "jupyter", "nbconvert",
+       "--to", "notebook", "--execute", "--inplace", "<notebook>.ipynb",
+   ])
+   ```
 6. Verificar que ninguna celda de código haya quedado con `output_type ==
    "error"`.
 7. Para cualquier gráfica nueva o modificada, extraer el PNG embebido del
@@ -126,7 +136,9 @@ barrio y la otra del hogar.
 8. Generar el informe HTML sin código (para gente no técnica):
    - Copiar el notebook, filtrar del output los mensajes `stderr` de tipo
      `stream` (son warnings inofensivos de matplotlib, no errores reales).
-   - `jupyter nbconvert --to html --no-input <copia>.ipynb`
+   - Igual que en el paso 5, envolvé la conversión con
+     `bitacora.medir_comando("generacion_html", [sys.executable, "-m", "jupyter", "nbconvert", "--to", "html", "--no-input", "<copia>.ipynb"])`
+     en vez de invocar `jupyter nbconvert` directo.
    - Corregir el `<title>` del HTML generado (por defecto queda con el
      nombre del archivo).
 9. Generar el informe PDF profesional a partir de ese HTML, y copiarlo a la
@@ -172,28 +184,31 @@ Pasos:
    páginas o se salga del ancho de la hoja. No la reinventes ni la
    simplifiques: cada regla ahí resuelve un problema real de paginación.
 4. Convertí ese HTML a PDF con Playwright (script corto, vía Bash con
-   `python -c` o un archivo temporal):
+   `python -c` o un archivo temporal), cronometrando el bloque con
+   `bitacora.medir()`:
    ```python
    from playwright.sync_api import sync_playwright
+   from encuesta_hogares import bitacora
 
-   with sync_playwright() as p:
-       browser = p.chromium.launch()
-       page = browser.new_page()
-       page.goto(f"file:///{ruta_html_absoluta}")
-       page.pdf(
-           path=ruta_pdf_salida,
-           format="A4",
-           print_background=True,
-           display_header_footer=True,
-           header_template="<span></span>",
-           footer_template=(
-               '<div style="font-size:8pt; width:100%; text-align:center; '
-               'color:#8b949e;">Página <span class="pageNumber"></span> '
-               'de <span class="totalPages"></span></div>'
-           ),
-           margin={"top": "20mm", "bottom": "16mm", "left": "18mm", "right": "18mm"},
-       )
-       browser.close()
+   with bitacora.medir("conversion_pdf"):
+       with sync_playwright() as p:
+           browser = p.chromium.launch()
+           page = browser.new_page()
+           page.goto(f"file:///{ruta_html_absoluta}")
+           page.pdf(
+               path=ruta_pdf_salida,
+               format="A4",
+               print_background=True,
+               display_header_footer=True,
+               header_template="<span></span>",
+               footer_template=(
+                   '<div style="font-size:8pt; width:100%; text-align:center; '
+                   'color:#8b949e;">Página <span class="pageNumber"></span> '
+                   'de <span class="totalPages"></span></div>'
+               ),
+               margin={"top": "20mm", "bottom": "16mm", "left": "18mm", "right": "18mm"},
+           )
+           browser.close()
    ```
    Usá `header_template` / `footer_template` (no CSS `@page { @bottom-center }`)
    para la numeración de página: Chromium no soporta las cajas de margen de

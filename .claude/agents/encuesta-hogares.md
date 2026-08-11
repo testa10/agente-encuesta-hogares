@@ -442,6 +442,14 @@ método — parate y volvé a este proceso:
    que ya identificaste en el paso 1. Termina escribiendo el notebook a
    disco con `nbformat.write(...)`.
 
+   **La celda de "preparación de datos" (la que llama a
+   `load_hogares_personas_csv` / `load_hogares` / `load_personas`, etc.)
+   tiene que envolver esa carga con `bitacora.medir("carga_de_datos"):`**
+   — es la única forma de saber, después, si el tiempo de la corrida se va
+   en cargar los datos o en el resto del notebook (gráficas). Ver
+   `docs/METODOLOGIA.md` sección 5 para el resto de las mediciones
+   (ejecución del notebook, conversión a PDF).
+
    **Cómo terminar cada celda que llama a una función `viz.plot_*` —
    comprobado que dejarla mal duplica la gráfica en el informe final:**
    - Si la función usa Plotly (`plotly.express`/`plotly.graph_objects` —
@@ -458,10 +466,13 @@ método — parate y volvé a este proceso:
      su definición en `visualization.py` (ya la tenés abierta del paso 1)
      y fijate qué importa.
 3. Corré ese único script **una vez** con `run_python.bat`.
-4. Ejecutá el notebook completo con `run_python.bat -m jupyter nbconvert
-   --to notebook --execute --inplace <notebook>` — eso es lo que corre
-   los cálculos de verdad. No necesitás correrlos vos mismo por separado
-   antes ni verificar los números a mano en el camino.
+4. Ejecutá el notebook completo — eso es lo que corre los cálculos de
+   verdad, no necesitás correrlos vos mismo por separado antes ni
+   verificar los números a mano en el camino. Envolvé la ejecución con
+   `bitacora.medir_comando("ejecucion_notebook", [...])` en vez de invocar
+   `jupyter nbconvert` directo (ver el ejemplo exacto en
+   `docs/METODOLOGIA.md`, sección 5, paso 5) — así queda registrado cuánto
+   tardó, para poder revisarlo después con `tools/resumen_sesiones.py`.
 5. Ahí sí, revisá errores y gráficas como indica el flujo de verificación
    (sección 5 de `docs/METODOLOGIA.md`).
 

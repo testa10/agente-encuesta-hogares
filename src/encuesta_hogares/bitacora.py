@@ -15,11 +15,20 @@ formulario se mostró, cuándo, si hubo timeout o una excepción real.
 No reemplaza el reporte de la persona - lo complementa. Nunca se sube a
 git (ver .gitignore) y nunca sale de la computadora donde corre: nadie
 más que el dueño del proyecto lo ve, y solo si la persona se lo manda.
+
+`medir()` y `medir_comando()` agregan una segunda cosa a esta bitácora:
+cuánto tarda de verdad cada paso pesado del flujo (cargar datos, ejecutar
+el notebook completo, convertir a PDF) - para responder "¿dónde se va el
+tiempo?" con números reales de una corrida, en vez de adivinar.
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
+import time
+import traceback
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -44,6 +53,43 @@ def registrar(tipo: str, **detalle) -> None:
             f.write(json.dumps(linea, ensure_ascii=False) + "\n")
     except Exception:
         pass
+
+
+@contextmanager
+def medir(nombre: str, **detalle):
+    """Cronometra un bloque de código Python y lo registra. Envolvé con
+    esto los pasos pesados que el agente ejecuta como código Python
+    directo (ej. cargar los datos), no llamadas a otro programa - para eso
+    está `medir_comando()`. Si el bloque lanza una excepción, igual se
+    registra la duración hasta ese punto, junto con el error."""
+    inicio = time.monotonic()
+    try:
+        yield
+    except Exception as e:
+        registrar(
+            f"{nombre}_error",
+            duracion_segundos=round(time.monotonic() - inicio, 1),
+            mensaje=str(e),
+            traceback=traceback.format_exc(),
+        )
+        raise
+    else:
+        registrar(f"{nombre}_fin", duracion_segundos=round(time.monotonic() - inicio, 1), **detalle)
+
+
+def medir_comando(nombre: str, comando: list[str]) -> subprocess.CompletedProcess:
+    """Corre un comando externo (ej. `jupyter nbconvert`) cronometrando
+    cuánto tarda, y lo registra en la bitácora. Pensado para los pasos
+    pesados que el agente invoca como subprocess en vez de código Python
+    directo - la ejecución del notebook completo, la conversión a HTML."""
+    inicio = time.monotonic()
+    try:
+        resultado = subprocess.run(comando, check=True)
+    except Exception as e:
+        registrar(f"{nombre}_error", duracion_segundos=round(time.monotonic() - inicio, 1), mensaje=str(e))
+        raise
+    registrar(f"{nombre}_fin", duracion_segundos=round(time.monotonic() - inicio, 1))
+    return resultado
 
 
 def leer_eventos() -> list[dict]:
@@ -90,13 +136,20 @@ class ResumenSesion:
     formularios_mostrados: int
     timeouts: int
     errores: list[dict] = field(default_factory=list)
+    pasos_medidos: list[dict] = field(default_factory=list)
 
 
 def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
+    pasos_medidos = [
+        {"nombre": e["tipo"].removesuffix("_fin"), "duracion_segundos": e["duracion_segundos"], "timestamp": e["timestamp"]}
+        for e in eventos
+        if e["tipo"].endswith("_fin") and "duracion_segundos" in e
+    ]
     return ResumenSesion(
         inicio=eventos[0]["timestamp"],
         fin=eventos[-1]["timestamp"],
         formularios_mostrados=sum(1 for e in eventos if e["tipo"] == "formulario_mostrado"),
         timeouts=sum(1 for e in eventos if e["tipo"] == "formulario_timeout"),
         errores=[e for e in eventos if e["tipo"].endswith("_error")],
+        pasos_medidos=sorted(pasos_medidos, key=lambda p: -p["duracion_segundos"]),
     )
