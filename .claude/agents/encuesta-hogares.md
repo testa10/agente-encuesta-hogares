@@ -240,9 +240,23 @@ por la fuente de datos.
 
 ### 3. Validar la estructura contra los datos de referencia (2019)
 
-Una vez confirmado, validá en dos niveles y contale el resultado al
+Una vez confirmado, validá en tres niveles y contale el resultado al
 usuario en una sola frase simple, sin bombardearlo con detalles técnicos:
 
+0. **Chequeo automático rápido primero.** Antes de inspeccionar nada a
+   mano, corré `run_python.bat tools/verificar_estructura_datos.py
+   {año}`. Compara los archivos reales del año contra todas las columnas
+   que `config.py` espera (Hogares, Personas, FIES, Empleo,
+   Victimización) y avisa en segundos si falta algo, en vez de
+   descubrirlo a los tumbos revisando módulo por módulo — así fue como se
+   perdieron más de 30 minutos la vez que el INE cambió de `.sav` a CSV
+   combinado sin avisar. Si el chequeo sale limpio ("Todas las columnas
+   esperadas están presentes"), igual seguí con los puntos 1 y 2 de abajo
+   para las columnas usadas por el catálogo activo — el chequeo automático
+   valida *existencia* de columna, no que el *significado* siga siendo el
+   mismo (una pregunta puede cambiar de escala sin cambiar de nombre, eso
+   solo lo detecta comparar etiquetas). Si el chequeo marca columnas
+   faltantes, priorizá revisar exactamente esas antes de mirar el resto.
 1. **Existencia de columnas**: con `pyreadstat`, leé solo los metadatos
    (`metadataonly=True`) de los `.sav` nuevos y verificá que todos los
    códigos de `HOGARES_COLUMNS` / `PERSONAS_COLUMNS` /
