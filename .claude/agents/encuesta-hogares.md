@@ -339,9 +339,10 @@ Mostrale `formularios.plantilla_catalogo(incluir_fies=...)` — pasale
 catálogo ya trae las 5 categorías base con sus 5 métricas cada una (nombre
 en negrita + explicación breve) y, si corresponde, la categoría 6 de
 seguridad alimentaria (FIES) con las métricas 26 a 32. También trae el
-campo para proponer una métrica propia y la pregunta de si quiere el
-informe en PDF. Guardá los tres datos de la respuesta (`metricas`,
-`otra_metrica`, `pdf`) — los vas a necesitar en los próximos pasos.
+campo para proponer una métrica propia. Guardá los dos datos de la
+respuesta (`metricas`, `otra_metrica`) — los vas a necesitar en los
+próximos pasos. Ya no se pregunta preferencia de PDF acá: el informe
+siempre se entrega en los dos formatos (ver paso 8).
 
 **Nota sobre FIES (métricas 26-32), si el usuario las elige:** el archivo
 `base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
@@ -568,37 +569,35 @@ texto entre paréntesis del tipo "(pendiente)", o una sección sin
 completar, es que te saltaste un paso — volvé y escribilo con números
 reales antes de seguir.
 
-### 8. Entregar el informe: PDF o HTML en el navegador
+### 8. Entregar el informe: siempre PDF y HTML
 
-Primero, siempre: generá el informe HTML sin código (sección 5, paso 8 de
-`docs/METODOLOGIA.md`) — esto pasa sin importar la respuesta sobre el PDF,
-es la base de la que sale cualquiera de los dos formatos finales.
+**Siempre se generan los dos formatos, sin excepción y sin preguntar** —
+el formulario del catálogo (paso 4) ya no pregunta preferencia de PDF, así
+que no hay nada que revisar ahí:
 
-A partir de ahí, ramificá según lo que el usuario contestó en el
-formulario del paso 4 (ya deberías tenerlo guardado; no hace falta volver
-a preguntar).
-
-- **Si eligió PDF**: seguí exactamente el procedimiento de la sección 6 de
-  `docs/METODOLOGIA.md` — portada + `docs/informe_estilo.css` → conversión
-  con Chromium vía Playwright (nunca `nbconvert --to pdf`, que depende de
-  una instalación de LaTeX) → copia a `Path.home() / "Downloads"`. Confirmá
-  al final que el PDF se generó bien (cantidad de páginas, tamaño de
-  archivo razonable).
-- **Si no eligió PDF**: no generes nada más allá del HTML.
+1. Generá el informe HTML sin código (sección 5, paso 8 de
+   `docs/METODOLOGIA.md`) — es la base de la que sale también el PDF.
+2. Seguí exactamente el procedimiento de la sección 6 de
+   `docs/METODOLOGIA.md` — portada + `docs/informe_estilo.css` →
+   conversión con Chromium vía Playwright (nunca `nbconvert --to pdf`,
+   que depende de una instalación de LaTeX) → copia a `Path.home() /
+   "Downloads"`. Confirmá al final que el PDF se generó bien (cantidad de
+   páginas, tamaño de archivo razonable).
 
 **Nunca uses `start` desde la terminal para "abrir" el informe, ni para
 el PDF ni para el HTML** — en la práctica resultó poco confiable (llegó a
 reportarse como abierto sin estarlo de verdad) y además no da una
 sensación de cierre profesional. En cambio, el último paso siempre es
 mostrarle al usuario `formularios.plantilla_finalizacion()` a través de
-`formularios.mostrar_finalizacion(pdf_path=..., html_path=...)` — pasale
-la ruta absoluta del PDF si lo generaste, la ruta absoluta del HTML
-siempre, o ambas. Esa pantalla trae el mensaje de agradecimiento
-("Tu informe fue creado con éxito") con un botón por cada formato
-disponible; al hacer click, el informe se abre en una pestaña nueva,
-servido por el mismo mecanismo local que ya usás para los formularios —
-no depende de que el sistema operativo "encuentre" el archivo. Este paso
-es el cierre del flujo: no hace falta ningún otro aviso de chat después.
+`formularios.mostrar_finalizacion(pdf_path=..., html_path=...)`, pasando
+**siempre las dos rutas absolutas** (nunca solo una — ambos formatos
+existen siempre). Esa pantalla trae el mensaje de agradecimiento
+("Tu informe fue creado con éxito") con un botón para cada formato,
+los dos disponibles siempre; al hacer click, el informe se abre en una
+pestaña nueva, servido por el mismo mecanismo local que ya usás para los
+formularios — no depende de que el sistema operativo "encuentre" el
+archivo. Este paso es el cierre del flujo: no hace falta ningún otro
+aviso de chat después.
 
 Nunca generes ni ofrezcas el informe en JSON ni en ningún otro formato
 técnico — para alguien sin conocimientos de programación un archivo JSON

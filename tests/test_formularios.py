@@ -32,8 +32,8 @@ def test_plantilla_catalogo_incluye_las_25_metricas():
     assert "Territorio" in html
     assert "Hogar y demografía" in html
     assert "Vivienda y tecnología" in html
-    # preferencia de PDF presente
-    assert 'name="pdf"' in html
+    # el informe siempre se entrega en PDF y HTML - no se pregunta acá
+    assert 'name="pdf"' not in html
 
 
 def test_plantilla_revision_incluye_las_tres_salidas():
@@ -56,6 +56,23 @@ def test_plantilla_finalizacion_omite_el_link_del_formato_no_generado():
     html = plantilla_finalizacion(pdf_disponible=False, html_disponible=True)
     assert 'href="/informe.pdf"' not in html
     assert 'href="/informe.html"' in html
+
+
+def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
+    # A diferencia de plantilla_finalizacion (que sí es el cierre real del
+    # flujo), estas pantallas de "procesando" siempre van seguidas de una
+    # pestaña nueva - prometer que se puede cerrar mientras se dice
+    # "estamos procesando" es contradictorio para alguien sin conocimientos
+    # técnicos (ver feedback real de usuario).
+    pantallas = [
+        plantilla_bienvenida(),
+        plantilla_datos("2024", r"C:\ruta\data\2024"),
+        plantilla_areas(True, True),
+        plantilla_catalogo(),
+        plantilla_revision("propuesta", "problema", "alternativa"),
+    ]
+    for html in pantallas:
+        assert "podés cerrar esta pestaña" not in html.lower()
 
 
 def test_plantilla_arranque_ofrece_empezar_y_salir():

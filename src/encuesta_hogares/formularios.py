@@ -93,9 +93,6 @@ ol { line-height: 1.9; font-size: 15px; padding-left: 22px; }
 .metrica .texto { font-size: 14px; line-height: 1.5; }
 .metrica .explicacion { color: var(--gris); }
 .otra { background: #f6f8fa; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }
-.pdf { background: #f0fdf4; border-left: 3px solid var(--verde); border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
-.pdf .opciones { display: flex; gap: 20px; margin-top: 8px; }
-.pdf .opciones label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: normal; margin: 0; cursor: pointer; }
 .opcion {
   display: block; border: 2px solid #d0d7de; border-radius: 10px;
   padding: 14px 16px; margin-bottom: 12px; cursor: pointer;
@@ -134,7 +131,7 @@ function mostrarListo() {
       <div class="spinner"></div>
       <h1>Aguardá un momento...</h1>
       <p>Estamos procesando tu solicitud. Cuando esté listo el siguiente
-      paso, se va a abrir solo en una pestaña nueva — podés cerrar esta.</p>
+      paso, se va a abrir solo en una pestaña nueva.</p>
     </div>`;
 }
 """
@@ -423,7 +420,7 @@ async function elegir(accion) {{
     <div class="listo">
       <div class="spinner"></div>
       <h1>${{accion === 'empezar' ? 'Iniciando…' : 'Cerrando…'}}</h1>
-      <p>${{accion === 'empezar' ? 'Podés cerrar esta pestaña.' : 'Si esta pestaña no se cierra sola, cerrala vos.'}}</p>
+      <p>${{accion === 'empezar' ? 'Ya te vamos a abrir el primer formulario en una pestaña nueva.' : 'Si esta pestaña no se cierra sola, cerrala vos.'}}</p>
     </div>`;
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
     body: JSON.stringify({{accion: accion}})}});
@@ -564,7 +561,8 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 
 
 def plantilla_catalogo(incluir_fies: bool = False, incluir_empleo: bool = False, incluir_seguridad: bool = False) -> str:
-    """Paso 5: catálogo de métricas por categoría + propuesta libre + preferencia de PDF.
+    """Paso 5: catálogo de métricas por categoría + propuesta libre. El informe
+    final siempre se entrega en PDF y HTML — no se pregunta preferencia acá.
 
     `incluir_fies` agrega la categoría de seguridad alimentaria — solo debe
     ser True si `config.datos_disponibles(anio)["fies"]` es True para el año
@@ -606,13 +604,6 @@ def plantilla_catalogo(incluir_fies: bool = False, incluir_empleo: bool = False,
       <label style="margin-top:0;">¿Hay alguna otra métrica que se te ocurra y no esté en la lista?</label>
       <textarea id="otra_metrica" placeholder="Nombre y una breve explicación de qué mostraría (opcional)"></textarea>
     </div>
-    <div class="pdf">
-      <label style="margin-top:0;">¿Querés además un informe en PDF, descargado automáticamente a tu carpeta de Descargas?</label>
-      <div class="opciones">
-        <label><input type="radio" name="pdf" value="si" checked> Sí (recomendado)</label>
-        <label><input type="radio" name="pdf" value="no"> No, con el HTML alcanza</label>
-      </div>
-    </div>
     <button type="submit">Confirmar selección →</button>
   </form>
 </div>
@@ -625,9 +616,8 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   const metricas = Array.from(document.querySelectorAll('input[name=m]:checked')).map(cb => parseInt(cb.value));
   const otra = document.getElementById('otra_metrica').value.trim();
-  const pdf = document.querySelector('input[name=pdf]:checked').value === 'si';
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
-    body: JSON.stringify({{metricas: metricas, otra_metrica: otra, pdf: pdf}})}});
+    body: JSON.stringify({{metricas: metricas, otra_metrica: otra}})}});
   mostrarListo();
 }});
 </script></body></html>"""
