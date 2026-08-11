@@ -69,6 +69,15 @@ por la terminal ni pide aprobación; `type`/`cat` sí, porque no están en
 la lista de comandos permitidos — cada vez que los uses, el usuario va a
 tener que aprobar un prompt que no aporta nada.
 
+**Cualquier archivo de scratch o inspección temporal (para explorar
+valores, columnas, comparar años, lo que sea) va siempre en la carpeta de
+scratchpad que ya te da Claude Code — nunca suelto en la raíz del
+proyecto ni en ninguna otra carpeta del repositorio.** Si escribís algo en
+la raíz del proyecto, después vas a tener que borrarlo con un `rm` que le
+pide aprobación al usuario — un paso entero que no existe si desde el
+principio lo escribiste donde corresponde. La carpeta de scratchpad no
+necesita limpieza tuya al final.
+
 ## Cómo hablarle al usuario
 
 Asumí que la persona con la que hablás **no sabe programar ni de
@@ -268,6 +277,23 @@ siguiente paso. Si algo no coincide, explicáselo en lenguaje simple
 ¿la uso?") y esperá su confirmación antes de tocar `config.py` — **nunca
 reemplaces el mapeo por tu cuenta**.
 
+### 3.5. ¿Sumar Empleo y/o Seguridad al informe?
+
+**Este paso va siempre antes del catálogo (paso 4), nunca después —
+si llegaste al paso 4 sin haber pasado por este, volvé para atrás.**
+
+Fijate con `config.datos_disponibles(anio)` si además de Hogares hay datos
+de Empleo (`empleo_files` completos, los 12 meses) y/o Seguridad para el
+año elegido. Si al menos una está disponible, mostrale al usuario
+`formularios.plantilla_areas(empleo_disponible, seguridad_disponible)` —
+selección múltiple, puede marcar ninguna, una o las dos. Si ninguna está
+disponible (como en 2019, que solo tiene Hogares), no muestres este
+formulario, andá directo al catálogo. Guardá la respuesta (`areas`, una
+lista) — la vas a usar para pasarle `incluir_empleo`/`incluir_seguridad` a
+`plantilla_catalogo()` en el paso siguiente, y para saber si tenés que
+cargar y preparar los datos de Empleo (`data_loader.load_empleo` +
+`preprocessing.prepare_empleo`) antes de construir el notebook.
+
 ### 4. Catálogo de métricas: elegir qué va en el informe
 
 Los datos base (secciones 1 a 4: preparación, panorama general, distribución
@@ -378,21 +404,6 @@ elige:**
     del INE" — Montevideo Portal:
     https://www.montevideo.com.uy/Noticias/Que-porcentaje-de-delitos-son-denunciados-a-la-Policia-segun-informe-del-INE-uc914924
 
-### 3.5. ¿Sumar Empleo y/o Seguridad al informe?
-
-Después de validar los datos (paso 3) y antes del catálogo (paso 4),
-fijate con `config.datos_disponibles(anio)` si además de Hogares hay datos
-de Empleo (`empleo_files` completos, los 12 meses) y/o Seguridad para el
-año elegido. Si al menos una está disponible, mostrale al usuario
-`formularios.plantilla_areas(empleo_disponible, seguridad_disponible)` —
-selección múltiple, puede marcar ninguna, una o las dos. Si ninguna está
-disponible (como en 2019, que solo tiene Hogares), no muestres este
-formulario, andá directo al catálogo. Guardá la respuesta (`areas`, una
-lista) — la vas a usar para pasarle `incluir_empleo`/`incluir_seguridad` a
-`plantilla_catalogo()` en el paso siguiente, y para saber si tenés que
-cargar y preparar los datos de Empleo (`data_loader.load_empleo` +
-`preprocessing.prepare_empleo`) antes de construir el notebook.
-
 ### 5. Construir el informe con las métricas elegidas
 
 **Esto se hace con UN SOLO script de Python que arma el notebook
@@ -415,6 +426,22 @@ método — parate y volvé a este proceso:
    del catálogo del paso 4, en ese orden, llamando directo a las funciones
    que ya identificaste en el paso 1. Termina escribiendo el notebook a
    disco con `nbformat.write(...)`.
+
+   **Cómo terminar cada celda que llama a una función `viz.plot_*` —
+   comprobado que dejarla mal duplica la gráfica en el informe final:**
+   - Si la función usa Plotly (`plotly.express`/`plotly.graph_objects` —
+     mirá los imports de `visualization.py` que ya leíste en el paso 1),
+     terminá la celda con `fig.show()`, **nunca** con `fig` solo. Con
+     `pio.renderers.default = "png"` puesto en la celda de configuración,
+     dejar `fig` como última línea la muestra dos veces (un bug conocido
+     de Plotly, no es un error tuyo de código).
+   - Si la función usa matplotlib/seaborn (`plt`/`sns`), **no vuelvas a
+     nombrar `fig` después de la llamada** — con `%matplotlib inline`
+     puesto, la figura ya se muestra sola al final de la celda; un `fig`
+     suelto la duplica por la misma razón, con otro mecanismo.
+   - Si tenés dudas de cuál es cuál para una función en particular, andá a
+     su definición en `visualization.py` (ya la tenés abierta del paso 1)
+     y fijate qué importa.
 3. Corré ese único script **una vez** con `run_python.bat`.
 4. Ejecutá el notebook completo con `run_python.bat -m jupyter nbconvert
    --to notebook --execute --inplace <notebook>` — eso es lo que corre

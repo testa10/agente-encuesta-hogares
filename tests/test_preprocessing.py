@@ -10,6 +10,7 @@ from encuesta_hogares.preprocessing import (
     prepare_empleo,
     prepare_fies,
     prepare_hogares_extendido,
+    prepare_hogares_montevideo,
     prepare_victimizacion,
 )
 
@@ -76,6 +77,35 @@ def test_prepare_hogares_extendido_decodes_booleanos():
     assert df["pobre"].tolist() == [False, True, False, True]
     assert df["tiene_internet"].tolist() == [True, False, True, False]
     assert df["goteras"].tolist() == [True, False, True, False]
+
+
+def test_prepare_hogares_extendido_tolera_columnas_de_vivienda_faltantes():
+    # A partir de 2024 solo llegan 4 de las 12 columnas de "problemas de la
+    # vivienda" (el resto se discontinuó a mitad de año, ver
+    # config.CONDICIONES_VIVIENDA_COLUMNS_CSV) - la función no debe fallar
+    # por eso, solo debe decodificar las que sí están presentes.
+    ejemplo = _hogares_extendido_ejemplo().drop(
+        columns=[
+            "humedad_techos", "muros_agrietados", "puertas_ventanas_deterioradas",
+            "grietas_pisos", "caida_revoque", "cielorraso_desprendido",
+            "poca_luz_solar", "escasa_ventilacion",
+        ]
+    )
+    df = prepare_hogares_extendido(ejemplo)
+    assert df["goteras"].tolist() == [True, False, True, False]
+    assert "humedad_techos" not in df.columns
+
+
+def test_prepare_hogares_montevideo_ignora_mayusculas():
+    hogares = pd.DataFrame(
+        {
+            "id_hogar": [1, 2, 3],
+            "departamento": ["Montevideo", "MONTEVIDEO", "Salto"],
+            "estrato_tipo": [1, 2, 3],
+        }
+    )
+    resultado = prepare_hogares_montevideo(hogares)
+    assert sorted(resultado["id_hogar"].tolist()) == [1, 2]
 
 
 def test_compute_penetracion_nacional():

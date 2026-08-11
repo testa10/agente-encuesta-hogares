@@ -5,6 +5,7 @@ from encuesta_hogares.analysis import (
     composicion_hogar_por,
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
+    diferencia_entre_categorias,
     diferencia_entre_tablas,
     filtrar_segmento,
     ingreso_hogar_mediano_por_departamento,
@@ -72,6 +73,23 @@ def test_condiciones_vivienda_por():
             df[col] = False
 
     resumen = condiciones_vivienda_por(df, "tiene_celular", {False: "Sin celular", True: "Con celular"})
+    fila_goteras = resumen[resumen["condicion"] == "Goteras en techos"].iloc[0]
+    assert fila_goteras["Con celular"] == 50.0
+    assert fila_goteras["Sin celular"] == 100.0
+
+
+def test_condiciones_vivienda_por_tolera_columnas_faltantes():
+    # A partir de 2024 solo hay 4 de las 12 columnas de vivienda (ver
+    # config.CONDICIONES_VIVIENDA_COLUMNS_CSV) - la función solo debe usar
+    # las que están presentes en el dataframe, sin fallar por las demás.
+    df = pd.DataFrame(
+        {
+            "tiene_celular": [True, True, False, False],
+            "goteras": [True, False, True, True],
+        }
+    )
+    resumen = condiciones_vivienda_por(df, "tiene_celular", {False: "Sin celular", True: "Con celular"})
+    assert resumen["condicion"].tolist() == ["Goteras en techos"]
     fila_goteras = resumen[resumen["condicion"] == "Goteras en techos"].iloc[0]
     assert fila_goteras["Con celular"] == 50.0
     assert fila_goteras["Sin celular"] == 100.0
@@ -230,6 +248,17 @@ def test_brecha_por_grupo_calcula_diferencia_en_puntos():
     brecha = brecha_por_grupo(resumen, "sexo_grupo", "1-Hombre", "2-Mujer")
     assert brecha["tasa_actividad"] == 16.2
     assert round(brecha["tasa_desempleo"], 1) == -3.4
+
+
+def test_diferencia_entre_categorias_calcula_diferencia_en_puntos():
+    resumen = pd.DataFrame(
+        {
+            "quintil_ingreso": [1, 2, 3, 4, 5],
+            "pct_inseguridad": [45.0, 30.0, 20.0, 10.0, 5.0],
+        }
+    )
+    diferencia = diferencia_entre_categorias(resumen, "quintil_ingreso", 1, 5, "pct_inseguridad")
+    assert diferencia == 40.0
 
 
 def test_pct_ponderado_por_calcula_porcentaje_ponderado_no_conteo_de_filas():

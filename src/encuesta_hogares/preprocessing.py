@@ -25,8 +25,14 @@ def classify_edad_grupo(edad: pd.Series) -> pd.Series:
 
 
 def prepare_hogares_montevideo(hogares: pd.DataFrame) -> pd.DataFrame:
-    """Filtra los hogares de Montevideo y agrega el nivel económico."""
-    hogares_mdeo = hogares.loc[hogares["departamento"] == "MONTEVIDEO"].copy()
+    """Filtra los hogares de Montevideo y agrega el nivel económico.
+
+    La comparación ignora mayúsculas/minúsculas porque el nombre del
+    departamento no se escribe igual en todos los años: en los .sav de 2019
+    viene como "MONTEVIDEO" y en el CSV combinado de 2024 en adelante viene
+    como "Montevideo" (ver config.HOGARES_COLUMNS_CSV).
+    """
+    hogares_mdeo = hogares.loc[hogares["departamento"].str.upper() == "MONTEVIDEO"].copy()
     hogares_mdeo["nivel_economico"] = classify_nivel_economico(hogares_mdeo["estrato_tipo"])
     return hogares_mdeo
 
@@ -87,7 +93,11 @@ def prepare_hogares_extendido(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     df["pobre"] = df["pobre"] == 1.0
     df["indigente"] = df["indigente"] == 1.0
 
-    condiciones_cols = list(config.CONDICIONES_VIVIENDA_COLUMNS.values())
+    # No todos los años tienen las 12 columnas de "problemas de la vivienda"
+    # (algunas se discontinuaron a partir de 2024 — ver
+    # config.CONDICIONES_VIVIENDA_COLUMNS_CSV): solo se decodifican las que
+    # de verdad están presentes en este dataframe.
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in df.columns]
     for col in condiciones_cols:
         df[col] = decode_si_no(df[col])
 

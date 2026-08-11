@@ -37,8 +37,16 @@ def plot_distribucion_conectividad(resumen: ResumenConectividad):
 
 
 def plot_penetracion_por_barrio(penetracion_por_barrio: pd.DataFrame):
+    # "barrio" puede venir como código numérico (años sin nombre de barrio,
+    # ver HOGARES_COLUMNS_CSV en config.py) o como texto (2019). Si se deja
+    # numérico, Plotly arma un eje continuo y "categoryorder" no hace nada
+    # -- pasándolo a texto, el eje queda categórico y el orden por
+    # suscripción sí se aplica, aunque el barrio se identifique por número.
+    df_plot = penetracion_por_barrio.copy()
+    df_plot["barrio"] = df_plot["barrio"].astype(str)
+
     fig = px.scatter(
-        penetracion_por_barrio,
+        df_plot,
         x="barrio",
         y="pct_abonados",
         color="nivel_suscripcion",
@@ -465,6 +473,10 @@ def plot_pct_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel:
     fig.update_layout(
         xaxis_title=xlabel, yaxis_title="% (ponderado)",
         showlegend=False, width=700, height=500, title_x=0.5,
+        # Un poco de margen arriba de la barra más alta, para que la
+        # etiqueta de porcentaje no quede cortada por el borde del gráfico
+        # cuando el valor está cerca del máximo (ej. 86%).
+        yaxis_range=[0, resumen[columna_valor].max() * 1.15],
     )
     return fig
 

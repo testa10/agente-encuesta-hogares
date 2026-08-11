@@ -101,7 +101,10 @@ def condiciones_vivienda_por(df_extendido: pd.DataFrame, columna_grupo: str, eti
     `etiquetas` mapea {False: "...", True: "..."} a los nombres de columna
     que va a tener el resultado.
     """
-    condiciones_cols = list(config.CONDICIONES_VIVIENDA_COLUMNS.values())
+    # Igual que en preprocessing.prepare_hogares_extendido: no todos los años
+    # tienen las 12 columnas (ver config.CONDICIONES_VIVIENDA_COLUMNS_CSV),
+    # así que solo se usan las que están presentes en este dataframe.
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in df_extendido.columns]
     resumen = (
         df_extendido.groupby(columna_grupo)[condiciones_cols]
         .mean()
@@ -154,6 +157,20 @@ def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos:
     """
     subset = hogares[hogares["departamento"].isin(departamentos)]
     return subset.groupby("departamento")["ingreso_hogar"].median().round(0)
+
+
+def diferencia_entre_categorias(
+    resumen: pd.DataFrame, columna_grupo: str, categoria_a, categoria_b, columna_valor: str
+) -> float:
+    """Diferencia en puntos porcentuales (categoria_a menos categoria_b) para
+    dos categorías cualquiera de una misma tabla ya calculada (ej. el
+    quintil de ingreso más rico contra el más pobre, en una tabla armada con
+    `inseguridad_alimentaria_por`). Mismo patrón que `brecha_por_grupo` y
+    `condiciones_vivienda_diferencia`, pero para tablas con una sola columna
+    de valor por categoría en vez de una columna por grupo.
+    """
+    tabla = resumen.set_index(columna_grupo)
+    return round(tabla.loc[categoria_a, columna_valor] - tabla.loc[categoria_b, columna_valor], 2)
 
 
 def prevalencia_inseguridad_alimentaria(fies_clasificado: pd.DataFrame) -> dict:

@@ -101,6 +101,85 @@ PERSONAS_COLUMNS = {
     "e60": "tiene_celular_persona",  # 1=Sí/2=No/99=Sin dato
 }
 
+# ============================================================================
+# Hogares/Personas a partir de un único CSV combinado (formato usado desde
+# 2024 en adelante: el INE dejó de publicar H_....sav y P_....sav por
+# separado y pasó a publicar un solo archivo ECH_{año}.csv, una fila por
+# persona, con las columnas de hogar repetidas para cada persona del mismo
+# hogar). Los códigos de columna también cambiaron de nombre en varios
+# casos, y algunas variables se discontinuaron — todo esto se verificó
+# contra el diccionario oficial "Diccionario ECH 2024.pdf" y confirmado con
+# el usuario (ver .claude/agents/encuesta-hogares.md, paso 3):
+#
+# - id_hogar viene en "ID" (antes "numero"); departamento en "nom_dpto"
+#   (antes "nomdpto"); estrato en "ESTRED13" (antes "estred13", misma
+#   escala 1-5 para Montevideo); indigencia en "indig06" (antes
+#   "indigente06"); menores de 14 en "d24" (antes "ht3").
+# - "barrio" en este formato es un CÓDIGO NUMÉRICO, no el nombre del barrio
+#   (el .sav de 2019 traía "nombarrio" como texto aparte; ese campo no
+#   existe en el CSV combinado). El agente no tiene forma de traducir ese
+#   código a un nombre real, así que las gráficas de este año identifican
+#   cada barrio por su número — decisión confirmada con el usuario.
+# - "ocupados_hogar" (antes "ht5") ya no viene precalculado a nivel de
+#   hogar: se calcula aparte contando, por hogar, cuántas personas tienen
+#   condicion_actividad_cod == 2 (Ocupados) — ver
+#   data_loader.load_hogares_personas_csv().
+# - "tiene_celular_persona" (antes "e60") no tiene equivalente: la
+#   pregunta sobre tenencia de celular no está en el cuestionario 2024.
+#   Cualquier métrica que dependa de ella queda afuera del informe para
+#   este año (confirmado con el usuario).
+HOGARES_COLUMNS_CSV = {
+    "ID": "id_hogar",
+    "nom_dpto": "departamento",
+    "barrio": "barrio",
+    "d21_7": "tipo_abonado",
+    "ESTRED13": "estrato_tipo",
+    "d25": "total_personas",
+    "d21_16": "tiene_internet",
+    "d21_16_1": "internet_fija",
+    "d21_16_2": "internet_movil",
+    "d21_15": "tiene_pc",
+    "d21_21": "tiene_streaming",
+    "pobre06": "pobre",
+    "indig06": "indigente",
+    "YSVL": "ingreso_hogar",
+    "d24": "menores_14",
+}
+
+# Solo las 4 preguntas de "problemas de la vivienda" (módulo C5) que el INE
+# siguió relevando durante todo 2024 — las otras 8 se discontinuaron a
+# partir del segundo semestre (marcadas con (*) en el diccionario oficial),
+# así que no hay dato completo de año para ellas. Se reutilizan los mismos
+# nombres legibles que CONDICIONES_VIVIENDA_COLUMNS para que el resto del
+# código (CONDICION_VIVIENDA_LABELS, condiciones_vivienda_por, etc.) no
+# necesite saber que es un subconjunto.
+CONDICIONES_VIVIENDA_COLUMNS_CSV = {
+    "c5_2": "goteras",
+    "c5_10": "se_inunda",
+    "c5_11": "peligro_derrumbe",
+    "c5_12": "humedad_cimientos",
+}
+HOGARES_COLUMNS_CSV.update(CONDICIONES_VIVIENDA_COLUMNS_CSV)
+
+PERSONAS_COLUMNS_CSV = {
+    "ID": "id_hogar",
+    "nper": "id_persona",
+    "e26": "sexo",
+    "e27": "edad",
+    "PT1": "ingresos_personales",
+    "POBPCOAC": "condicion_actividad_cod",
+}
+
+
+def hogares_csv_file(anio: int | str) -> Path:
+    """Ruta al archivo combinado `data/{año}/ECH_{año}.csv` (ver nota más
+    arriba). `datos_disponibles()` ya lo detecta como fuente válida de
+    "hogares" para años que no tienen H_....sav.
+    """
+    carpeta = DATA_DIR / str(anio)
+    candidatos = sorted(carpeta.glob(f"ECH_{anio}.csv"))
+    return candidatos[0] if candidatos else carpeta / f"ECH_{anio}.csv"
+
 TIPO_ABONADO_LABELS = {1.0: "Con cable", 2.0: "Sin cable"}
 
 NIVEL_ECONOMICO_LABELS = {

@@ -17,6 +17,28 @@ def fix_mojibake(value):
     return value
 
 
+def fix_doble_codificacion(value):
+    """Corrige texto que quedó doblemente codificado: unos pocos valores del
+    CSV combinado (formato usado desde 2024 en adelante, ver
+    HOGARES_COLUMNS_CSV en config.py) mezclan caracteres en latin1 (la
+    mayoría de las tildes) con algún caracter guardado en UTF-8 dentro del
+    mismo archivo — visto en el departamento "Río Negro", donde la í queda
+    como dos caracteres sueltos en vez de uno. Se detectó leyendo el CSV
+    crudo en bytes y comparando ambas codificaciones (no es un supuesto).
+
+    El archivo ya se lee con `encoding="latin1"` (correcto para el resto de
+    los acentos, ej. "Paysandú", "San José", "Tacuarembó"), así que acá solo
+    hace falta re-codificar a bytes latin1 y decodificar como UTF-8 — si
+    eso falla (el texto ya estaba bien), se devuelve el valor sin tocar.
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        return value.encode("latin1").decode("utf-8")
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return value
+
+
 def load_hogares(path: Path = config.HOGARES_FILE) -> pd.DataFrame:
     """Carga la base de Hogares y devuelve solo las columnas necesarias, renombradas."""
     df, _meta = pyreadstat.read_sav(str(path))
@@ -32,6 +54,38 @@ def load_personas(path: Path = config.PERSONAS_FILE) -> pd.DataFrame:
     return df
 
 
+def load_hogares_personas_csv(anio: int | str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Carga Hogares y Personas desde el CSV combinado (`config.hogares_csv_file`,
+    formato usado desde 2024 en adelante — ver la nota en config.py sobre
+    HOGARES_COLUMNS_CSV/PERSONAS_COLUMNS_CSV). El archivo trae una fila por
+    persona, con las columnas de hogar repetidas para cada persona del mismo
+    hogar, así que la vista de Hogares se arma deduplicando por id_hogar.
+
+    A diferencia de `load_hogares()`, acá también se calcula
+    "ocupados_hogar" (no viene precalculado en este formato): se cuenta, por
+    hogar, cuántas personas tienen condicion_actividad_cod == 2 (Ocupados).
+    """
+    columnas_hogar = list(config.HOGARES_COLUMNS_CSV)
+    columnas_persona = list(config.PERSONAS_COLUMNS_CSV)
+    columnas = sorted(set(columnas_hogar) | set(columnas_persona))
+    # encoding="latin1": el CSV combinado no viene en UTF-8 (ver
+    # fix_doble_codificacion más arriba para el detalle de un caso mixto).
+    df = pd.read_csv(config.hogares_csv_file(anio), usecols=columnas, encoding="latin1")
+
+    personas = df.loc[:, columnas_persona].rename(columns=config.PERSONAS_COLUMNS_CSV)
+
+    ocupados_hogar = (df["POBPCOAC"] == 2).groupby(df["ID"]).sum().rename("ocupados_hogar")
+
+    hogares = (
+        df.loc[:, columnas_hogar]
+        .drop_duplicates("ID")
+        .rename(columns=config.HOGARES_COLUMNS_CSV)
+        .merge(ocupados_hogar, left_on="id_hogar", right_index=True, how="left")
+    )
+    hogares["departamento"] = hogares["departamento"].map(fix_doble_codificacion)
+    return hogares, personas
+
+
 def load_empleo(anio: int | str) -> pd.DataFrame:
     """Carga y concatena los 12 archivos mensuales de empleo
     (`config.empleo_files(anio)`) en un único DataFrame, con la columna
@@ -40,9 +94,15 @@ def load_empleo(anio: int | str) -> pd.DataFrame:
     Nunca se pierde de qué mes vino cada fila.
     """
     columnas_originales = list(config.EMPLEO_COLUMNS)
-    meses = [pd.read_csv(archivo, usecols=columnas_originales) for archivo in config.empleo_files(anio)]
-    df = pd.concat(meses, ignore_index=True)
-    return df.rename(columns=config.EMPLEO_COLUMNS)
+    # encoding="latin1": mismos archivos fuente que el CSV combinado de
+    # Hogares/Personas, con el mismo problema de codificación de acentos.
+    meses = [
+        pd.read_csv(archivo, usecols=columnas_originales, encoding="latin1")
+        for archivo in config.empleo_files(anio)
+    ]
+    df = pd.concat(meses, ignore_index=True).rename(columns=config.EMPLEO_COLUMNS)
+    df["departamento"] = df["departamento"].map(fix_doble_codificacion)
+    return df
 
 
 def load_victimizacion(anio: int | str) -> pd.DataFrame:
@@ -57,10 +117,13 @@ def load_victimizacion(anio: int | str) -> pd.DataFrame:
 
     archivos_segundo_semestre = config.empleo_files(anio)[6:]
     departamentos = (
-        pd.concat(pd.read_csv(a, usecols=["ID", "nom_dpto"]) for a in archivos_segundo_semestre)
+        pd.concat(
+            pd.read_csv(a, usecols=["ID", "nom_dpto"], encoding="latin1") for a in archivos_segundo_semestre
+        )
         .drop_duplicates("ID")
         .rename(columns={"ID": "id_hogar", "nom_dpto": "departamento"})
     )
+    departamentos["departamento"] = departamentos["departamento"].map(fix_doble_codificacion)
     return df.merge(departamentos, on="id_hogar", how="left")
 
 

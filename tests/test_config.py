@@ -70,6 +70,23 @@ def test_empleo_files_devuelve_los_12_meses_en_orden(tmp_path, monkeypatch):
     assert archivos[11].name == "ECH_12_24.csv"
 
 
+def test_hogares_csv_file_resuelve_por_anio(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2024"
+    carpeta.mkdir()
+    archivo = carpeta / "ECH_2024.csv"
+    archivo.write_text("ID\n1\n")
+
+    assert config.hogares_csv_file(2024) == archivo
+
+
+def test_hogares_csv_file_sin_archivo_devuelve_ruta_esperada_igual(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    ruta = config.hogares_csv_file(2030)
+    assert ruta.name == "ECH_2030.csv"
+    assert not ruta.exists()
+
+
 def test_datos_disponibles_empleo_requiere_los_12_meses_completos(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     carpeta = tmp_path / "2024"

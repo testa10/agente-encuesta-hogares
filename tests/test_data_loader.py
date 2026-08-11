@@ -1,5 +1,13 @@
+import pandas as pd
+
 from encuesta_hogares import config
-from encuesta_hogares.data_loader import fix_mojibake, load_empleo, load_victimizacion
+from encuesta_hogares.data_loader import (
+    fix_doble_codificacion,
+    fix_mojibake,
+    load_empleo,
+    load_hogares_personas_csv,
+    load_victimizacion,
+)
 
 
 def test_fix_mojibake_replaces_broken_char():
@@ -13,6 +21,23 @@ def test_fix_mojibake_leaves_clean_text_untouched():
 def test_fix_mojibake_ignores_non_string_values():
     assert fix_mojibake(None) is None
     assert fix_mojibake(42) == 42
+
+
+def test_fix_doble_codificacion_corrige_rio_negro():
+    # Bytes reales encontrados en el CSV combinado 2024: la í de "Río Negro"
+    # quedó en UTF-8 dentro de un archivo que en general es latin1.
+    valor_roto = b"R\xc3\xado Negro".decode("latin1")
+    assert fix_doble_codificacion(valor_roto) == "Río Negro"
+
+
+def test_fix_doble_codificacion_deja_texto_ya_correcto_sin_tocar():
+    assert fix_doble_codificacion("Paysandú") == "Paysandú"
+    assert fix_doble_codificacion("Montevideo") == "Montevideo"
+
+
+def test_fix_doble_codificacion_ignora_valores_no_string():
+    assert fix_doble_codificacion(None) is None
+    assert fix_doble_codificacion(42) == 42
 
 
 def test_load_empleo_concatena_los_12_meses_y_renombra(tmp_path, monkeypatch):
@@ -31,6 +56,36 @@ def test_load_empleo_concatena_los_12_meses_y_renombra(tmp_path, monkeypatch):
     assert "condicion_actividad_cod" in df.columns
     assert "ponderador_empleo" in df.columns
     assert "edad" in df.columns
+
+
+def test_load_hogares_personas_csv_corrige_departamento_mal_codificado(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2030"
+    carpeta.mkdir()
+
+    columnas = sorted(set(config.HOGARES_COLUMNS_CSV) | set(config.PERSONAS_COLUMNS_CSV))
+    # Marcador de texto (se reemplaza por los bytes reales más abajo, para no
+    # depender de cómo este archivo fuente guarde caracteres no-ASCII).
+    valores = {
+        "ESTRED13": "1", "ID": "1", "POBPCOAC": "2", "PT1": "100", "YSVL": "50000",
+        "barrio": "5", "c5_2": "1", "c5_10": "1", "c5_11": "2", "c5_12": "2", "d21_15": "1",
+        "d21_16": "1", "d21_16_1": "1", "d21_16_2": "2", "d21_21": "2", "d21_7": "1",
+        "d24": "0", "d25": "3", "e26": "1", "e27": "30", "indig06": "0",
+        "nom_dpto": "MARCADOR_DEPARTAMENTO",
+        "nper": "1", "pobre06": "0",
+    }
+    encabezado = ",".join(columnas)
+    fila = ",".join(valores[c] for c in columnas)
+    contenido = f"{encabezado}\n{fila}\n".encode("ascii")
+    # Bytes reales encontrados en el CSV combinado 2024 para "Río Negro"
+    # (í en UTF-8 dentro de un archivo que en general está en latin1).
+    contenido = contenido.replace(b"MARCADOR_DEPARTAMENTO", b"R\xc3\xado Negro")
+    (carpeta / "ECH_2030.csv").write_bytes(contenido)
+
+    hogares, personas = load_hogares_personas_csv(2030)
+
+    assert hogares.loc[0, "departamento"] == "Río Negro"
+    assert len(personas) == 1
 
 
 def test_load_victimizacion_agrega_departamento_por_join(tmp_path, monkeypatch):
