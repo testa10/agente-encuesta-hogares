@@ -1,4 +1,21 @@
-"""Carga de las bases de datos .sav (ECH - INE Uruguay)."""
+"""Carga de las bases de datos de la ECH (INE Uruguay).
+
+Conviven dos familias de loaders porque el INE cambió el formato de
+distribución de los microdatos entre 2019 y 2024:
+
+- Años con archivos .sav separados por módulo (H_/P_...): `load_hogares`,
+  `load_personas`, etc., vía `pyreadstat`.
+- 2024 en adelante, CSV único combinado (`ECH_{año}.csv`, una fila por
+  persona con las columnas de hogar repetidas): `load_hogares_personas_csv`.
+
+Decisión consciente: no se abstrajo esto detrás de una interfaz común de
+"loader de año". Con un solo cambio de formato real observado, cualquier
+interfaz genérica sería una abstracción prematura basada en una muestra de
+tamaño 1 - no hay forma de saber qué variará en un tercer formato hasta que
+exista. Si el INE cambia el formato de nuevo (o aparece un tercer caso),
+ese es el momento de extraer la interfaz común, con dos changes reales
+como guía en vez de una imaginada.
+"""
 
 from pathlib import Path
 

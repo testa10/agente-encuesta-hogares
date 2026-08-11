@@ -40,3 +40,17 @@ def test_el_paso_de_bienvenida_es_el_primero():
         "El paso 1 (bienvenida) tiene que ser la primera sección numerada "
         "del archivo - es la regla innegociable de todo el flujo."
     )
+
+
+def test_la_curacion_del_catalogo_tiene_compuerta_previa():
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+    seccion = texto.split("## Curación del catálogo")[-1]
+    assert "Compuerta previa" in seccion, (
+        "La sección de curación del catálogo perdió su compuerta de "
+        "calidad (punto 0: confirmación explícita del dueño del proyecto "
+        "sobre revisión metodológica, validación con datos reales y "
+        "archivos a tocar, antes de escribir nada permanente). No basta "
+        "con el pedido de 'agregá esta métrica' - eso autoriza la "
+        "intención, la compuerta es la revisión técnica antes de "
+        "ejecutar."
+    )

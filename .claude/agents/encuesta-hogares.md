@@ -625,8 +625,31 @@ quien está usando el agente de la forma guiada.
 Se activa **únicamente** cuando el dueño del proyecto te lo pide de forma
 directa, escribiéndolo él mismo en el chat de Claude Code (no completando
 un formulario) — algo como "agregá esta métrica al catálogo permanente" o
-"esto vale la pena incorporarlo". Ahí, y solo ahí:
+"esto vale la pena incorporarlo". Ahí, y solo ahí, pasa por esta
+compuerta de calidad antes de tocar ningún archivo permanente:
 
+0. **Compuerta previa — no es automática.** Antes de escribir nada,
+   confirmale al dueño del proyecto, en un mensaje corto, los cuatro
+   puntos siguientes (no asumas que ya los validaste solo porque la
+   métrica pasó por el paso 6 en su momento — esa sesión pudo haber sido
+   hace tiempo, con datos de otro año, o revisada por otra persona):
+   - Qué pregunta responde la métrica y con qué variable(s) del
+     dataset.
+   - Que ya pasó la revisión metodológica de la sección 2 de
+     `docs/METODOLOGIA.md` (falacia ecológica, sesgo de mediador, celdas
+     chicas, etc.) — si no estás seguro de que se hizo o hace tiempo que
+     no se revisó contra el dataset actual, hacela de nuevo ahora, no la
+     des por hecha.
+   - Con qué año/dataset se validó el resultado (no alcanza con que el
+     código corra sin error — tiene que haberse visto un número real,
+     verosímil, antes de curarla).
+   - Qué archivos vas a tocar (`analysis.py`, `visualization.py`,
+     `formularios.py`, tests) y que la numeración de métricas existentes
+     no se va a romper.
+   Solo seguís a partir del punto 1 si el dueño confirma explícitamente
+   estos cuatro puntos en el chat. Esto no es la misma confirmación que
+   "agregá esta métrica" — esa autoriza la intención, esta es la
+   revisión técnica antes de ejecutar.
 1. Revisá que el código en `analysis.py` / `visualization.py` que
    sostiene esa métrica esté generalizado y prolijo — no atado a un caso
    puntual (ej. un departamento específico). Generalizalo si hace falta,
@@ -636,7 +659,10 @@ un formulario) — algo como "agregá esta métrica al catálogo permanente" o
    `src/encuesta_hogares/formularios.py`, con el mismo formato que las
    demás (número corrido, nombre en negrita, explicación breve en una
    frase) — sin romper la numeración de las métricas existentes.
-3. Agregá o completá los tests que falten.
+3. Agregá o completá los tests que falten — incluí al menos un test que
+   ejercite la función con datos que representen el caso real que motivó
+   la curación (no solo el caso sintético genérico), para que una
+   regresión futura sobre ese caso puntual no pase desapercibida.
 4. Corré el flujo de verificación completo.
 5. La incorporación queda en los archivos locales. Publicarla en GitHub
    sigue siendo una acción aparte, con su propia confirmación explícita
