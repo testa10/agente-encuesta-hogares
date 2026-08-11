@@ -112,6 +112,79 @@ def compute_tiene_celular_hogar(personas: pd.DataFrame) -> pd.DataFrame:
     return resumen
 
 
+def prepare_fies(fies: pd.DataFrame) -> pd.DataFrame:
+    """Clasifica cada hogar en inseguridad alimentaria moderada-o-severa y
+    severa, según el umbral estándar de la metodología FIES (ver
+    config.UMBRAL_FIES), y agrega la etiqueta legible de región.
+    """
+    df = fies.copy()
+    df["inseguridad_moderada_o_severa"] = df["prob_inseguridad_moderada"] >= config.UMBRAL_FIES
+    df["inseguridad_severa"] = df["prob_inseguridad_severa"] >= config.UMBRAL_FIES
+    df["region"] = df["region_cod"].map(config.REGION_FIES_LABELS)
+    df["tiene_menores_18"] = df["tiene_menores_18"] == 1
+    df["tiene_menores_6"] = df["tiene_menores_6"] == 1
+    return df
+
+
+def prepare_empleo(empleo: pd.DataFrame) -> pd.DataFrame:
+    """Mapea la condición de actividad (POBPCOAC) a las mismas categorías
+    que ya usa Hogares/Personas de 2019 (Ocupados/Desocupados/Inactivos), y
+    decodifica INFORMAL/SUBEMPLEO a booleano.
+
+    Ojo: esas dos últimas columnas solo tienen sentido para quien está en
+    condicion_actividad == "Ocupados" — para cualquier otro caso el 0 no
+    significa "formal" ni "sin subempleo", significa "no aplica" (verificado
+    contra los datos reales: INFORMAL=1 y SUBEMPLEO=1 nunca aparecen fuera
+    de Ocupados). Cualquier métrica que las use tiene que filtrar a
+    Ocupados primero.
+    """
+    df = empleo.copy()
+    df["condicion_actividad"] = df["condicion_actividad_cod"].map(config.POBPCOAC_GRUPOS)
+    df["es_informal"] = df["es_informal"] == 1
+    df["es_subempleo"] = df["es_subempleo"] == 1
+    df["sexo_grupo"] = classify_sexo(df["sexo"])
+    es_joven = df["edad"].between(config.EDAD_JOVEN_MIN, config.EDAD_JOVEN_MAX)
+    df["grupo_edad_laboral"] = es_joven.map({True: "Joven (14-24)", False: "Resto"})
+    return df
+
+
+def prepare_victimizacion(victimizacion: pd.DataFrame) -> pd.DataFrame:
+    """Agrega sexo legible y un flag de "víctima de al menos un delito"
+    (cualquiera de los 5 tipos), a nivel de persona.
+    """
+    df = victimizacion.copy()
+    df["sexo_grupo"] = classify_sexo(df["sexo"])
+    columnas_delito = list(config.TIPOS_DELITO)
+    df["victimizado_algun_delito"] = (df[columnas_delito] == 1).any(axis=1)
+    return df
+
+
+def melt_delitos(victimizacion: pd.DataFrame) -> pd.DataFrame:
+    """Convierte las columnas anchas (una por tipo de delito, con sus
+    sub-preguntas propias) a formato largo — una fila por persona x tipo de
+    delito — para poder calcular prevalencia, comunicación a la policía,
+    denuncia formal y violencia con las mismas funciones genéricas para
+    cualquier tipo. `comunicacion_policia`/`denuncia_formal`/`violencia`
+    solo tienen sentido para quien fue víctima de ESE delito (`victimizado`
+    True) — cualquier métrica que las use tiene que filtrar primero.
+    """
+    partes = []
+    for codigo, info in config.TIPOS_DELITO.items():
+        parte = pd.DataFrame({
+            "id_persona": victimizacion["id_persona"],
+            "sexo_grupo": victimizacion["sexo_grupo"],
+            "departamento": victimizacion["departamento"],
+            "ponderador_victimizacion": victimizacion["ponderador_victimizacion"],
+            "tipo_delito": info["nombre"],
+            "victimizado": victimizacion[codigo] == 1,
+            "comunicacion_policia": victimizacion[info["comunicacion"]] == 1,
+            "denuncia_formal": victimizacion[info["denuncia"]] == 1,
+            "violencia": victimizacion[info["violencia"]] == 1 if info["violencia"] else False,
+        })
+        partes.append(parte)
+    return pd.concat(partes, ignore_index=True)
+
+
 def compute_penetracion_nacional(hogares: pd.DataFrame) -> pd.DataFrame:
     """% de hogares con TV cable por departamento, para todo el país (sin filtrar a Montevideo)."""
     df = hogares.copy()

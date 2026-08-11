@@ -18,5 +18,18 @@
       "Bash(git *)",
       "Bash(*git *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-primer-paso.cjs\""
+          }
+        ]
+      }
+    ]
   }
 }

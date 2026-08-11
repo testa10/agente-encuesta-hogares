@@ -156,6 +156,165 @@ def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos:
     return subset.groupby("departamento")["ingreso_hogar"].median().round(0)
 
 
+def prevalencia_inseguridad_alimentaria(fies_clasificado: pd.DataFrame) -> dict:
+    """% de hogares (ponderado por `ponderador_fies`, no por el ponderador
+    general de la encuesta) en inseguridad alimentaria moderada-o-severa y
+    severa, a nivel nacional. FIES cubre una submuestra de hogares, no el
+    total del año — este cálculo ya lo tiene en cuenta vía el ponderador.
+    """
+    total_ponderado = fies_clasificado["ponderador_fies"].sum()
+    moderada_o_severa = (
+        fies_clasificado.loc[fies_clasificado["inseguridad_moderada_o_severa"], "ponderador_fies"].sum()
+        / total_ponderado * 100
+    )
+    severa = (
+        fies_clasificado.loc[fies_clasificado["inseguridad_severa"], "ponderador_fies"].sum()
+        / total_ponderado * 100
+    )
+    return {"moderada_o_severa": round(moderada_o_severa, 2), "severa": round(severa, 2)}
+
+
+def inseguridad_alimentaria_por(
+    fies_clasificado: pd.DataFrame, columna_grupo: str, columna_clasificacion: str = "inseguridad_moderada_o_severa"
+) -> pd.DataFrame:
+    """% de hogares en inseguridad alimentaria (ponderado por `ponderador_fies`),
+    agrupado por una columna cualquiera (ej. quintil de ingreso, región).
+    `columna_clasificacion` permite reutilizar la función tanto para
+    moderada-o-severa como para severa.
+    """
+    df = fies_clasificado.copy()
+    df["_ponderador_positivo"] = df["ponderador_fies"].where(df[columna_clasificacion], 0.0)
+    resumen = df.groupby(columna_grupo).agg(
+        total_ponderado=("ponderador_fies", "sum"),
+        positivo_ponderado=("_ponderador_positivo", "sum"),
+    )
+    resumen["pct_inseguridad"] = (resumen["positivo_ponderado"] / resumen["total_ponderado"] * 100).round(2)
+    return resumen[["pct_inseguridad"]].reset_index()
+
+
+def tasas_actividad_empleo_desempleo(empleo: pd.DataFrame) -> dict:
+    """Tasas de actividad, empleo y desempleo (definiciones estándar del
+    INE), ponderadas por `ponderador_empleo`. Se calculan mes a mes y se
+    promedian entre los 12 meses — nunca sobre el pool de los 12 CSV juntos,
+    porque cada hogar permanece en el panel 6 meses seguidos y eso pesaría
+    de más a quien lleva más tiempo en la muestra (ver nota en config.py).
+    Tasa de desempleo = desocupados / (ocupados + desocupados), no sobre el
+    total de personas.
+    """
+    df = empleo.copy()
+    df["_ocupado_pond"] = df["ponderador_empleo"].where(df["condicion_actividad"] == "Ocupados", 0.0)
+    df["_desocupado_pond"] = df["ponderador_empleo"].where(df["condicion_actividad"] == "Desocupados", 0.0)
+    df["_activo_pond"] = df["ponderador_empleo"].where(
+        df["condicion_actividad"].isin(["Ocupados", "Desocupados"]), 0.0
+    )
+
+    por_mes = df.groupby("mes").agg(
+        total=("ponderador_empleo", "sum"),
+        ocupados=("_ocupado_pond", "sum"),
+        desocupados=("_desocupado_pond", "sum"),
+        activos=("_activo_pond", "sum"),
+    )
+    por_mes["tasa_actividad"] = por_mes["activos"] / por_mes["total"] * 100
+    por_mes["tasa_empleo"] = por_mes["ocupados"] / por_mes["total"] * 100
+    por_mes["tasa_desempleo"] = por_mes["desocupados"] / por_mes["activos"] * 100
+
+    return {
+        "tasa_actividad": round(por_mes["tasa_actividad"].mean(), 2),
+        "tasa_empleo": round(por_mes["tasa_empleo"].mean(), 2),
+        "tasa_desempleo": round(por_mes["tasa_desempleo"].mean(), 2),
+    }
+
+
+def tasas_actividad_empleo_desempleo_por(empleo: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """Igual que `tasas_actividad_empleo_desempleo`, pero desagregado por una
+    columna cualquiera (`sexo_grupo`, `grupo_edad_laboral`) — sirve tanto
+    para la brecha de género como para comparar el desempleo juvenil contra
+    el resto. Mismo cálculo mes a mes y promedio entre los 12 meses, ahora
+    dentro de cada grupo.
+    """
+    df = empleo.copy()
+    df["_ocupado_pond"] = df["ponderador_empleo"].where(df["condicion_actividad"] == "Ocupados", 0.0)
+    df["_desocupado_pond"] = df["ponderador_empleo"].where(df["condicion_actividad"] == "Desocupados", 0.0)
+    df["_activo_pond"] = df["ponderador_empleo"].where(
+        df["condicion_actividad"].isin(["Ocupados", "Desocupados"]), 0.0
+    )
+
+    por_mes_grupo = df.groupby(["mes", columna_grupo]).agg(
+        total=("ponderador_empleo", "sum"),
+        ocupados=("_ocupado_pond", "sum"),
+        desocupados=("_desocupado_pond", "sum"),
+        activos=("_activo_pond", "sum"),
+    )
+    por_mes_grupo["tasa_actividad"] = por_mes_grupo["activos"] / por_mes_grupo["total"] * 100
+    por_mes_grupo["tasa_empleo"] = por_mes_grupo["ocupados"] / por_mes_grupo["total"] * 100
+    por_mes_grupo["tasa_desempleo"] = por_mes_grupo["desocupados"] / por_mes_grupo["activos"] * 100
+
+    resumen = por_mes_grupo.groupby(columna_grupo)[["tasa_actividad", "tasa_empleo", "tasa_desempleo"]].mean().round(2)
+    return resumen.reset_index()
+
+
+def brecha_por_grupo(resumen_por_grupo: pd.DataFrame, columna_grupo: str, grupo_a: str, grupo_b: str) -> pd.Series:
+    """Diferencia en puntos porcentuales (grupo_a menos grupo_b) de cada
+    tasa, a partir de una tabla ya calculada con
+    `tasas_actividad_empleo_desempleo_por` — mismo patrón que
+    `condiciones_vivienda_diferencia`, para el texto de síntesis.
+    """
+    tabla = resumen_por_grupo.set_index(columna_grupo)
+    columnas_tasas = [c for c in tabla.columns if c.startswith("tasa_")]
+    return (tabla.loc[grupo_a, columnas_tasas] - tabla.loc[grupo_b, columnas_tasas]).round(2)
+
+
+def tasa_mensual_promedio_por(
+    df: pd.DataFrame, columna_grupo: str, columna_positivo: str, columna_ponderador: str = "ponderador_empleo"
+) -> pd.DataFrame:
+    """% ponderado de `columna_positivo` (una columna booleana), agrupado
+    por `columna_grupo`, calculado mes a mes y promediado entre los 12
+    meses — misma lógica que `tasas_actividad_empleo_desempleo`, pero
+    genérica para reutilizar en cualquier corte (departamento, nivel
+    educativo, sexo). El `df` que se le pasa ya tiene que venir filtrado al
+    universo correcto (ej. solo Ocupados, para informalidad o subempleo).
+    """
+    df = df.copy()
+    df["_positivo_pond"] = df[columna_ponderador].where(df[columna_positivo], 0.0)
+    por_mes_grupo = df.groupby(["mes", columna_grupo]).agg(
+        total=(columna_ponderador, "sum"),
+        positivo=("_positivo_pond", "sum"),
+    )
+    por_mes_grupo["pct"] = por_mes_grupo["positivo"] / por_mes_grupo["total"] * 100
+    resumen = por_mes_grupo.groupby(columna_grupo)["pct"].mean().round(2).reset_index()
+    return resumen.rename(columns={"pct": "pct_promedio"})
+
+
+def pct_ponderado_por(df: pd.DataFrame, columna_grupo: str, columna_positivo: str, columna_ponderador: str) -> pd.DataFrame:
+    """% ponderado de `columna_positivo` (booleana), agrupado por
+    `columna_grupo` — sin promedio mensual, a diferencia de
+    `tasa_mensual_promedio_por`. Sirve para datos que no vienen en panel
+    rotativo mensual (Victimización, un corte del semestre).
+    """
+    df = df.copy()
+    df["_positivo_pond"] = df[columna_ponderador].where(df[columna_positivo], 0.0)
+    resumen = df.groupby(columna_grupo).agg(
+        total=(columna_ponderador, "sum"),
+        positivo=("_positivo_pond", "sum"),
+    )
+    resumen["pct"] = (resumen["positivo"] / resumen["total"] * 100).round(2)
+    return resumen[["pct"]].reset_index()
+
+
+def diferencia_entre_tablas(
+    tabla_a: pd.DataFrame, tabla_b: pd.DataFrame, columna_indice: str, columna_valor: str
+) -> pd.Series:
+    """Diferencia en puntos porcentuales (tabla_a menos tabla_b) para la
+    misma columna de valor, cruzando dos tablas por su columna de índice
+    (ej. comunicación a la policía vs denuncia formal, ambas por tipo de
+    delito) — mismo patrón que `condiciones_vivienda_diferencia` y
+    `brecha_por_grupo`.
+    """
+    a = tabla_a.set_index(columna_indice)[columna_valor]
+    b = tabla_b.set_index(columna_indice)[columna_valor]
+    return (a - b).round(2)
+
+
 def situacion_ocupacional_por(df_combinado: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
     """% de personas por condición de actividad (Ocupados/Desocupados/Inactivos),
     agrupado por una columna cualquiera (ej. `tipo_abonado`, o una columna de

@@ -149,6 +149,157 @@ POBPCOAC_GRUPOS = {
     11.0: "Inactivos",
 }
 
+# ============================================================================
+# FIES (seguridad alimentaria) — solo disponible para algunos años, y solo
+# para una submuestra de hogares (no el total). A diferencia de Hogares y
+# Personas, viene en CSV, no en .sav.
+# ============================================================================
+
+
+def fies_file(anio: int | str) -> Path:
+    """Ruta al archivo FIES de un año determinado (`data/{año}/base_FIES_{año}.csv`).
+    No tiene resolución automática al "año más reciente" a propósito: FIES no
+    existe para todos los años, así que el año siempre se pasa explícito.
+    """
+    carpeta = DATA_DIR / str(anio)
+    candidatos = sorted(carpeta.glob(f"base_FIES_{anio}.csv"))
+    return candidatos[0] if candidatos else carpeta / f"base_FIES_{anio}.csv"
+
+
+def datos_disponibles(anio: int | str) -> dict:
+    """Qué tipos de datos existen para un año determinado, para que el agente
+    sepa qué ofrecerle al usuario (ver .claude/agents/encuesta-hogares.md).
+    "empleo" requiere los 12 archivos mensuales completos, no unos pocos —
+    con menos de 12 no se puede promediar el año correctamente.
+    """
+    carpeta = DATA_DIR / str(anio)
+    return {
+        "hogares": bool(list(carpeta.glob("H_*.sav")) or list(carpeta.glob(f"ECH_{anio}.csv"))),
+        "fies": fies_file(anio).exists(),
+        "empleo": all(archivo.exists() for archivo in empleo_files(anio)),
+        "seguridad": victimizacion_file(anio).exists(),
+    }
+
+
+# Solo las columnas cuyo significado se verificó contra el diccionario de
+# datos oficial del INE (catálogo ANDA, ficha URY-INE-ECH-2024-v02,
+# archivo base_FIES_2024) — deliberadamente no incluye HT19 ni ing_pc
+# todavía: HT19 es "cantidad de personas SIN servicio doméstico" (una
+# definición distinta de total_personas, no intercambiable sin más
+# análisis) e ing_pc no se necesitó para ninguna métrica del catálogo por
+# ahora.
+FIES_COLUMNS = {
+    "ID": "id_hogar",
+    "region": "region_cod",
+    "quintiles": "quintil_ingreso",
+    "menores18": "tiene_menores_18",   # 0/1: hogar con menores de 18 años
+    "menores6": "tiene_menores_6",     # 0/1: hogar con niños de 0 a 5 años
+    "prob.mod.h": "prob_inseguridad_moderada",
+    "prob.sev.h": "prob_inseguridad_severa",
+    "w": "ponderador_fies",
+}
+
+# Confirmado cruzando IDs contra ECH_2024.csv: region=1 son 100% hogares de
+# Montevideo.
+REGION_FIES_LABELS = {1: "Montevideo", 2: "Interior"}
+
+# Umbral estándar de la metodología FIES (FAO): un hogar se clasifica en una
+# categoría de inseguridad alimentaria cuando su probabilidad (prob.mod.h /
+# prob.sev.h, un puntaje continuo de un modelo Rasch) supera 0.5.
+UMBRAL_FIES = 0.5
+
+# ============================================================================
+# Empleo (ECH_seguimiento) — panel rotativo mensual, no un corte anual como
+# Hogares. Cada hogar permanece en el panel 6 meses seguidos, así que las
+# métricas se calculan mes a mes (ponderadas por `w`) y se promedian entre
+# los 12 meses — nunca juntando los 12 CSV en un solo pool antes de
+# ponderar (ver .claude/agents/encuesta-hogares.md, sección de empleo).
+# ============================================================================
+
+
+def empleo_files(anio: int | str) -> list[Path]:
+    """Los 12 archivos mensuales `ECH_{MM}_{AA}.csv` de un año determinado,
+    ordenados de enero a diciembre. `anio` es el año completo (ej. 2024); el
+    archivo usa los últimos dos dígitos en el nombre.
+    """
+    carpeta = DATA_DIR / str(anio)
+    sufijo_anio = str(anio)[-2:]
+    return [carpeta / f"ECH_{mes:02d}_{sufijo_anio}.csv" for mes in range(1, 13)]
+
+
+# Solo las columnas cuyo significado se verificó contra el diccionario de
+# datos oficial del INE (archivo ECH_seguimiento_2024) y/o contra los datos
+# reales. POBPCOAC usa los mismos códigos que HOGARES/PERSONAS de 2019 (ver
+# POBPCOAC_GRUPOS más abajo) — se reutiliza el mismo mapeo.
+EMPLEO_COLUMNS = {
+    "ID": "id_hogar",
+    "nper": "id_persona",
+    "mes": "mes",
+    "nom_dpto": "departamento",
+    "e26": "sexo",
+    "e27": "edad",
+    "POBPCOAC": "condicion_actividad_cod",
+    "SIT_OCUP": "situacion_ocupacional",     # ya viene con etiquetas de texto
+    "SECTOR_F": "sector_formalidad",         # ya viene con etiquetas de texto
+    "NIV_EDU": "nivel_educativo",            # ya viene con etiquetas de texto
+    "INFORMAL": "es_informal",               # 0/1 — solo válido si condicion_actividad == "Ocupados"
+    "SUBEMPLEO": "es_subempleo",             # 0/1 — solo válido si condicion_actividad == "Ocupados"
+    "W": "ponderador_empleo",                # ponderador MENSUAL, no anual
+}
+
+# Definición estándar de "población joven" para indicadores de empleo (14 a
+# 24 años) — es la que reportan INE/prensa para el desempleo juvenil de
+# Uruguay. Distinta de EDAD_BINS/EDAD_LABELS de más abajo, que clasifica
+# edad para el análisis de Hogares con otro criterio (niños/adultos/adultos
+# mayores) y no aplica acá.
+EDAD_JOVEN_MIN = 14
+EDAD_JOVEN_MAX = 24
+
+# ============================================================================
+# Seguridad y Victimización (ECH_VICTIMIZACION_S2). A diferencia de Empleo,
+# no es un panel rotativo mensual — es un corte del segundo semestre, se
+# pondera directo por W_SEM sin promediar meses. El archivo no trae
+# departamento propio: hay que cruzarlo por ID contra los meses de
+# julio-diciembre del mismo año (ver data_loader.load_victimizacion).
+# ============================================================================
+
+
+def victimizacion_file(anio: int | str) -> Path:
+    """Ruta al archivo de victimización de un año determinado
+    (`data/{año}/ECH_VICTIMIZACION_S2_{año}.csv`)."""
+    carpeta = DATA_DIR / str(anio)
+    candidatos = sorted(carpeta.glob(f"ECH_VICTIMIZACION_S2_{anio}.csv"))
+    return candidatos[0] if candidatos else carpeta / f"ECH_VICTIMIZACION_S2_{anio}.csv"
+
+
+VICTIMIZACION_COLUMNS = {
+    "ID": "id_hogar",
+    "nper": "id_persona",
+    "e26": "sexo",
+    "v3": "v3", "v3_4": "v3_4", "v3_6": "v3_6", "v3_8": "v3_8",
+    "v4": "v4", "v4_4": "v4_4", "v4_6": "v4_6", "v4_8": "v4_8",
+    "v5": "v5", "v5_4": "v5_4", "v5_6": "v5_6", "v5_8": "v5_8",
+    "v6": "v6", "v6_2": "v6_2", "v6_4": "v6_4",
+    "v7": "v7", "v7_4": "v7_4", "v7_6": "v7_6",
+    "W_SEM": "ponderador_victimizacion",
+}
+
+# Cada tipo de delito, con sus columnas de seguimiento propias — no todas
+# tienen la misma estructura de sub-preguntas: "violencia" solo se pregunta
+# para v3/v4/v5 (delitos con contacto directo), no para v6 (estafa) ni v7
+# (robo/asalto en la calle) — verificado contra el diccionario del INE, no
+# es un descuido nuestro, así viene el cuestionario. v1 (percepción de
+# seguridad, escala de 6 niveles) queda deliberadamente afuera del catálogo:
+# no hay diccionario de valores publicado para esa variable en ningún
+# material del INE, así que no se puede etiquetar con confianza todavía.
+TIPOS_DELITO = {
+    "v3": {"nombre": "Robo total de vehículo", "comunicacion": "v3_6", "denuncia": "v3_8", "violencia": "v3_4"},
+    "v4": {"nombre": "Robo de objetos del vehículo", "comunicacion": "v4_6", "denuncia": "v4_8", "violencia": "v4_4"},
+    "v5": {"nombre": "Robo en la vivienda", "comunicacion": "v5_6", "denuncia": "v5_8", "violencia": "v5_4"},
+    "v6": {"nombre": "Estafa", "comunicacion": "v6_2", "denuncia": "v6_4", "violencia": None},
+    "v7": {"nombre": "Robo o asalto fuera de la vivienda", "comunicacion": "v7_4", "denuncia": "v7_6", "violencia": None},
+}
+
 CONDICION_VIVIENDA_LABELS = {
     "humedad_techos": "Humedad en techos",
     "goteras": "Goteras en techos",

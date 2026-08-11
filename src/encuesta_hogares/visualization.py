@@ -352,6 +352,123 @@ def plot_composicion_hogar(resumen_composicion: pd.DataFrame, titulo: str, color
     return fig
 
 
+def plot_prevalencia_inseguridad_alimentaria(prevalencia: dict):
+    """Barras simples: % de hogares (ponderado) en inseguridad alimentaria
+    moderada-o-severa y severa, a nivel nacional."""
+    categorias = ["Moderada o severa", "Severa"]
+    valores = [prevalencia["moderada_o_severa"], prevalencia["severa"]]
+    fig = px.bar(
+        x=categorias, y=valores,
+        title="Prevalencia de inseguridad alimentaria en los hogares",
+        color=categorias,
+        color_discrete_map={"Moderada o severa": "#eeb95c", "Severa": "#d1495b"},
+        text=[f"{v:.1f}%" for v in valores],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="", yaxis_title="% de hogares (ponderado)",
+        showlegend=False, width=650, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_inseguridad_alimentaria_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel: str):
+    """Barras simples: % de hogares en inseguridad alimentaria (ponderado), por grupo."""
+    fig = px.bar(
+        resumen, x=columna_grupo, y="pct_inseguridad",
+        title=titulo,
+        color=columna_grupo,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:.1f}%" for v in resumen["pct_inseguridad"]],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title=xlabel, yaxis_title="% de hogares en inseguridad alimentaria (ponderado)",
+        showlegend=False, width=650, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_tasas_actividad_empleo_desempleo(tasas: dict):
+    """Barras simples: tasas de actividad, empleo y desempleo a nivel nacional."""
+    etiquetas = {"tasa_actividad": "Actividad", "tasa_empleo": "Empleo", "tasa_desempleo": "Desempleo"}
+    categorias = [etiquetas[k] for k in ["tasa_actividad", "tasa_empleo", "tasa_desempleo"]]
+    valores = [tasas["tasa_actividad"], tasas["tasa_empleo"], tasas["tasa_desempleo"]]
+    fig = px.bar(
+        x=categorias, y=valores,
+        title="Tasas de actividad, empleo y desempleo (promedio de los 12 meses)",
+        color=categorias,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:.1f}%" for v in valores],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="", yaxis_title="% (ponderado, promedio mensual)",
+        showlegend=False, width=650, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_tasas_por_grupo(resumen: pd.DataFrame, columna_grupo: str, titulo: str):
+    """Barras agrupadas: tasas de actividad, empleo y desempleo comparando
+    grupos (sexo, edad) — para la brecha de género y el desempleo juvenil."""
+    df_plot = resumen.melt(
+        id_vars=columna_grupo, value_vars=["tasa_actividad", "tasa_empleo", "tasa_desempleo"],
+        var_name="tasa", value_name="valor",
+    )
+    etiquetas = {"tasa_actividad": "Actividad", "tasa_empleo": "Empleo", "tasa_desempleo": "Desempleo"}
+    df_plot["tasa"] = df_plot["tasa"].map(etiquetas)
+    fig = px.bar(
+        df_plot, x="tasa", y="valor", color=columna_grupo, barmode="group",
+        title=titulo,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:.1f}%" for v in df_plot["valor"]],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="", yaxis_title="% (ponderado, promedio mensual)",
+        width=700, height=500, title_x=0.5, legend_title="",
+    )
+    return fig
+
+
+def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel: str):
+    """Barras simples: % ponderado (promedio mensual) por grupo — informalidad,
+    subempleo, desempleo, lo que corresponda según el título."""
+    fig = px.bar(
+        resumen, x=columna_grupo, y="pct_promedio",
+        title=titulo,
+        color=columna_grupo,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:.1f}%" for v in resumen["pct_promedio"]],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title=xlabel, yaxis_title="% (ponderado, promedio mensual)",
+        showlegend=False, width=650, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_pct_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel: str, columna_valor: str = "pct"):
+    """Barras simples: % ponderado por grupo — genérica para prevalencia de
+    victimización, tasas de comunicación/denuncia/violencia por tipo de
+    delito, o cualquier corte similar sin promedio mensual."""
+    fig = px.bar(
+        resumen, x=columna_grupo, y=columna_valor,
+        title=titulo,
+        color=columna_grupo,
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        text=[f"{v:.1f}%" for v in resumen[columna_valor]],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title=xlabel, yaxis_title="% (ponderado)",
+        showlegend=False, width=700, height=500, title_x=0.5,
+    )
+    return fig
+
+
 def plot_penetracion_nacional(resumen_departamentos: pd.DataFrame, resaltar: str = "MONTEVIDEO"):
     """Gráfico de puntos ordenado: penetración de TV cable por departamento, con uno resaltado."""
     df_plot = resumen_departamentos.copy()

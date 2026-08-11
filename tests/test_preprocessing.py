@@ -6,7 +6,11 @@ from encuesta_hogares.preprocessing import (
     classify_sexo,
     compute_penetracion_nacional,
     decode_si_no,
+    melt_delitos,
+    prepare_empleo,
+    prepare_fies,
     prepare_hogares_extendido,
+    prepare_victimizacion,
 )
 
 
@@ -87,3 +91,78 @@ def test_compute_penetracion_nacional():
     mdeo = resumen[resumen["departamento"] == "MONTEVIDEO"].iloc[0]
     assert salto["pct_cable"] == 100.0
     assert mdeo["pct_cable"] == 50.0
+
+
+def test_prepare_fies_clasifica_por_umbral_y_etiqueta_region():
+    df = pd.DataFrame(
+        {
+            "prob_inseguridad_moderada": [0.6, 0.4, 0.5],
+            "prob_inseguridad_severa": [0.6, 0.1, 0.2],
+            "region_cod": [1, 2, 1],
+            "tiene_menores_18": [1, 0, 1],
+            "tiene_menores_6": [0, 0, 1],
+        }
+    )
+    resultado = prepare_fies(df)
+    assert resultado["inseguridad_moderada_o_severa"].tolist() == [True, False, True]
+    assert resultado["inseguridad_severa"].tolist() == [True, False, False]
+    assert resultado["region"].tolist() == ["Montevideo", "Interior", "Montevideo"]
+    assert resultado["tiene_menores_18"].tolist() == [True, False, True]
+    assert resultado["tiene_menores_6"].tolist() == [False, False, True]
+
+
+def test_prepare_empleo_mapea_actividad_sexo_y_edad():
+    df = pd.DataFrame(
+        {
+            "condicion_actividad_cod": [2.0, 3.0, 6.0],
+            "es_informal": [1, 0, 0],
+            "es_subempleo": [0, 0, 0],
+            "sexo": [1, 2, 1],
+            "edad": [20, 40, 24],
+        }
+    )
+    resultado = prepare_empleo(df)
+    assert resultado["condicion_actividad"].tolist() == ["Ocupados", "Desocupados", "Inactivos"]
+    assert resultado["es_informal"].tolist() == [True, False, False]
+    assert resultado["es_subempleo"].tolist() == [False, False, False]
+    assert resultado["sexo_grupo"].tolist() == ["1-Hombre", "2-Mujer", "1-Hombre"]
+    assert resultado["grupo_edad_laboral"].tolist() == ["Joven (14-24)", "Resto", "Joven (14-24)"]
+
+
+def test_prepare_victimizacion_marca_victimizado_algun_delito():
+    df = pd.DataFrame(
+        {
+            "sexo": [1, 2],
+            "v3": [0, 0], "v4": [0, 1], "v5": [0, 0], "v6": [0, 0], "v7": [0, 0],
+        }
+    )
+    resultado = prepare_victimizacion(df)
+    assert resultado["sexo_grupo"].tolist() == ["1-Hombre", "2-Mujer"]
+    assert resultado["victimizado_algun_delito"].tolist() == [False, True]
+
+
+def test_melt_delitos_arma_formato_largo_con_subpreguntas_correctas():
+    df = pd.DataFrame(
+        {
+            "id_persona": [1],
+            "sexo_grupo": ["1-Hombre"],
+            "departamento": ["MONTEVIDEO"],
+            "ponderador_victimizacion": [100.0],
+            "v3": [1], "v3_4": [1], "v3_6": [1], "v3_8": [2],
+            "v4": [0], "v4_4": [0], "v4_6": [0], "v4_8": [0],
+            "v5": [0], "v5_4": [0], "v5_6": [0], "v5_8": [0],
+            "v6": [0], "v6_2": [0], "v6_4": [0],
+            "v7": [0], "v7_4": [0], "v7_6": [0],
+        }
+    )
+    largo = melt_delitos(df)
+
+    fila_v3 = largo[largo["tipo_delito"] == "Robo total de vehículo"].iloc[0]
+    assert fila_v3["victimizado"] == True
+    assert fila_v3["comunicacion_policia"] == True
+    assert fila_v3["denuncia_formal"] == False
+    assert fila_v3["violencia"] == True
+
+    fila_v6 = largo[largo["tipo_delito"] == "Estafa"].iloc[0]
+    # v6 (estafa) no tiene sub-pregunta de violencia en el cuestionario
+    assert fila_v6["violencia"] == False

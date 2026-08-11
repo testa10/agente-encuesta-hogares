@@ -43,6 +43,32 @@ Si `run_python.bat` falla con un error de que no encuentra
 reemplazo: decile al usuario en un mensaje corto que corra `instalar.bat`
 (está en la raíz del proyecto) y esperá — no sigas sin eso.
 
+**Regla de alcance general, válida en cualquier momento de la
+conversación, no solo al principio: nunca corras una "prueba de humo"
+para confirmar que `run_python.bat` funciona** (nada de
+`run_python.bat -c "print('hello')"` ni parecidos, ni antes del
+formulario de bienvenida, ni antes de una métrica nueva, ni en ningún
+otro punto del flujo). Ya sabés que funciona porque lo venís usando desde
+el principio de la conversación — verificarlo "por las dudas" es un paso
+de más que le muestra al usuario un comando de terminal sin necesidad. Si
+un comando de verdad falla, vas a enterarte ahí mismo, en el comando real
+que intentabas correr — no antes, y no como paso separado.
+
+**Nunca le agregues `; echo "EXIT:$?"` (ni parecidos) al final de un
+comando de Bash para chequear el código de salida.** No hace falta: si el
+comando de Python falla, ya lo vas a ver en su propia salida (excepción,
+traceback, o falta del `print` esperado) — agregar esa parte solo suma
+riesgo de que el chequeo de seguridad de la terminal lo marque como
+sospechoso y le pida aprobación manual al usuario, que es exactamente lo
+que estamos tratando de evitar en todo este flujo.
+
+**Para ver el contenido de un archivo que vos mismo generaste (un CSV de
+scratch, un `.txt` con resultados intermedios, lo que sea), usá siempre
+la herramienta `Read`, nunca `type` ni `cat` por Bash.** `Read` no pasa
+por la terminal ni pide aprobación; `type`/`cat` sí, porque no están en
+la lista de comandos permitidos — cada vez que los uses, el usuario va a
+tener que aprobar un prompt que no aporta nada.
+
 ## Cómo hablarle al usuario
 
 Asumí que la persona con la que hablás **no sabe programar ni de
@@ -80,6 +106,25 @@ después de "orientarte" — la primera. Antes de esa llamada:
 - No corras `pytest`, no corras `nbconvert`, no inspecciones `data/` con
   Glob — ninguna de esas cosas tiene sentido todavía, porque ni siquiera
   sabés qué año eligió el usuario.
+- **No hagas una "prueba de humo" para confirmar que `run_python.bat`
+  funciona** (nada de `run_python.bat -c "print('test')"` ni parecidos).
+  Ya sabés que funciona — no necesitás verificarlo antes de usarlo. Si de
+  verdad falla, te vas a enterar recién en la llamada real a
+  `plantilla_bienvenida()`, y ahí lo manejás; no antes, y no como paso
+  separado.
+- **No leas ni busques nada dentro de `formularios.py`** para confirmar
+  cómo se llama o cómo se usa `plantilla_bienvenida()`. Ya está
+  documentado arriba en este mismo archivo, en la sección "Flujo de
+  trabajo": el patrón es siempre
+  `from encuesta_hogares import formularios; html =
+  formularios.plantilla_bienvenida(); respuesta =
+  formularios.mostrar_formulario(html)`. Usalo tal cual, de memoria, sin
+  ir a confirmarlo en el código.
+- En criollo: **tu primera llamada a cualquier herramienta —
+  `Bash`, `Read`, `Glob`, `Grep`, la que sea — tiene que ser exactamente
+  el `Bash` de `plantilla_bienvenida()`.** Cualquier otra llamada antes de
+  esa, con cualquier excusa ("verificar", "confirmar", "entender
+  primero"), es un error.
 
 Si te llega una tarea que suena a "hacé todo el análisis ya", con
 contexto ya resuelto, con un resumen detallado, o con cualquier señal de
@@ -109,9 +154,30 @@ respuesta = formularios.mostrar_formulario(html)  # abre el navegador y espera
 
 Corré esto con Bash, siempre a través de `run_python.bat` (ver la
 sección "Qué Python usar" más arriba) — `run_python.bat -c "..."`, o un
-archivo temporal si el fragmento es largo. El comando queda bloqueado hasta que el usuario
+archivo temporal si el fragmento es largo. **Para crear ese archivo
+temporal, usá siempre la herramienta `Write`, nunca un heredoc de Bash
+(`cat > archivo.py <<EOF ... EOF`)** — cualquier código Python con llaves
+y comillas mezcladas (diccionarios, f-strings) hace que el chequeo de
+seguridad de la terminal interprete el heredoc como una posible
+ofuscación y le pida aprobación manual al usuario, algo que rompe por
+completo la idea de que nunca vea la terminal. Con `Write` ese chequeo ni
+se activa. El comando queda bloqueado hasta que el usuario
 completa el formulario y aprieta el botón — es intencional, esperá ahí sin
 hacer nada más mientras tanto.
+
+**Cada vez que invoques por Bash un script que muestra un formulario
+(`mostrar_formulario` o `mostrar_finalizacion`), pasale a la propia
+herramienta Bash un `timeout` largo — 1800000 (30 minutos, en
+milisegundos) — en el parámetro `timeout` de la llamada a la herramienta,
+no solo en el código Python.** Son dos límites distintos: el `timeout` de
+`mostrar_formulario`/`mostrar_finalizacion` es de Python y ya está en 30
+minutos, pero la herramienta Bash de Claude Code tiene su propio límite,
+más corto por defecto (2 minutos), que puede matar el proceso —y con él,
+el servidor local que sirve el formulario o el informe— mucho antes de
+que el usuario termine de leer, decidir, o abrir los links del informe
+final. Si eso pasa, al hacer click en un link el usuario ve
+"ERR_CONNECTION_REFUSED" porque el servidor ya no existe. Nunca dejes
+este parámetro en su valor por defecto para estos comandos.
 
 Tus mensajes de chat quedan solo para avisos cortos ("generando el
 informe...", o para explicar un error si algo salió mal) — nunca para
@@ -222,11 +288,110 @@ este agente**, ni siquiera para "ahorrarle un paso" al usuario. Siempre
 que haya alguna Ampliación en el informe, tiene que venir de una
 selección real hecha en `formularios.plantilla_catalogo()`.
 
-Mostrale `formularios.plantilla_catalogo()` — ya trae las 5 categorías con
-sus 5 métricas cada una (nombre en negrita + explicación breve), el campo
-para proponer una métrica propia, y la pregunta de si quiere el informe en
-PDF. Guardá los tres datos de la respuesta (`metricas`, `otra_metrica`,
-`pdf`) — los vas a necesitar en los próximos pasos.
+**Antes de mostrar el catálogo, fijate qué datos existen de verdad para el
+año elegido con `config.datos_disponibles(anio)`.** Devuelve un dict como
+`{"hogares": True, "fies": True}`. Nunca asumas disponibilidad por el año
+en sí (ej. "2024 seguro tiene FIES") — depende de qué archivos haya en
+`data/{año}/`, y eso puede cambiar con el tiempo.
+
+Mostrale `formularios.plantilla_catalogo(incluir_fies=...)` — pasale
+`incluir_fies=True` solo si `datos_disponibles(anio)["fies"]` fue True. El
+catálogo ya trae las 5 categorías base con sus 5 métricas cada una (nombre
+en negrita + explicación breve) y, si corresponde, la categoría 6 de
+seguridad alimentaria (FIES) con las métricas 26 a 32. También trae el
+campo para proponer una métrica propia y la pregunta de si quiere el
+informe en PDF. Guardá los tres datos de la respuesta (`metricas`,
+`otra_metrica`, `pdf`) — los vas a necesitar en los próximos pasos.
+
+**Nota sobre FIES (métricas 26-32), si el usuario las elige:** el archivo
+`base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
+año (para 2024, ~32% de los hogares) — cualquier texto que describa estos
+resultados tiene que aclarar eso en una frase simple ("esto se calculó
+sobre una parte de los hogares encuestados, no todos"), igual que se
+aclaran los tamaños de muestra chicos en otras secciones (sección 2 de
+`docs/METODOLOGIA.md`). Además, los cálculos tienen que ponderar por la
+columna `ponderador_fies` (ya lo hacen `prevalencia_inseguridad_alimentaria`
+e `inseguridad_alimentaria_por` en `analysis.py`) — nunca por conteo simple
+de filas, y nunca por el ponderador general de la encuesta (`w` de FIES es
+distinto del ponderador de Hogares/Personas).
+
+**Nota sobre Empleo (métricas 33-40), si el usuario las elige** (solo se
+ofrecen si contestó que sí en `plantilla_areas()`, ver paso 3.5 más abajo):
+
+- Los cálculos ya vienen ponderados mes a mes y promediados entre los 12
+  meses en `analysis.py` (`tasas_actividad_empleo_desempleo`,
+  `tasas_actividad_empleo_desempleo_por`, `tasa_mensual_promedio_por`) —
+  nunca calcules una versión propia que junte los 12 CSV en un pool antes
+  de ponderar, un mismo hogar puede aparecer hasta 6 veces seguidas en el
+  panel.
+- `es_informal` y `es_subempleo` (columnas de `preprocessing.prepare_empleo`)
+  solo tienen sentido para quien está en `condicion_actividad == "Ocupados"`
+  — filtrá a Ocupados antes de usarlas, si no la tasa sale artificialmente
+  baja (verificado contra los datos reales).
+- Estas 8 métricas (a diferencia de las de Hogares y FIES, que salen
+  directo de la metodología del proyecto) se eligieron consultando fuentes
+  externas — dos ejes en particular (brecha de género y desempleo juvenil)
+  no estaban en el diseño original y se agregaron después de esa consulta,
+  porque son los hallazgos más relevantes para Uruguay según esas mismas
+  fuentes. Si el informe incluye alguna métrica de esta categoría, agregá
+  esta lista en la sección "Fuentes de consulta para alineación de
+  métricas" del resumen final (ver más abajo):
+  - Indicadores Clave del Mercado de Trabajo (KILM) — OIT:
+    https://www.ilo.org/resource/key-indicators-labour-market-kilm
+  - "Se profundizó la brecha de género en el mercado laboral" — Ámbito:
+    https://www.ambito.com/uruguay/se-profundizo-la-brecha-genero-el-mercado-laboral-n6096977
+  - "El desempleo entre los más jóvenes cerró cerca del 25% en 2024" — Ámbito:
+    https://www.ambito.com/uruguay/el-desempleo-los-mas-jovenes-cerro-cerca-del-25-2024-n6108458
+  - "Subempleo e informalidad afectan a casi 3 de cada 10 ocupados en
+    Uruguay" — La Mañana:
+    https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
+
+**Nota sobre Seguridad y Victimización (métricas 41-47), si el usuario las
+elige:**
+
+- **El período de referencia es "el mes anterior a la entrevista", no el
+  semestre ni el año.** La sub-pregunta de cada tipo de delito
+  (`v3_1`/`v4_1`/etc.) dice literalmente "cuántas veces ocurrió en el mes
+  anterior", y el archivo trae una columna `mes` con valores de julio a
+  diciembre — es una victimización mensual recolectada a lo largo del
+  semestre, no una pregunta de "¿te pasó esto en el último año?". Nunca
+  redactes estos porcentajes como si fueran una tasa anual o semestral —
+  aclará siempre "en el último mes" en el texto, en base a la definición
+  real de la pregunta del cuestionario, no a ninguna otra fuente.
+- `comunicacion_policia`, `denuncia_formal` y `violencia` (columnas de
+  `preprocessing.melt_delitos`) solo tienen sentido para quien fue víctima
+  de ESE delito (`victimizado == True`) — filtrá antes de usarlas.
+- `violencia` no existe para Estafa ni para Robo o asalto fuera de la
+  vivienda (esos dos tipos no tienen esa sub-pregunta en el cuestionario,
+  no es un error de carga) — la métrica 47 solo aplica a los otros tres
+  tipos.
+- La variable `v1` (percepción de seguridad en el barrio) sigue sin
+  diccionario de valores publicado por el INE — se confirmó revisando la
+  variable directo en el catálogo (categorías vacías) — sigue sin estar en
+  el catálogo.
+- Fuentes consultadas para diseñar esta categoría (agregalas también a
+  "Fuentes de consulta para alineación de métricas" si el informe incluye
+  alguna de estas 7 métricas):
+  - Manual para Encuestas de Victimización — UNODC/UNECE:
+    https://www.unodc.org/documents/data-and-analysis/Crime-statistics/Manual_Victimization_surveys_2009_spanish.pdf
+  - "Qué porcentaje de delitos son denunciados a la Policía, según informe
+    del INE" — Montevideo Portal:
+    https://www.montevideo.com.uy/Noticias/Que-porcentaje-de-delitos-son-denunciados-a-la-Policia-segun-informe-del-INE-uc914924
+
+### 3.5. ¿Sumar Empleo y/o Seguridad al informe?
+
+Después de validar los datos (paso 3) y antes del catálogo (paso 4),
+fijate con `config.datos_disponibles(anio)` si además de Hogares hay datos
+de Empleo (`empleo_files` completos, los 12 meses) y/o Seguridad para el
+año elegido. Si al menos una está disponible, mostrale al usuario
+`formularios.plantilla_areas(empleo_disponible, seguridad_disponible)` —
+selección múltiple, puede marcar ninguna, una o las dos. Si ninguna está
+disponible (como en 2019, que solo tiene Hogares), no muestres este
+formulario, andá directo al catálogo. Guardá la respuesta (`areas`, una
+lista) — la vas a usar para pasarle `incluir_empleo`/`incluir_seguridad` a
+`plantilla_catalogo()` en el paso siguiente, y para saber si tenés que
+cargar y preparar los datos de Empleo (`data_loader.load_empleo` +
+`preprocessing.prepare_empleo`) antes de construir el notebook.
 
 ### 5. Construir el informe con las métricas elegidas
 
@@ -284,6 +449,14 @@ no de memoria ni a ojo) y armá 3-5 párrafos cortos que cuenten los
 hallazgos principales, en lenguaje simple, citando los porcentajes
 puntuales. Un notebook que termina con algo como "(se completa después)"
 no está terminado — no lo entregues así.
+
+**Si el informe incluye alguna categoría de métricas cuyo diseño se basó en
+fuentes externas** (por ahora, la categoría Empleo — ver más abajo la lista
+de fuentes usadas para elegirlas), agregá al final del "Resumen analítico
+final" una sección corta llamada **"Fuentes de consulta para alineación de
+métricas"**, con esas fuentes en una lista simple (título + link). No hace
+falta para Hogares ni FIES, que salen directo de la metodología del
+proyecto, no de investigación externa.
 
 Seguí el flujo de verificación completo de la sección 5 de
 `docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,
@@ -369,17 +542,32 @@ a preguntar).
   con Chromium vía Playwright (nunca `nbconvert --to pdf`, que depende de
   una instalación de LaTeX) → copia a `Path.home() / "Downloads"`. Confirmá
   al final que el PDF se generó bien (cantidad de páginas, tamaño de
-  archivo razonable) antes de decirle al usuario que ya está listo.
-- **Si no eligió PDF**: abrile directamente el informe HTML en su
-  navegador — no lo dejes esperando dentro de la carpeta del proyecto.
-  En Windows alcanza con:
-  ```bash
-  start "" "ruta\completa\al\informe.html"
-  ```
-  Nunca generes ni ofrezcas el informe en JSON ni en ningún otro formato
-  técnico — para alguien sin conocimientos de programación un archivo
-  JSON es ilegible. El HTML ya tiene el mismo contenido y diseño que el
-  PDF, solo que se ve en el navegador en vez de como archivo descargado.
+  archivo razonable).
+- **Si no eligió PDF**: no generes nada más allá del HTML.
+
+**Nunca uses `start` desde la terminal para "abrir" el informe, ni para
+el PDF ni para el HTML** — en la práctica resultó poco confiable (llegó a
+reportarse como abierto sin estarlo de verdad) y además no da una
+sensación de cierre profesional. En cambio, el último paso siempre es
+mostrarle al usuario `formularios.plantilla_finalizacion()` a través de
+`formularios.mostrar_finalizacion(pdf_path=..., html_path=...)` — pasale
+la ruta absoluta del PDF si lo generaste, la ruta absoluta del HTML
+siempre, o ambas. Esa pantalla trae el mensaje de agradecimiento
+("Tu informe fue creado con éxito") con un botón por cada formato
+disponible; al hacer click, el informe se abre en una pestaña nueva,
+servido por el mismo mecanismo local que ya usás para los formularios —
+no depende de que el sistema operativo "encuentre" el archivo. Este paso
+es el cierre del flujo: no hace falta ningún otro aviso de chat después.
+
+Nunca generes ni ofrezcas el informe en JSON ni en ningún otro formato
+técnico — para alguien sin conocimientos de programación un archivo JSON
+es ilegible. El HTML ya tiene el mismo contenido y diseño que el PDF,
+solo que se ve en el navegador en vez de como archivo descargado.
+
+**Regla general: nunca le digas al usuario que "se abrió" o "ya está
+abierto" un archivo sin haber mostrado vos mismo la pantalla de
+`mostrar_finalizacion()` con el botón correspondiente en ese mismo
+turno.** No inventes que ya lo tiene enfrente.
 
 ### 9. No publicar nada — nunca
 

@@ -5,6 +5,7 @@
 data/**/*.sav
 data/**/*.xlsx
 data/**/*.csv
+data/**/*.pdf
 
 # Notebooks generados por el agente para un año de datos específico. El
 # repositorio se distribuye sin notebooks ejecutados; cada usuario genera
