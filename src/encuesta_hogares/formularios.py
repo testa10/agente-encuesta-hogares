@@ -14,9 +14,24 @@ Las funciones `plantilla_*` arman el HTML de cada paso del flujo (ver
 
 import http.server
 import json
+import re
 import subprocess
 import threading
+import traceback
 from pathlib import Path
+
+from . import bitacora
+
+
+def _nombre_desde_html(html: str) -> str:
+    """Extrae el texto del primer <h1> del HTML para identificar el
+    formulario en la bitácora, sin depender de que cada llamada a
+    mostrar_formulario() le pase un nombre a mano."""
+    coincidencia = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.DOTALL)
+    if not coincidencia:
+        return "formulario"
+    texto = re.sub(r"<[^>]+>", "", coincidencia.group(1)).strip()
+    return texto[:60] if texto else "formulario"
 
 _ESTILO = """
 :root { --rojo: #d1495b; --verde: #66a182; --texto: #24292f; --gris: #57606a; }
@@ -212,6 +227,7 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
     """Sirve `html` en localhost, abre el navegador, y bloquea hasta que el
     usuario lo completa. Devuelve lo que haya mandado el formulario.
     """
+    nombre = _nombre_desde_html(html)
     resultado: dict = {}
     evento = threading.Event()
     html_bytes = html.encode("utf-8")
@@ -244,19 +260,27 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
         def log_message(self, format, *args):
             pass
 
-    # ThreadingHTTPServer: el navegador puede abrir mas de una conexion a la
-    # vez. Un servidor de una sola conexion por vez se traba en ese caso
-    # (visto en la practica con el formulario del catalogo de metricas).
-    with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as httpd:
-        puerto = httpd.server_address[1]
-        hilo = threading.Thread(target=httpd.serve_forever, daemon=True)
-        hilo.start()
-        url = f"http://127.0.0.1:{puerto}/"
-        # os.startfile()/webbrowser.open() resultaron poco confiables en
-        # algunos entornos; "cmd /c start" es lo mas robusto en Windows.
-        subprocess.run(["cmd", "/c", "start", "", url], check=False)
-        evento.wait(timeout=timeout)
-        httpd.shutdown()
+    bitacora.registrar("formulario_mostrado", nombre=nombre)
+    try:
+        # ThreadingHTTPServer: el navegador puede abrir mas de una conexion a
+        # la vez. Un servidor de una sola conexion por vez se traba en ese
+        # caso (visto en la practica con el formulario del catalogo de
+        # metricas).
+        with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as httpd:
+            puerto = httpd.server_address[1]
+            hilo = threading.Thread(target=httpd.serve_forever, daemon=True)
+            hilo.start()
+            url = f"http://127.0.0.1:{puerto}/"
+            # os.startfile()/webbrowser.open() resultaron poco confiables en
+            # algunos entornos; "cmd /c start" es lo mas robusto en Windows.
+            subprocess.run(["cmd", "/c", "start", "", url], check=False)
+            completado = evento.wait(timeout=timeout)
+            httpd.shutdown()
+    except Exception as e:
+        bitacora.registrar("formulario_error", nombre=nombre, mensaje=str(e), traceback=traceback.format_exc())
+        raise
+
+    bitacora.registrar("formulario_timeout" if not completado else "formulario_respondido", nombre=nombre)
 
     return resultado
 
@@ -315,14 +339,21 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
         def log_message(self, format, *args):
             pass
 
-    with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as httpd:
-        puerto = httpd.server_address[1]
-        hilo = threading.Thread(target=httpd.serve_forever, daemon=True)
-        hilo.start()
-        url = f"http://127.0.0.1:{puerto}/"
-        subprocess.run(["cmd", "/c", "start", "", url], check=False)
-        evento.wait(timeout=timeout)
-        httpd.shutdown()
+    bitacora.registrar("finalizacion_mostrada", pdf_disponible=bool(pdf_path), html_disponible=bool(html_path))
+    try:
+        with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as httpd:
+            puerto = httpd.server_address[1]
+            hilo = threading.Thread(target=httpd.serve_forever, daemon=True)
+            hilo.start()
+            url = f"http://127.0.0.1:{puerto}/"
+            subprocess.run(["cmd", "/c", "start", "", url], check=False)
+            completado = evento.wait(timeout=timeout)
+            httpd.shutdown()
+    except Exception as e:
+        bitacora.registrar("finalizacion_error", mensaje=str(e), traceback=traceback.format_exc())
+        raise
+
+    bitacora.registrar("finalizacion_timeout" if not completado else "finalizacion_respondida")
 
     return resultado
 

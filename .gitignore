@@ -20,6 +20,10 @@ notebooks/*.ipynb
 # como guía interna - nunca se redistribuye, se queda solo en esta máquina.
 .claude/referencias_privadas/
 
+# Bitácora local de sesiones (ver src/encuesta_hogares/bitacora.py) - queda
+# siempre en la computadora de quien usa el agente, nunca se sube a git.
+logs/
+
 # Entornos
 .venv/
 venv/

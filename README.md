@@ -186,6 +186,15 @@ las reglas de rigor estadístico y claridad que se fueron descubriendo
 durante la construcción del análisis original. Si te interesa el detalle
 técnico, está todo ahí.
 
+**¿El agente registra lo que hago?**
+Sí, un registro mínimo y local: qué pantallas se te mostraron y cuándo, si
+alguna tardó demasiado o falló — nada de lo que escribiste ni de tus
+datos personales. Queda en el archivo `logs/bitacora.jsonl`, **en tu
+propia computadora**, nunca se sube a ningún lado ni se comparte
+automáticamente con nadie. Sirve para que, si algo te falla y le avisás a
+quien mantiene este proyecto, pueda entender qué pasó mandándole ese
+archivo, en vez de tener que describir de memoria lo que viste.
+
 **Los tests, ¿cómo los corro yo si quiero revisar que todo esté bien?**
 
 Desde la terminal, en la carpeta del proyecto:
