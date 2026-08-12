@@ -81,10 +81,11 @@ datos, hacer las gráficas, etc.). Puede tardar uno o dos minutos.
 
 ## Paso 3: Conseguir los datos del año que querés analizar
 
-En resumen: entrá al catálogo del INE, aceptá sus términos de uso, bajá el
-archivo `.RAR` de la base en formato SPSS del año que te interesa,
-extraelo, y copiá los dos archivos `.sav` (Hogares y Personas) a la carpeta
-`data/` de este proyecto.
+En resumen: entrá al catálogo del INE, aceptá sus términos de uso, bajá la
+base del año que te interesa, y copiá los archivos a la carpeta `data/`
+de este proyecto. El formato exacto cambia según el año (hasta 2023, dos
+archivos `.sav`; desde 2024, un único CSV combinado) — el proyecto
+soporta los dos automáticamente.
 
 La guía completa, paso a paso y con capturas de dónde hacer clic, está en
 [`data/README.md`](data/README.md) — seguila de ahí, es más detallada que
@@ -144,7 +145,7 @@ cosa, o la dejás afuera del informe.
 **Después de confirmar el catálogo, esperá — un informe tarda bastante.**
 No es un cálculo instantáneo: el agente arma y revisa una por una todas
 las gráficas que elegiste. Como referencia real (catálogo completo, las
-47 métricas de las cinco categorías): **alrededor de 25 a 30 minutos**.
+47 métricas de las ocho categorías): **alrededor de 25 a 30 minutos**.
 Eligiendo menos métricas tarda menos, más o menos en proporción a
 cuántas elegiste. Esto también consume una porción real de tu uso de
 Claude Code (en la corrida de referencia, el equivalente a unos 95
