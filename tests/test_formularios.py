@@ -70,10 +70,14 @@ def test_plantilla_finalizacion_ofrece_crear_un_nuevo_informe():
 
 def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
     # A diferencia de plantilla_finalizacion (que sí es el cierre real del
-    # flujo), estas pantallas de "procesando" siempre van seguidas de una
+    # flujo) y del mensaje de despedida al salir a mitad de camino, la
+    # pantalla de "procesando" (mostrarListo) siempre va seguida de una
     # pestaña nueva - prometer que se puede cerrar mientras se dice
     # "estamos procesando" es contradictorio para alguien sin conocimientos
-    # técnicos (ver feedback real de usuario).
+    # técnicos (ver feedback real de usuario). Se busca puntualmente dentro
+    # de mostrarListo(), no en todo el HTML - el botón de "salir sin
+    # terminar" sí usa esa misma frase, correctamente, en su propio mensaje
+    # de despedida (ese es un cierre real del flujo).
     pantallas = [
         plantilla_bienvenida(),
         plantilla_datos("2024", r"C:\ruta\data\2024"),
@@ -82,7 +86,26 @@ def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
         plantilla_revision("propuesta", "problema", "alternativa"),
     ]
     for html in pantallas:
-        assert "podés cerrar esta pestaña" not in html.lower()
+        inicio = html.index("function mostrarListo()")
+        fin = html.index("function salirDelFlujo()")
+        cuerpo_mostrar_listo = html[inicio:fin]
+        assert "podés cerrar esta pestaña" not in cuerpo_mostrar_listo.lower()
+
+
+def test_todas_las_pantallas_del_flujo_guiado_ofrecen_salir():
+    # Sin este botón, alguien que quiere dejar de usar el agente a mitad de
+    # camino tiene que cerrar la pestaña y dejar al agente esperando hasta
+    # el timeout de 30 minutos (ver bug real reportado por el usuario).
+    pantallas = [
+        plantilla_bienvenida(),
+        plantilla_datos("2024", r"C:\ruta\data\2024"),
+        plantilla_areas(True, True),
+        plantilla_catalogo(),
+        plantilla_revision("propuesta", "problema", "alternativa"),
+    ]
+    for html in pantallas:
+        assert "salirDelFlujo()" in html
+        assert "salir_del_flujo" in html
 
 
 def test_plantilla_arranque_ofrece_empezar_y_salir():

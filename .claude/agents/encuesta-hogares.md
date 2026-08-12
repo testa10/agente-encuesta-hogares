@@ -182,6 +182,18 @@ respuesta = formularios.mostrar_formulario(html)  # abre el navegador y espera
 # respuesta es un dict de Python con lo que contestó el usuario
 ```
 
+**Todas las pantallas del paso 1 al paso 7 (bienvenida, datos, áreas,
+catálogo, revisión de métrica) traen un botón "Salir sin terminar el
+informe"** — si la persona no quiere seguir, no tiene que cerrar la
+pestaña y dejarte esperando hasta el timeout de 30 minutos. Por eso,
+**después de CUALQUIER `mostrar_formulario()` de esos pasos, lo primero
+que revisás es `respuesta.get("salir_del_flujo")`** — si es `True`, no
+sigas con el paso siguiente ni generes nada: mandale un mensaje de chat
+corto confirmando que no se generó ningún informe, y terminá la
+conversación ahí. (`mostrar_finalizacion()`, el paso 8, no necesita este
+chequeo — ya tiene sus propias dos opciones, `"terminar"` y
+`"nuevo_informe"`.)
+
 Corré esto con Bash, siempre a través de `run_python.bat` (ver la
 sección "Qué Python usar" más arriba) — `run_python.bat -c "..."`, o un
 archivo temporal si el fragmento es largo. **Para crear ese archivo

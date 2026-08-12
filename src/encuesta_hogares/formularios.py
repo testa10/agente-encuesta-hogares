@@ -122,6 +122,13 @@ button[type=submit]:hover { background: #559874; }
 .boton-primario:hover { background: #559874; }
 .boton-secundario { color: white; background: var(--gris); }
 .boton-secundario:hover { background: #46505a; }
+.boton-salir {
+  display: block; width: 100%; text-align: center; margin-top: 10px;
+  padding: 10px; font-size: 13px; font-weight: 600; color: var(--gris);
+  background: none; border: none; cursor: pointer; text-decoration: underline;
+  font-family: inherit;
+}
+.boton-salir:hover { color: var(--rojo); }
 """
 
 _SCRIPT_LISTO = """
@@ -133,6 +140,30 @@ function mostrarListo() {
       <p>Estamos procesando tu solicitud. Cuando esté listo el siguiente
       paso, se va a abrir solo en una pestaña nueva.</p>
     </div>`;
+}
+"""
+
+# Botón presente en todos los pasos del formulario guiado (bienvenida hasta
+# revisión de métrica propuesta) para que alguien que no quiere seguir
+# pueda salir en el momento, en vez de que el agente quede esperando hasta
+# 30 minutos a que la pestaña, cerrada sin contestar, llegue al timeout.
+# No se usa en plantilla_arranque (ya tiene su propio botón "Salir del
+# agente") ni en plantilla_finalizacion (ya es la pantalla de cierre, con
+# sus propias dos opciones).
+_BOTON_SALIR = '<button type="button" class="boton-salir" onclick="salirDelFlujo()">Salir sin terminar el informe</button>'
+
+_SCRIPT_SALIR = """
+function salirDelFlujo() {
+  if (!confirm('¿Seguro que querés salir sin terminar el informe? Se pierde lo que elegiste en esta pantalla.')) return;
+  fetch('/', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({salir_del_flujo: true})}).then(() => {
+    document.getElementById('tarjeta').innerHTML = `
+      <div class="listo">
+        <div class="check">👋</div>
+        <h1>Listo, no se generó ningún informe.</h1>
+        <p>Ya podés cerrar esta pestaña.</p>
+      </div>`;
+  });
 }
 """
 
@@ -474,9 +505,11 @@ def plantilla_bienvenida(anio_sugerido: str = "") -> str:
       placeholder="ej. 2024" {"value=" + chr(34) + anio_sugerido + chr(34) if anio_sugerido else ""} required>
     <button type="submit">Empezar →</button>
   </form>
+  {_BOTON_SALIR}
 </div>
 <script>
 {_SCRIPT_LISTO}
+{_SCRIPT_SALIR}
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   const anio = document.getElementById('anio').value;
@@ -511,9 +544,11 @@ def plantilla_datos(anio: str, carpeta: str, ficha_url: str = "") -> str:
   <form id="form">
     <button type="submit">Ya guardé los dos archivos ahí →</button>
   </form>
+  {_BOTON_SALIR}
 </div>
 <script>
 {_SCRIPT_LISTO}
+{_SCRIPT_SALIR}
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
@@ -558,9 +593,11 @@ def plantilla_areas(empleo_disponible: bool, seguridad_disponible: bool) -> str:
     {opciones_html}
     <button type="submit">Continuar →</button>
   </form>
+  {_BOTON_SALIR}
 </div>
 <script>
 {_SCRIPT_LISTO}
+{_SCRIPT_SALIR}
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   const areas = Array.from(document.querySelectorAll('input[name=area]:checked')).map(cb => cb.value);
@@ -617,9 +654,11 @@ def plantilla_catalogo(incluir_fies: bool = False, incluir_empleo: bool = False,
     </div>
     <button type="submit">Confirmar selección →</button>
   </form>
+  {_BOTON_SALIR}
 </div>
 <script>
 {_SCRIPT_LISTO}
+{_SCRIPT_SALIR}
 function marcarTodas(valor) {{
   document.querySelectorAll('input[name=m]').forEach(cb => cb.checked = valor);
 }}
@@ -654,9 +693,11 @@ def plantilla_revision(propuesta: str, problema: str, alternativa: str) -> str:
     <textarea id="texto_nueva" placeholder="Escribí tu nueva propuesta..." style="display:none;"></textarea>
     <button type="submit">Confirmar →</button>
   </form>
+  {_BOTON_SALIR}
 </div>
 <script>
 {_SCRIPT_LISTO}
+{_SCRIPT_SALIR}
 document.querySelectorAll('input[name=decision]').forEach(r => {{
   r.addEventListener('change', () => {{
     document.getElementById('texto_nueva').style.display =

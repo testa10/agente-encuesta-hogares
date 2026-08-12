@@ -131,7 +131,9 @@ el agente te va a ir abriendo el navegador con una serie de pantallas
 (bienvenida, dónde poner los datos, qué querés incluir en el informe,
 etc.) — vas completando cada una con clics y algún campo de texto corto,
 y apenas confirmás una, sigue con la siguiente. La terminal de Claude Code
-queda de fondo, trabajando; no hace falta que la mires.
+queda de fondo, trabajando; no hace falta que la mires. Cada una de estas
+pantallas trae, además, un enlace para **salir sin terminar el informe**,
+por si en algún momento decidís no seguir.
 
 Una de esas pantallas te deja elegir, de un catálogo, qué métricas querés
 que tenga tu informe (organizadas por tema, cada una con una explicación

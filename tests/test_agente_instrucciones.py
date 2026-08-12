@@ -76,6 +76,16 @@ def test_la_pantalla_final_ramifica_por_nuevo_informe():
     )
 
 
+def test_maneja_la_salida_anticipada_del_flujo():
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+    assert '"salir_del_flujo"' in texto, (
+        "La instrucción de revisar respuesta.get('salir_del_flujo') después "
+        "de cada mostrar_formulario() desapareció del archivo - sin eso, el "
+        "agente sigue con el flujo (o queda esperando el timeout) aunque la "
+        "persona haya pedido salir explícitamente."
+    )
+
+
 def test_prohibe_correr_bash_en_segundo_plano():
     texto = AGENTE_MD.read_text(encoding="utf-8")
     assert "run_in_background: true" in texto, (
