@@ -12,6 +12,52 @@ import seaborn as sns
 from .analysis import FILTROS_SUSCRIPCION, ResumenConectividad, filtrar_segmento
 
 
+def plot_dumbbell(categorias: list, valores_a: list, valores_b: list, nombre_a: str, nombre_b: str, titulo: str, xlabel: str = "%"):
+    """Dumbbell chart (dos puntos por categoría, conectados por una línea):
+    compara dos series de valores a través de una o más categorías —
+    ej. "quintil 1" vs. "quintil 5", o "comunicación informal" vs.
+    "denuncia formal" para varios tipos de delito a la vez.
+
+    Es la práctica recomendada por la literatura de visualización de
+    datos (Tufte; Knaflic, storytellingwithdata.com; Nightingale/Data
+    Visualization Society) para comparar dos grupos específicos, en vez
+    de una barra con la diferencia ya calculada — conserva los dos
+    valores reales además de la brecha entre ellos, algo que una sola
+    barra de "diferencia" no muestra (ver docs/METODOLOGIA.md, sección 9).
+
+    Plotly no trae este tipo de gráfica nativo (ni Plotly Express ni
+    ninguna librería especializada mejor mantenida vale la pena sumar
+    como dependencia nueva solo para esto) — se arma a mano con
+    `go.Scatter`: una traza de líneas (los segmentos que conectan cada
+    par) y dos trazas de marcadores (una por serie).
+    """
+    line_x, line_y = [], []
+    for categoria, valor_a, valor_b in zip(categorias, valores_a, valores_b):
+        line_x += [valor_a, valor_b, None]
+        line_y += [categoria, categoria, None]
+
+    fig = go.Figure(
+        data=[
+            go.Scatter(x=line_x, y=line_y, mode="lines", line=dict(color="#8b949e", width=2), showlegend=False, hoverinfo="skip"),
+            go.Scatter(x=valores_a, y=categorias, mode="markers", name=nombre_a, marker=dict(color="#d1495b", size=14)),
+            go.Scatter(x=valores_b, y=categorias, mode="markers", name=nombre_b, marker=dict(color="#66a182", size=14)),
+        ]
+    )
+    altura = max(300, 80 * len(categorias) + 150)
+    fig.update_layout(
+        title=titulo,
+        title_x=0.5,
+        xaxis_title=xlabel,
+        yaxis_title="",
+        # Mismo motivo que en plot_penetracion_por_barrio: un scatter no
+        # arranca en cero solo, hay que fijarlo a mano.
+        xaxis_range=[0, max(max(valores_a), max(valores_b)) * 1.15],
+        width=850,
+        height=altura,
+    )
+    return fig
+
+
 # ============================================================================
 # Análisis principal: penetración de TV cable por barrio y nivel económico
 # ============================================================================
@@ -91,6 +137,25 @@ def plot_tabla_barrios(penetracion_por_barrio: pd.DataFrame, nivel: str, titulo:
         ]
     )
     fig.update_layout(title=titulo, width=500, height=600, title_x=0.5, title_y=0.90)
+    return fig
+
+
+def plot_clasificacion_barrios(resumen: pd.DataFrame):
+    """Barras: cantidad de barrios en cada nivel de suscripción. Es un
+    conteo de categorías (no una distribución continua), por eso barras y
+    no boxplot/violin — ver docs/METODOLOGIA.md, sección 9.
+    """
+    fig = px.bar(
+        resumen, x="nivel_suscripcion", y="cantidad_barrios",
+        title="Clasificación de barrios por nivel de suscripción",
+        text="cantidad_barrios",
+        color_discrete_sequence=["#5a7fa6"],
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="Nivel de suscripción", yaxis_title="Cantidad de barrios",
+        width=700, height=450, title_x=0.5, showlegend=False,
+    )
     return fig
 
 

@@ -5,6 +5,7 @@ from encuesta_hogares.analysis import (
     brecha_digital_por_cohorte,
     brecha_digital_por_jefatura,
     brecha_por_grupo,
+    clasificacion_barrios_resumen,
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
     diferencia_entre_categorias,
@@ -38,6 +39,19 @@ def test_resumen_conectividad():
     assert resumen.hogares_sin_cable == 3
     assert resumen.pct_con_cable == 40.0
     assert resumen.pct_sin_cable == 60.0
+
+
+def test_clasificacion_barrios_resumen_cuenta_por_nivel_y_ordena_ordinal():
+    penetracion_por_barrio = pd.DataFrame(
+        {
+            "barrio": ["1", "2", "3", "4"],
+            "nivel_suscripcion": ["4-Alta", "1-Baja", "1-Baja", "3-Media-Alta"],
+        }
+    )
+    resumen = clasificacion_barrios_resumen(penetracion_por_barrio)
+    assert list(resumen["nivel_suscripcion"]) == ["1-Baja", "2-Media-Baja", "3-Media-Alta", "4-Alta"]
+    assert resumen.set_index("nivel_suscripcion").loc["1-Baja", "cantidad_barrios"] == 2
+    assert resumen.set_index("nivel_suscripcion").loc["2-Media-Baja", "cantidad_barrios"] == 0
 
 
 def test_filtrar_segmento():

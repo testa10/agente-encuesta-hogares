@@ -59,6 +59,24 @@ def filtrar_segmento(df: pd.DataFrame, filtro: dict) -> pd.DataFrame:
     return df[(df["tipo_abonado"] == filtro["tipo_abonado"]) & (df["nivel_suscripcion"].isin(filtro["niveles"]))]
 
 
+def clasificacion_barrios_resumen(penetracion_por_barrio: pd.DataFrame) -> pd.DataFrame:
+    """Cantidad de barrios en cada nivel de suscripción (ver
+    preprocessing.compute_penetracion_por_barrio, que arma los cuatro
+    niveles con cuartiles de `pct_abonados`). Se ordena por
+    config.NIVEL_SUSCRIPCION_LABELS, no por cantidad — es una escala
+    ordinal (de menor a mayor suscripción), no un ranking.
+    """
+    resumen = (
+        penetracion_por_barrio["nivel_suscripcion"]
+        .value_counts()
+        .reindex(config.NIVEL_SUSCRIPCION_LABELS, fill_value=0)
+        .rename("cantidad_barrios")
+        .rename_axis("nivel_suscripcion")
+        .reset_index()
+    )
+    return resumen
+
+
 def promedio_edad_por_grupo(segmento: pd.DataFrame) -> pd.Series:
     """Edad promedio por tramo etario, dentro de un segmento ya filtrado."""
     return segmento.groupby("edad_grupo", observed=True)["edad"].mean().round(0)
@@ -148,6 +166,11 @@ def diferencia_entre_categorias(
     `inseguridad_alimentaria_por`). Mismo patrón que `brecha_por_grupo` y
     `condiciones_vivienda_diferencia`, pero para tablas con una sola columna
     de valor por categoría en vez de una columna por grupo.
+
+    Este número no reemplaza la gráfica: armar un `visualization.plot_dumbbell`
+    con los dos valores originales de `tabla` (no solo esta diferencia), para
+    no perder cuánto vale cada categoría por separado — ver
+    docs/METODOLOGIA.md, sección 9.
     """
     tabla = resumen.set_index(columna_grupo)
     return round(tabla.loc[categoria_a, columna_valor] - tabla.loc[categoria_b, columna_valor], 2)
@@ -306,6 +329,10 @@ def diferencia_entre_tablas(
     (ej. comunicación a la policía vs denuncia formal, ambas por tipo de
     delito) — mismo patrón que `condiciones_vivienda_diferencia` y
     `brecha_por_grupo`.
+
+    Este número no reemplaza la gráfica: armar un `visualization.plot_dumbbell`
+    con `tabla_a` y `tabla_b` completas (no solo esta diferencia), una fila
+    por categoría de `columna_indice` — ver docs/METODOLOGIA.md, sección 9.
     """
     a = tabla_a.set_index(columna_indice)[columna_valor]
     b = tabla_b.set_index(columna_indice)[columna_valor]

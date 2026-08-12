@@ -613,12 +613,23 @@ cual). Para las pocas que no, generá primero la función correspondiente
 —siguiendo el mismo criterio de rigor del paso 6— y su test, y recién
 después sumala al script del punto 2.
 
-**Cada gráfica lleva, además de su pregunta guía, una frase corta que
-justifique por qué se eligió ese tipo de gráfica** (barras horizontales,
-heatmap, barras 100% apiladas, etc.), en lenguaje simple y sin cita
-académica — seguí la chuleta de la sección 9 de `docs/METODOLOGIA.md`. Esa
-frase va en la misma celda de markdown que la pregunta guía, no en el
-código.
+**Cada gráfica lleva, además de su pregunta guía, la justificación con
+fundamento de por qué se eligió ese tipo de gráfica** (barras
+horizontales, heatmap, barras 100% apiladas, dumbbell chart, etc.) —
+**citando el principio o la fuente que la respalda** (Cleveland & McGill,
+Tufte, Knaflic, etc., según corresponda) **y la fórmula o definición
+exacta de la métrica cuando la tenga** (una tasa, un índice, una razón).
+El público de este informe es académico y profesional: la cita y la
+fórmula refuerzan que el número tiene sentido, no son ruido para evitar.
+Seguí la chuleta de la sección 9 de `docs/METODOLOGIA.md`, que trae la
+fuente exacta de cada patrón. Esa justificación va en la misma celda de
+markdown que la pregunta guía, no en el código.
+
+**Ninguna métrica queda solo como número o tabla de texto — todas llevan
+su gráfica, sin excepción**, incluidas las que resumen un solo valor o
+una diferencia entre dos grupos específicos (para estas últimas, usá
+`visualization.plot_dumbbell` — ver sección 9 de `docs/METODOLOGIA.md` —
+en vez de un `print()` con la resta ya calculada).
 
 **La última sección del notebook es siempre el "Resumen analítico final"
 (sección 1 de `docs/METODOLOGIA.md`), y tiene que quedar escrita con las

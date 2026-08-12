@@ -118,3 +118,40 @@ def test_plot_adopcion_tablet_ibirapita_no_falla():
     df = pd.DataFrame({"jefe_es_mayor": [True, False], "pct_con_tablet": [25.0, 1.0]})
     fig = viz.plot_adopcion_tablet_ibirapita(df, "jefe es mayor")
     assert fig is not None
+
+
+def test_plot_clasificacion_barrios_no_falla():
+    df = pd.DataFrame(
+        {
+            "nivel_suscripcion": ["1-Baja", "2-Media-Baja", "3-Media-Alta", "4-Alta"],
+            "cantidad_barrios": [10, 9, 9, 10],
+        }
+    )
+    fig = viz.plot_clasificacion_barrios(df)
+    assert fig is not None
+
+
+def test_plot_dumbbell_no_falla_con_una_sola_categoria():
+    fig = viz.plot_dumbbell(
+        categorias=["FIES"],
+        valores_a=[12.0],
+        valores_b=[45.0],
+        nombre_a="Quintil 1 (más pobre)",
+        nombre_b="Quintil 5 (más rico)",
+        titulo="Inseguridad alimentaria: quintil 1 vs. quintil 5",
+    )
+    assert fig is not None
+
+
+def test_plot_dumbbell_ancla_el_eje_x_en_cero_con_varias_categorias():
+    fig = viz.plot_dumbbell(
+        categorias=["Hurto", "Rapiña", "Copamiento"],
+        valores_a=[70.0, 55.0, 40.0],
+        valores_b=[20.0, 35.0, 30.0],
+        nombre_a="Comunicación informal",
+        nombre_b="Denuncia formal",
+        titulo="Brecha entre comunicación informal y denuncia formal",
+    )
+    assert fig.layout.xaxis.range[0] == 0
+    # una línea + dos series de marcadores
+    assert len(fig.data) == 3

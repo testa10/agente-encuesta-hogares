@@ -297,35 +297,53 @@ sus propios cuidados:
    propia si ninguna del catálogo le sirve (ver el paso 5 del archivo del
    agente).
 
-## 9. Justificar el tipo de gráfica elegido, en lenguaje simple
+## 9. Justificar el tipo de gráfica elegido, con fundamento estadístico
 
-Cada gráfica del informe va acompañada de una frase corta (una sola
-oración, sin jerga) que explica por qué se eligió ese tipo de gráfica y no
-otro. No es una cita académica ni un párrafo técnico — es una explicación
-para alguien sin formación en estadística, apoyada en principios de
-visualización de datos bien establecidos (Cleveland & McGill sobre qué
-tan fácil es comparar visualmente distintas formas; Wilke, *Fundamentals
-of Data Visualization*; Stephen Few sobre simplicidad). Usá esta chuleta
-como referencia rápida, adaptando la frase al caso concreto:
+**Cada gráfica del informe va acompañada de una justificación con
+fundamento, no solo una frase intuitiva.** El público de este informe es
+académico y profesional — "no técnico" no significa "sin formación": es
+gente que puede leer una cita o una fórmula y que la va a valorar como
+señal de que los números tienen sentido, no como ruido innecesario. Por
+eso, a diferencia de un criterio anterior de este documento (ya
+descartado), acá **sí correspondía citar la fuente y, cuando la métrica
+lo amerite, mostrar la fórmula o definición exacta** — no ocultarla.
+
+Cada celda de markdown con una métrica lleva, además de la pregunta guía:
+
+1. **Por qué ese tipo de gráfica** — con el principio de visualización que
+   lo respalda y, cuando aplique, el autor/fuente (Cleveland & McGill
+   sobre comparación visual de formas; Tufte sobre slopegraphs; Knaflic,
+   *Storytelling with Data*; Few sobre simplicidad — ver la chuleta más
+   abajo con la cita concreta de cada patrón).
+2. **La fórmula o definición exacta**, cuando la métrica la tenga (ej. una
+   tasa, un índice compuesto, una razón) — no alcanza con describirla en
+   palabras si existe una notación estándar. Ejemplo: "Razón de
+   dependencia demográfica = (población de 0 a 14 + población de 65 y
+   más) / población de 15 a 64 × 100".
+
+**Esto aplica a todas las métricas, sin excepción — no hay métrica
+"demasiado simple" como para saltearse la gráfica o la justificación.**
+Un solo número o una diferencia entre dos grupos siguen necesitando su
+gráfica (ver la entrada de "dumbbell chart" más abajo) y su fundamento,
+igual que cualquier otra.
+
+Chuleta de referencia, con la fuente de cada patrón:
 
 - **Barras horizontales** (en vez de verticales): cuando las categorías
   tienen nombres largos (barrios, condiciones de vivienda) — se leen sin
-  tener que inclinar la cabeza.
-  > *"Usamos barras horizontales porque los nombres de los barrios son
-  > largos y así se leen de corrido."*
+  inclinar la cabeza. Fundamento: Cleveland & McGill (1984), sobre
+  precisión en la percepción de posición vs. longitud en distintas
+  orientaciones.
 - **Barras agrupadas** (en vez de una sola barra con todo mezclado): para
-  comparar el mismo dato entre 2 o más grupos lado a lado.
-  > *"Ponemos las barras de 'con' y 'sin' una al lado de la otra para que
-  > la comparación sea directa."*
+  comparar el mismo dato entre 2 o más grupos lado a lado. Fundamento:
+  principio de comparación directa (Few, *Show Me the Numbers*).
 - **Nunca gráfico de torta con más de 3-4 categorías**: el ojo humano
-  compara largos y posiciones mucho mejor que ángulos — con muchas
-  porciones, un gráfico de torta se vuelve difícil de leer.
+  compara longitudes y posiciones con mayor precisión que ángulos
+  (Cleveland & McGill, 1984) — con muchas porciones, un gráfico de torta
+  se vuelve difícil de leer con precisión.
 - **Heatmap (mapa de calor)**: cuando se cruzan dos variables categóricas
-  y lo que importa es ver de un vistazo dónde se concentran los valores
-  altos y bajos, no leer cifras exactas.
-  > *"Usamos un mapa de calor porque cruza dos categorías a la vez, y los
-  > colores muestran de un vistazo dónde se concentran los valores más
-  > altos."*
+  y lo que importa es la magnitud relativa de la concentración, no el
+  valor exacto de cada celda.
 - **Gráfico de puntos/dispersión ordenado**: cuando hay muchas categorías
   (ej. 62 barrios) y lo que importa es el orden y la distancia entre
   ellas, no compararlas de a pares.
@@ -335,7 +353,21 @@ como referencia rápida, adaptando la frase al caso concreto:
 - **Barras de diferencia** (puntos porcentuales, no barras apiladas):
   cuando se comparan varios grupos que NO suman 100% entre sí — apilarlos
   daría una impresión de proporción que no existe (ver sección 2).
+- **Dumbbell chart (o "barbell"/slopegraph)** — dos puntos por categoría,
+  conectados por una línea, en vez de una barra con la resta ya calculada:
+  para cualquier métrica que compare **dos grupos específicos** dentro de
+  una variable más amplia (ej. "quintil 1 vs. quintil 5", "comunicación
+  informal vs. denuncia formal"). Es la práctica recomendada en la
+  literatura de visualización por sobre una barra de diferencia simple,
+  porque conserva los dos valores reales además de la brecha entre ellos
+  — una barra de diferencia sola oculta si la brecha viene de un valor
+  alto contra uno bajo, o de dos valores intermedios cercanos. Fuente:
+  Tufte (slopegraphs, años 80); Knaflic, *storytellingwithdata.com*,
+  "More on slopegraphs" (2014); Nightingale/Data Visualization Society,
+  "Beyond the Bar: Alternative Methods for Visualizing Two Points of
+  Change". Implementación: `visualization.plot_dumbbell`.
 
 Si una gráfica no encaja claramente en ninguno de estos patrones, aplicá
-el mismo criterio general igual: preferí siempre la forma que un lector
-sin formación técnica entienda más rápido, y decilo en una frase.
+el mismo criterio general: identificá el principio de percepción visual
+o de rigor estadístico que está en juego, y citalo — nunca elijas el tipo
+de gráfica "porque sí" o "porque se ve bien".
