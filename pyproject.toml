@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+# >=77.0.3: version minima con soporte real para "license" como expresion
+# SPDX y "license-files" (PEP 639) - verificado que 68.0 falla al instalar
+# con este pyproject.toml si alguna vez se instala sin aislamiento de build.
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +10,8 @@ name = "encuesta-hogares-agente"
 version = "0.1.0"
 description = "Agente y paquete reutilizable para analizar la penetracion tecnologica (TV cable, internet, PC, streaming) en hogares de Montevideo, a partir de la Encuesta Continua de Hogares (ECH, INE Uruguay), para cualquier año de datos disponible."
 readme = "README.md"
+license = "PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 dependencies = [
     "pandas>=2.0",

@@ -244,3 +244,11 @@ agente-encuesta-hogares/
 
 Instituto Nacional de Estadística (INE) - Encuesta Continua de Hogares (ECH).
 https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares
+
+## Licencia
+
+Este proyecto se distribuye bajo [PolyForm Noncommercial 1.0.0](LICENSE):
+se puede usar, copiar, modificar y compartir libremente para fines
+académicos, educativos, de investigación y cualquier otro uso no
+comercial — no para fines de lucro. Ver el archivo [`LICENSE`](LICENSE)
+para el texto completo.
