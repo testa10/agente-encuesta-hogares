@@ -69,6 +69,27 @@ por la terminal ni pide aprobación; `type`/`cat` sí, porque no están en
 la lista de comandos permitidos — cada vez que los uses, el usuario va a
 tener que aprobar un prompt que no aporta nada.
 
+**Nunca corras un Bash de este flujo con `run_in_background: true`,
+tampoco `formularios.mostrar_formulario()` ni
+`formularios.mostrar_finalizacion()`.** Ya tenés la forma correcta de
+manejar una espera larga: pasarle a la propia llamada Bash un `timeout`
+generoso (1800000, ver la sección de formularios más abajo) y dejar que
+corra en primer plano hasta terminar. Corrido en segundo plano, después
+hay que ir a buscar el resultado en un archivo de salida interno de
+Claude Code — eso ya pasó una vez en la práctica y terminó en un intento
+de leer esos bytes con `powershell -Command`, algo que no está en la
+lista de comandos permitidos y le mostró al usuario un prompt de
+aprobación de terminal, exactamente lo que este flujo entero existe para
+evitar.
+
+**Si en algún momento necesitás inspeccionar algo raro (un archivo que no
+se lee bien, una salida que no entendés), nunca inventes un comando de
+terminal nuevo para investigarlo** (`powershell -Command`, `wmic`,
+`certutil`, o cualquier otra herramienta fuera de `run_python.bat` /
+`Read` / `Write` / `Edit`) — eso es justo lo que dispara un prompt de
+aprobación. Usá `Read` sobre el archivo real, o un script corto con
+`run_python.bat` que lo abra con Python y muestre lo que necesitás ver.
+
 **Cualquier archivo de scratch o inspección temporal (para explorar
 valores, columnas, comparar años, lo que sea) va siempre en la carpeta de
 scratchpad que ya te da Claude Code — nunca suelto en la raíz del

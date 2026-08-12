@@ -74,3 +74,14 @@ def test_la_pantalla_final_ramifica_por_nuevo_informe():
         "mostrar_finalizacion() ('terminar' vs 'nuevo_informe', volviendo "
         "al paso 1) desapareció del archivo."
     )
+
+
+def test_prohibe_correr_bash_en_segundo_plano():
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+    assert "run_in_background: true" in texto, (
+        "La regla de no correr Bash con run_in_background desapareció del "
+        "archivo. Nace de un incidente real: correr mostrar_finalizacion() "
+        "en segundo plano llevó a inventar un comando powershell no "
+        "permitido para leer el resultado, mostrándole al usuario un "
+        "prompt de aprobación de terminal."
+    )

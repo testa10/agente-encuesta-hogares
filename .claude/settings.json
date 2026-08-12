@@ -38,6 +38,15 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-notebook-sin-duplicados.cjs\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-no-segundo-plano.cjs\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
