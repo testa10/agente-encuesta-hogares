@@ -12,6 +12,7 @@
       "Bash(cmd //c start *)",
       "Bash(cmd /c start *)",
       "Bash(grep *)",
+      "Bash(*instalar.bat*)",
       "Write",
       "Edit"
     ],

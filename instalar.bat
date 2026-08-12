@@ -17,7 +17,7 @@ if errorlevel 1 (
     echo        instalar.bat, para continuar donde quedaste.
     echo.
     start https://nodejs.org
-    pause
+    if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause
     exit /b 1
 )
 echo [1/4] Node.js encontrado: OK
@@ -31,7 +31,7 @@ if errorlevel 1 (
         echo.
         echo No se pudo instalar Claude Code. Revisa tu conexion a
         echo internet y volve a intentar.
-        pause
+        if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause
         exit /b 1
     )
 ) else (
@@ -54,7 +54,7 @@ if not exist "!PYEXE!" (
         echo No se encontro una instalacion de Python/Anaconda utilizable.
         echo Instala Anaconda desde https://www.anaconda.com/download y
         echo volve a correr este instalador.
-        pause
+        if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause
         exit /b 1
     )
 )
@@ -64,7 +64,7 @@ echo [3/4] Instalando las dependencias de Python del proyecto...
 if errorlevel 1 (
     echo.
     echo Hubo un problema instalando las dependencias de Python.
-    pause
+    if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause
     exit /b 1
 )
 
@@ -88,4 +88,4 @@ echo      misma ventana.
 echo   2. Escribi: claude
 echo   3. Pedile el analisis que necesites, en tus palabras.
 echo.
-pause
+if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause

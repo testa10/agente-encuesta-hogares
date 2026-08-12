@@ -39,9 +39,23 @@ completa, cada comando te va a pedir aprobación de nuevo, rompiendo la
 idea de que el usuario nunca vea la terminal.
 
 Si `run_python.bat` falla con un error de que no encuentra
-`.claude/python_path.txt`, no lo generes vos ni intentes adivinar un
-reemplazo: decile al usuario en un mensaje corto que corra `instalar.bat`
-(está en la raíz del proyecto) y esperá — no sigas sin eso.
+`.claude/python_path.txt`, no lo generes vos a mano ni intentes adivinar
+un reemplazo: corré vos mismo `instalar.bat` (está en la raíz del
+proyecto) por Bash — es seguro e idempotente, solo instala o actualiza lo
+que falte, nunca borra nada. **Nunca le preguntes al usuario cómo
+prefiere que se corra** (ni por chat ni por ningún otro medio): eso es
+justo el tipo de interrupción de terminal que este proyecto existe para
+evitar, y una persona sin conocimientos técnicos no va a saber qué
+contestar. Invocalo así, para que no se quede esperando un Enter que
+nunca va a llegar:
+
+```bash
+ENCUESTA_HOGARES_NONINTERACTIVE=1 ./instalar.bat
+```
+
+Si aun así falla (ej. no hay conexión a internet para instalar algo),
+recién ahí mostrale al usuario un mensaje corto explicando qué faltó y
+esperá — pero eso es la excepción, no el primer paso.
 
 **Regla de alcance general, válida en cualquier momento de la
 conversación, no solo al principio: nunca corras una "prueba de humo"
