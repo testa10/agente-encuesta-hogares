@@ -305,6 +305,26 @@ def tasa_mensual_promedio_por(
     return resumen.rename(columns={"pct": "pct_promedio"})
 
 
+def composicion_categorica_por_mes_promedio(
+    df: pd.DataFrame, columna_grupo: str, columna_categoria: str, columna_ponderador: str = "ponderador_empleo"
+) -> pd.DataFrame:
+    """% ponderado de cada categoría de `columna_categoria` (una variable con
+    más de dos valores posibles, ej. situación ocupacional:
+    patrón/cuentapropista/asalariado), dentro de cada `columna_grupo`,
+    calculado mes a mes y promediado entre los 12 meses — mismo patrón que
+    `tasas_actividad_empleo_desempleo_por` y `tasa_mensual_promedio_por`,
+    generalizado a una variable categórica de más de dos valores en vez de
+    un booleano. Cada fila (grupo) del resultado suma ~100%, apta para
+    graficar con barras 100% apiladas.
+    """
+    df = df.copy()
+    total_pond_mes_grupo = df.groupby(["mes", columna_grupo])[columna_ponderador].transform("sum")
+    df["_pct_pond"] = df[columna_ponderador] / total_pond_mes_grupo * 100
+    por_mes = df.groupby(["mes", columna_grupo, columna_categoria])["_pct_pond"].sum().reset_index()
+    resumen = por_mes.groupby([columna_grupo, columna_categoria])["_pct_pond"].mean().round(2)
+    return resumen.unstack(columna_categoria).fillna(0.0)
+
+
 def pct_ponderado_por(df: pd.DataFrame, columna_grupo: str, columna_positivo: str, columna_ponderador: str) -> pd.DataFrame:
     """% ponderado de `columna_positivo` (booleana), agrupado por
     `columna_grupo` — sin promedio mensual, a diferencia de

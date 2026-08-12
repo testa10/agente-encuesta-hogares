@@ -6,6 +6,7 @@ from encuesta_hogares.analysis import (
     brecha_digital_por_jefatura,
     brecha_por_grupo,
     clasificacion_barrios_resumen,
+    composicion_categorica_por_mes_promedio,
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
     diferencia_entre_categorias,
@@ -252,6 +253,21 @@ def test_diferencia_entre_categorias_calcula_diferencia_en_puntos():
     )
     diferencia = diferencia_entre_categorias(resumen, "quintil_ingreso", 1, 5, "pct_inseguridad")
     assert diferencia == 40.0
+
+
+def test_composicion_categorica_por_mes_promedio_promedia_meses_y_no_hace_pool():
+    df = pd.DataFrame(
+        {
+            "mes": [1, 1, 1, 1, 2, 2, 2, 2],
+            "sector_formalidad": ["Formal", "Formal", "Informal", "Informal"] * 2,
+            "situacion_ocupacional": ["Asalariado", "Cuentapropista", "Asalariado", "Cuentapropista"] * 2,
+            "ponderador_empleo": [60.0, 40.0, 30.0, 70.0, 60.0, 40.0, 30.0, 70.0],
+        }
+    )
+    tabla = composicion_categorica_por_mes_promedio(df, "sector_formalidad", "situacion_ocupacional")
+    assert tabla.loc["Formal", "Asalariado"] == 60.0
+    assert tabla.loc["Formal", "Cuentapropista"] == 40.0
+    assert tabla.loc["Informal", "Cuentapropista"] == 70.0
 
 
 def test_pct_ponderado_por_calcula_porcentaje_ponderado_no_conteo_de_filas():

@@ -7,10 +7,12 @@ data/**/*.xlsx
 data/**/*.csv
 data/**/*.pdf
 
-# Notebooks generados por el agente para un año de datos específico. El
-# repositorio se distribuye sin notebooks ejecutados; cada usuario genera
-# el suyo a partir de sus propios datos.
+# Notebooks generados por el agente para un año de datos específico, y sus
+# formatos derivados (HTML, PDF). El repositorio se distribuye sin informes
+# ya generados; cada usuario genera el suyo a partir de sus propios datos.
 notebooks/*.ipynb
+notebooks/*.html
+notebooks/*.pdf
 
 # Ruta al Python de esta máquina en particular (la genera instalar.bat) -
 # distinta en cada computadora, nunca se comparte entre usuarios.
