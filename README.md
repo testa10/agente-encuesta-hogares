@@ -1,230 +1,229 @@
 # Agente de Análisis: Encuesta Continua de Hogares (ECH, INE Uruguay)
 
-Este proyecto le permite a un usuario técnico (con conocimientos
-estadísticos) o no técnico generar un informe de la Encuesta Continua de
-Hogares del INE Uruguay, repitiéndolo cada vez que consiga un nuevo año
-de datos — sin tener que volver a explicar desde cero cómo se hace, ni
-programar. El catálogo se elige en dos pasos: primero qué **bloques
-temáticos** incluir (Brecha Digital, Hogares, Territorio, Vivienda, y —
-cuando el año elegido tiene esos datos disponibles — Seguridad
-Alimentaria, Empleo, Seguridad y Victimización — ninguno viene elegido de
-antemano), y después qué métricas puntuales de cada bloque.
+Este proyecto permite generar un informe de la Encuesta Continua de
+Hogares del INE Uruguay, tanto a usuarios técnicos (con conocimientos
+estadísticos) como a usuarios sin experiencia en programación, y
+reproducirlo cada vez que se disponga de un nuevo año de datos, sin
+necesidad de reconfigurar el análisis desde cero. El catálogo se define
+en dos pasos: primero se seleccionan los **bloques temáticos** a incluir
+(Brecha Digital, Hogares, Territorio, Vivienda y, cuando el año elegido
+cuenta con esos datos, Seguridad Alimentaria, Empleo, y Seguridad y
+Victimización — ninguno se incluye por defecto), y luego las métricas
+puntuales dentro de cada bloque.
 
-En vez de un análisis fijo, este proyecto incluye un **agente**: un asistente
-de inteligencia artificial (Claude) que hace el trabajo — carga los datos,
-arma las gráficas, redacta las conclusiones, verifica que todo esté bien —
-y te va guiando con **formularios visuales que se abren solos en tu
-navegador** (nada de comandos ni pantallas negras): elegís el año, marcás
-qué métricas te interesan de un catálogo, y confirmás con un clic. También
-podés proponer una métrica propia que no esté en el catálogo, y el agente
-te va a avisar si encuentra algún problema estadístico antes de
-construirla, ofreciéndote una alternativa.
+El análisis lo ejecuta un **agente**: un asistente de inteligencia
+artificial (Claude) que carga los datos, construye las gráficas, redacta
+las conclusiones y verifica la consistencia del resultado, guiando todo
+el proceso mediante **formularios visuales que se abren automáticamente
+en el navegador** — sin comandos ni ventanas de terminal. El usuario
+selecciona el año, marca las métricas de interés en el catálogo y
+confirma con un clic. También es posible proponer una métrica propia que
+no figure en el catálogo; el agente advierte si detecta un problema
+metodológico antes de construirla y ofrece una alternativa válida.
 
-No hace falta que entiendas el resto de este documento técnicamente — está
-escrito para que lo sigas paso a paso, incluso si nunca programaste.
+El resto de este documento está pensado para seguirse paso a paso, sin
+necesidad de conocimientos técnicos previos.
 
 ---
 
-## Lo que vas a necesitar (una sola vez)
+## Requisitos previos (instalación única)
 
-Estos son programas que se instalan una única vez en tu computadora. Si ya
-tenés alguno instalado, saltealo.
+Los siguientes programas se instalan una sola vez. Si ya cuenta con
+alguno instalado, puede omitir ese paso.
 
-| Programa | Para qué sirve | Dónde conseguirlo |
+| Programa | Función | Dónde obtenerlo |
 |---|---|---|
-| **Git** | Para descargar y actualizar este proyecto | https://git-scm.com/downloads |
-| **Anaconda** | Trae Python y las librerías de análisis de datos | https://www.anaconda.com/download |
-| **Visual Studio Code** | El editor donde vas a abrir el proyecto | https://code.visualstudio.com/ |
-| **Node.js** | Lo necesita Claude Code para funcionar | https://nodejs.org (versión LTS) |
-| **Claude Code** | La herramienta que ejecuta al agente | https://claude.com/claude-code (instrucciones de instalación ahí mismo) |
-| **7-Zip** | Para abrir el archivo comprimido (.RAR) que baja el INE | https://www.7-zip.org/ |
+| **Git** | Descargar y actualizar este proyecto | https://git-scm.com/downloads |
+| **Anaconda** | Incluye Python y las librerías de análisis de datos | https://www.anaconda.com/download |
+| **Visual Studio Code** | Editor para abrir el proyecto | https://code.visualstudio.com/ |
+| **Node.js** | Requerido por Claude Code | https://nodejs.org (versión LTS) |
+| **Claude Code** | Herramienta que ejecuta al agente | https://claude.com/claude-code (instrucciones de instalación incluidas) |
+| **7-Zip** | Para descomprimir el archivo `.RAR` que distribuye el INE | https://www.7-zip.org/ |
 
-Instalá cada uno con las opciones por defecto del instalador — no hace
-falta configurar nada especial.
+Instale cada programa con las opciones por defecto del instalador; no se
+requiere configuración adicional.
 
 ---
 
-## Paso 1: Descargar este proyecto a tu computadora
+## Paso 1: Descargar el proyecto
 
-Abrí una terminal (en Windows: buscá "Git Bash" en el menú de inicio, si lo
-instalaste junto con Git) y escribí:
+Abra una terminal (en Windows: busque "Git Bash" en el menú de inicio, si
+lo instaló junto con Git) y ejecute:
 
 ```bash
 git clone https://github.com/testa10/agente-encuesta-hogares.git
 cd agente-encuesta-hogares
 ```
 
-Esto crea una carpeta `agente-encuesta-hogares` con todo el proyecto adentro.
+Esto crea una carpeta `agente-encuesta-hogares` con el contenido completo
+del proyecto.
 
-## Paso 2: Instalar todo lo que falta (Node.js, Claude Code y las
-dependencias de Python)
+## Paso 2: Instalar las dependencias (Node.js, Claude Code y Python)
 
-La forma más simple: andá a la carpeta `agente-encuesta-hogares` en el
-Explorador de Windows y hacé **doble clic en `instalar.bat`**. Se abre una
-ventana negra que revisa qué te falta y lo instala solo. Si te pide
-instalar Node.js, va a abrir la página de descarga en el navegador — instalá
-ese programa con las opciones por defecto y después volvé a hacer doble
-clic en `instalar.bat` para que continúe donde quedó.
+La forma más simple es hacer **doble clic en `instalar.bat`**, dentro de
+la carpeta `agente-encuesta-hogares`. Se abre una ventana que verifica
+qué falta e instala automáticamente lo necesario. Si solicita instalar
+Node.js, abrirá la página de descarga en el navegador; instálelo con las
+opciones por defecto y vuelva a ejecutar `instalar.bat` para continuar
+donde quedó.
 
-Si preferís hacerlo a mano (o el `.bat` no te funciona por algún motivo),
-desde una terminal, dentro de la carpeta del proyecto:
+Alternativamente, desde una terminal, dentro de la carpeta del proyecto:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-Y asegurate de tener [Node.js](https://nodejs.org) y Claude Code
-instalados (`npm install -g @anthropic-ai/claude-code`) — ver la tabla de
-prerrequisitos más arriba.
+Y verifique tener instalados [Node.js](https://nodejs.org) y Claude Code
+(`npm install -g @anthropic-ai/claude-code`) — ver la tabla de
+requisitos previos.
 
-Esto instala las librerías de Python que el análisis necesita (para leer los
-datos, hacer las gráficas, etc.). Puede tardar uno o dos minutos.
+Este paso instala las librerías de Python necesarias para el análisis
+(lectura de datos, generación de gráficas, etc.). Puede demorar uno o dos
+minutos.
 
-## Paso 3: Conseguir los datos del año que querés analizar
+## Paso 3: Obtener los datos del año a analizar
 
-En resumen: entrá al catálogo del INE, aceptá sus términos de uso, bajá la
-base del año que te interesa, y copiá los archivos a la carpeta `data/`
-de este proyecto. El formato exacto cambia según el año (hasta 2023, dos
-archivos `.sav`; desde 2024, un único CSV combinado) — el proyecto
-soporta los dos automáticamente.
+En resumen: acceda al catálogo del INE, acepte sus términos de uso,
+descargue la base del año de interés, y copie los archivos a la carpeta
+`data/` del proyecto. El formato exacto varía según el año (hasta 2023,
+dos archivos `.sav`; desde 2024, un único CSV combinado); el proyecto
+admite ambos formatos automáticamente.
 
-La guía completa, paso a paso y con capturas de dónde hacer clic, está en
-[`data/README.md`](data/README.md) — seguila de ahí, es más detallada que
-este resumen. Si preferís, también le podés pedir directamente al agente
-que te guíe mientras lo hacés (ver Paso 5).
+La guía completa, con el detalle de cada paso, está en
+[`data/README.md`](data/README.md) — se recomienda seguirla, ya que
+amplía este resumen. También es posible pedirle al agente que guíe este
+proceso directamente (ver Paso 5).
 
-> Estos archivos de datos **nunca se suben a GitHub** — son de uso personal
-> según las condiciones del INE. El proyecto ya está configurado para
-> ignorarlos automáticamente.
+> Estos archivos de datos **nunca se suben a GitHub**: su uso es personal,
+> conforme a las condiciones del INE. El proyecto ya está configurado
+> para excluirlos automáticamente.
 
 ## Paso 4: Abrir el proyecto en Claude Code
 
-La forma más simple: hacé doble clic en **`abrir_agente.bat`** (está en esta
-misma carpeta). Se abre una terminal ya parada en el proyecto y lanza
-Claude Code directo — listo para el Paso 5.
+La forma más simple es hacer doble clic en **`abrir_agente.bat`**, en la
+raíz del proyecto. Se abre una terminal ya ubicada en la carpeta
+correspondiente y lanza Claude Code directamente — listo para continuar
+con el Paso 5.
 
-Si preferís hacerlo a mano, o vas a editar algo del proyecto de paso:
+Alternativamente, para hacerlo manualmente o si se va a editar el
+proyecto:
 
-1. Abrí Visual Studio Code y abrí la carpeta `agente-encuesta-hogares`
+1. Abra Visual Studio Code y abra la carpeta `agente-encuesta-hogares`
    (`Archivo > Abrir Carpeta...`).
-2. Abrí una terminal integrada (`Terminal > Nueva Terminal`, o `` Ctrl+` ``).
-3. Escribí `claude` y presioná Enter. Esto abre Claude Code, ya ubicado en
-   la carpeta de tu proyecto.
+2. Abra una terminal integrada (`Terminal > Nueva Terminal`, o `` Ctrl+` ``).
+3. Escriba `claude` y presione Enter. Esto abre Claude Code, ya ubicado en
+   la carpeta del proyecto.
 
-## Paso 5: Pedirle al agente que haga el análisis
+## Paso 5: Solicitar el análisis al agente
 
-En la conversación con Claude Code, escribí simplemente lo que querés,
-en tus propias palabras. Por ejemplo:
+En la conversación con Claude Code, describa lo que necesita con sus
+propias palabras. Por ejemplo:
 
 > Quiero hacer el análisis de la Encuesta de Hogares con los datos de 2024
 > que puse en la carpeta data/
 
-Claude va a reconocer que este pedido corresponde al agente de este
-proyecto y va a empezar a trabajar con ese método. Si en algún momento no
-se activa solo, podés pedirlo de forma explícita:
+Claude reconocerá que la solicitud corresponde al agente de este
+proyecto y comenzará a trabajar. Si en algún momento no se activa
+automáticamente, puede solicitarlo de forma explícita:
 
 > Usá el agente encuesta-hogares para analizar los datos de 2024
 
-## Paso 6: Completar los formularios que te va mostrando
+## Paso 6: Completar los formularios
 
-A partir de acá, **no hace falta que escribas nada más en la terminal**:
-el agente te va a ir abriendo el navegador con una serie de pantallas
-(bienvenida, dónde poner los datos, qué querés incluir en el informe,
-etc.) — vas completando cada una con clics y algún campo de texto corto,
-y apenas confirmás una, sigue con la siguiente. La terminal de Claude Code
-queda de fondo, trabajando; no hace falta que la mires. Cada una de estas
-pantallas trae, además, un enlace para **salir sin terminar el informe**,
-por si en algún momento decidís no seguir.
+A partir de este punto, **no es necesario escribir nada más en la
+terminal**: el agente abrirá en el navegador una serie de pantallas
+(bienvenida, ubicación de los datos, contenido del informe, etc.), que se
+completan con clics y algún campo de texto breve; al confirmar cada una,
+continúa automáticamente con la siguiente. La terminal de Claude Code
+permanece en segundo plano; no requiere supervisión. Cada pantalla
+incluye, además, un enlace para **salir sin terminar el informe**, por si
+se decide no continuar.
 
-Primero vas a ver una pantalla para elegir qué **bloques temáticos**
-querés en el informe — Brecha Digital, Hogares, Territorio, Vivienda, y
-(si hay datos para el año elegido) Seguridad Alimentaria, Empleo,
-Seguridad y Victimización. Ninguno viene marcado de antemano, ni siquiera
-Brecha Digital: elegís los que te interesen, uno, varios o todos.
+La primera pantalla permite elegir qué **bloques temáticos** incluir en
+el informe — Brecha Digital, Hogares, Territorio, Vivienda y, si hay
+datos disponibles para el año elegido, Seguridad Alimentaria, Empleo, y
+Seguridad y Victimización. Ninguno viene preseleccionado, ni siquiera
+Brecha Digital: se elige uno, varios, o todos.
 
-Después de eso, otra pantalla te deja elegir, de un catálogo, qué
-métricas puntuales querés dentro de los bloques que ya elegiste
-(organizadas por tema, cada una con una explicación breve), y también
-proponer una que no esté en la lista si se te ocurre algo puntual. Si el
-agente encuentra un problema con algo que propusiste (por ejemplo, un
-cruce que no se puede hacer de forma confiable con los datos
-disponibles), te lo va a mostrar en otra pantalla, con una alternativa
-que sí funcione — ahí elegís si la aceptás, proponés otra cosa, o la
-dejás afuera del informe.
+A continuación, otra pantalla presenta el catálogo de métricas puntuales
+disponibles dentro de los bloques elegidos (organizadas por tema, cada
+una con una breve explicación), y permite proponer una métrica adicional
+que no figure en la lista. Si el agente detecta un problema con algo
+propuesto (por ejemplo, un cruce que no puede calcularse de forma
+confiable con los datos disponibles), lo indicará en otra pantalla junto
+con una alternativa válida, para aceptarla, proponer otra, o descartar
+esa métrica del informe.
 
-**Después de confirmar el catálogo, esperá — un informe tarda bastante.**
-No es un cálculo instantáneo: el agente arma y revisa una por una todas
-las gráficas que elegiste. Como referencia real (catálogo completo, las
-44 métricas de los siete bloques): **alrededor de 25 a 30 minutos**.
-Eligiendo menos bloques o menos métricas tarda menos, más o menos en
-proporción a cuántas elegiste. Esto también consume una porción real de
-tu uso de Claude Code (en la corrida de referencia, el equivalente a unos 95
-llamados a herramientas) — no es un error ni algo colgado si la terminal
-sigue trabajando un buen rato sin que pase nada nuevo en pantalla.
+**Tras confirmar el catálogo, el proceso demora un tiempo considerable.**
+No es un cálculo instantáneo: el agente construye y revisa cada gráfica
+seleccionada, una por una. Como referencia (catálogo completo, las 44
+métricas de los siete bloques): **entre 25 y 30 minutos**. Seleccionar
+menos bloques o menos métricas reduce el tiempo proporcionalmente. Este
+proceso también consume una parte del uso disponible de Claude Code (en
+la corrida de referencia, el equivalente a unos 95 llamados a
+herramientas); que la terminal permanezca sin novedades visibles durante
+un rato prolongado es esperable, no indica un error.
 
 ## Paso 7: Revisar los resultados
 
-Vas a encontrar tres archivos nuevos en `notebooks/`, todos con el año
-que elegiste en el nombre (ej. `Informe_ECH_2024.ipynb/.html/.pdf` — si
-volvés a correr el mismo año, el informe anterior no se pierde, queda
-guardado como "(anterior)"):
-- El notebook, con todo el análisis y el código incluido — para quien
-  quiera ver el detalle.
+Se generan tres archivos nuevos en `notebooks/`, todos identificados con
+el año elegido (por ejemplo, `Informe_ECH_2024.ipynb/.html/.pdf`; si se
+repite la corrida para el mismo año, el informe anterior no se pierde,
+queda guardado con el sufijo "(anterior)"):
+
+- El notebook, con el análisis completo y el código incluido, para quien
+  desee revisar el detalle técnico.
 - Un informe en HTML, sin código, pensado para compartir con cualquier
   persona.
 - Un **informe en PDF**, con formato de documento profesional (portada,
-  tipografía cuidada, gráficas ajustadas a la hoja) — el agente siempre
-  genera los dos formatos, y además copia el PDF automáticamente a tu
-  **carpeta de Descargas**: no hace falta que lo busques dentro del
-  proyecto, aparece ahí solo, como cualquier archivo que descargarías
-  normalmente.
+  tipografía cuidada, gráficas ajustadas a la página). El agente genera
+  siempre ambos formatos, y copia el PDF automáticamente a la **carpeta
+  de Descargas** — no es necesario buscarlo dentro del proyecto.
 
-La última pantalla del agente ya trae un botón para abrir cada formato
-directamente, además de un botón para **crear un nuevo informe** (otro
-año, u otra selección de métricas) sin tener que cerrar la ventana ni
-volver a hacer doble clic en `abrir_agente.bat` — vuelve directo al primer
-formulario, en la misma conversación.
+La pantalla final incluye un botón para abrir cada formato directamente,
+además de un botón para **crear un nuevo informe** (otro año, u otra
+selección de métricas) sin cerrar la ventana ni volver a ejecutar
+`abrir_agente.bat` — retoma directamente el primer formulario, dentro de
+la misma conversación.
 
-Con eso el trabajo del agente termina — el análisis queda guardado en tu
-propia computadora, nada se sube a ningún lado automáticamente ni el
-agente te lo va a ofrecer.
+Con esto concluye el trabajo del agente: el análisis queda guardado
+localmente; nada se publica automáticamente ni el agente ofrecerá
+hacerlo.
 
 ---
 
 ## Preguntas frecuentes
 
-**¿Necesito saber programar?**
-No. Toda la interacción es a través de formularios en el navegador, en
-español — nunca ves código ni comandos. El código existe, pero no
-necesitás tocarlo ni entenderlo.
+**¿Es necesario saber programar?**
+No. Toda la interacción ocurre mediante formularios en el navegador, en
+español, sin exposición a código ni comandos. El código existe, pero no
+es necesario modificarlo ni comprenderlo para usar el agente.
 
-**¿Qué pasa si el INE cambió el formato o los nombres de las preguntas de la
-encuesta entre 2019 y el año que estoy usando?**
-El agente lo detecta automáticamente al revisar los datos nuevos, y te va a
-avisar y pedir confirmación antes de asumir nada — nunca adivina en
+**¿Qué ocurre si el INE modificó el formato o los nombres de las
+preguntas de la encuesta entre 2019 y el año utilizado?**
+El agente lo detecta automáticamente al validar los datos nuevos, y
+solicita confirmación antes de asumir cualquier cambio — nunca infiere en
 silencio.
 
-**¿Puedo correr el análisis de más de un año y compararlos?**
-Sí — pedíselo al agente directamente, por ejemplo "quiero comparar el
-análisis de 2019 con el de 2024".
+**¿Es posible analizar más de un año y compararlos?**
+Sí — puede solicitarse directamente al agente, por ejemplo: "quiero
+comparar el análisis de 2019 con el de 2024".
 
-**¿Dónde está la lógica de "qué está bien y qué está mal" que sigue el
-agente?**
-En [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md) — es el documento con todas
-las reglas de rigor estadístico y claridad que se fueron descubriendo
-durante la construcción del análisis original. Si te interesa el detalle
-técnico, está todo ahí.
+**¿Dónde se documentan los criterios de rigor que sigue el agente?**
+En [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md), que reúne las reglas de
+rigor estadístico y claridad definidas durante la construcción del
+análisis original.
 
-**¿El agente registra lo que hago?**
-Sí, un registro mínimo y local: qué pantallas se te mostraron y cuándo, si
-alguna tardó demasiado o falló — nada de lo que escribiste ni de tus
-datos personales. Queda en el archivo `logs/bitacora.jsonl`, **en tu
-propia computadora**, nunca se sube a ningún lado ni se comparte
-automáticamente con nadie. Sirve para que, si algo te falla y le avisás a
-quien mantiene este proyecto, pueda entender qué pasó mandándole ese
-archivo, en vez de tener que describir de memoria lo que viste.
+**¿El agente registra la actividad del usuario?**
+Sí, un registro mínimo y local: qué pantallas se mostraron, cuándo, y si
+alguna demoró en exceso o falló — nunca el contenido escrito ni datos
+personales. Se guarda en `logs/bitacora.jsonl`, **en la propia
+computadora**, sin subirse ni compartirse automáticamente. Su propósito
+es permitir que, ante un problema reportado, quien mantiene el proyecto
+pueda diagnosticarlo a partir de ese archivo, en lugar de depender de una
+descripción de memoria.
 
-**Los tests, ¿cómo los corro yo si quiero revisar que todo esté bien?**
+**¿Cómo se ejecutan los tests automáticos?**
 
 Desde la terminal, en la carpeta del proyecto:
 
@@ -247,22 +246,21 @@ agente-encuesta-hogares/
 ├── docs/
 │   └── METODOLOGIA.md           # Reglas de rigor estadístico y claridad
 ├── src/
-│   └── encuesta_hogares/        # El código de análisis, reutilizable año a año
-├── notebooks/                   # Acá se generan los análisis (uno por año)
+│   └── encuesta_hogares/        # Código de análisis, reutilizable año a año
+├── notebooks/                   # Informes generados (uno por año)
 ├── tests/                       # Tests automáticos de la lógica de análisis
-├── data/                        # Tus archivos .sav van acá (no se suben a git)
+├── data/                        # Archivos de datos del usuario (no se suben a git)
 └── pyproject.toml
 ```
 
 ## Fuente de los datos
 
-Instituto Nacional de Estadística (INE) - Encuesta Continua de Hogares (ECH).
+Instituto Nacional de Estadística (INE) — Encuesta Continua de Hogares (ECH).
 https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares
 
 ## Licencia
 
 Este proyecto se distribuye bajo [PolyForm Noncommercial 1.0.0](LICENSE):
-se puede usar, copiar, modificar y compartir libremente para fines
-académicos, educativos, de investigación y cualquier otro uso no
-comercial — no para fines de lucro. Ver el archivo [`LICENSE`](LICENSE)
-para el texto completo.
+permite usar, copiar, modificar y compartir el código libremente para
+fines académicos, educativos, de investigación, y cualquier otro uso no
+comercial. Ver el archivo [`LICENSE`](LICENSE) para el texto completo.
