@@ -1,7 +1,7 @@
 # Agente de Análisis: Encuesta Continua de Hogares (ECH, INE Uruguay)
 
 Este proyecto le permite a un usuario técnico (con conocimientos
-estadísticos) o no técnico generar un reporte de la Encuesta Continua de
+estadísticos) o no técnico generar un informe de la Encuesta Continua de
 Hogares del INE Uruguay, repitiéndolo cada vez que consiga un nuevo año
 de datos — sin tener que volver a explicar desde cero cómo se hace, ni
 programar. El catálogo cubre nivel económico y brecha digital, pobreza,
