@@ -131,6 +131,13 @@ def test_plot_clasificacion_barrios_no_falla():
     assert fig is not None
 
 
+def test_plot_tasa_mensual_promedio_por_no_falla_y_es_horizontal():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "TREINTA Y TRES"], "pct_promedio": [7.5, 9.2]})
+    fig = viz.plot_tasa_mensual_promedio_por(df, "departamento", "Desempleo por departamento")
+    assert fig is not None
+    assert fig.data[0].orientation == "h"
+
+
 def test_plot_dumbbell_no_falla_con_una_sola_categoria():
     fig = viz.plot_dumbbell(
         categorias=["FIES"],

@@ -208,6 +208,18 @@ def _plot_grid_por_filtros(df: pd.DataFrame, get_serie, titulo: str, ylabel: str
 
 
 def plot_composicion_edades(df: pd.DataFrame, promedio_edad_por_grupo):
+    """Grilla de barras: edad promedio por tramo etario, dentro de cada
+    segmento de suscripción/abonado (ver FILTROS_SUSCRIPCION).
+
+    Un promedio graficado como barra, sin mostrar la dispersión alrededor,
+    es en general el patrón de "dynamite plot" que Weissgerber et al.
+    (2015, PLOS Biology) desaconsejan para datos continuos — puede ocultar
+    que dos grupos con la misma barra tienen formas de distribución muy
+    distintas. Acá el riesgo es bajo porque `edad_grupo` ya es un tramo
+    etario angosto (ver config.py): el promedio dentro de un tramo ya
+    acotado no puede variar mucho más que el ancho del tramo mismo, así
+    que la barra no está ocultando una dispersión relevante.
+    """
     return _plot_grid_por_filtros(
         df,
         get_serie=promedio_edad_por_grupo,
@@ -218,6 +230,13 @@ def plot_composicion_edades(df: pd.DataFrame, promedio_edad_por_grupo):
 
 
 def plot_composicion_sexo(df: pd.DataFrame, porcentaje_por_sexo, total_personas: int):
+    """Grilla de barras: % de personas por sexo, dentro de cada segmento de
+    suscripción/abonado (ver FILTROS_SUSCRIPCION). Es una proporción, no
+    un promedio de una variable continua — a diferencia de
+    `plot_composicion_edades`, no aplica la reserva de Weissgerber et al.
+    sobre "dynamite plots", porque no hay una distribución subyacente que
+    la barra esté ocultando.
+    """
     return _plot_grid_por_filtros(
         df,
         get_serie=lambda segmento: porcentaje_por_sexo(segmento, total_personas),
@@ -281,9 +300,13 @@ def plot_streaming_vs_cable(tabla_streaming: pd.DataFrame):
 
 
 def plot_ingreso_hogar_departamento(serie: pd.Series):
-    """Barras simples: ingreso típico del hogar por departamento."""
+    """Barras horizontales: ingreso típico del hogar por departamento (19
+    categorías, algunas con nombres largos) — horizontales para que se
+    lean sin inclinar la cabeza (Cleveland & McGill, 1984), mismo criterio
+    que `plot_razon_dependencia_por` para el mismo tipo de comparación.
+    """
     fig = px.bar(
-        x=serie.index, y=serie.values,
+        y=serie.index, x=serie.values, orientation="h",
         title="Ingreso típico del hogar por departamento",
         color=serie.index,
         color_discrete_sequence=px.colors.qualitative.Safe,
@@ -291,8 +314,9 @@ def plot_ingreso_hogar_departamento(serie: pd.Series):
     )
     fig.update_traces(textposition="outside")
     fig.update_layout(
-        xaxis_title="", yaxis_title="Ingreso típico del hogar (UYU, sin valor locativo)",
-        showlegend=False, width=650, height=500, title_x=0.5,
+        yaxis_title="", xaxis_title="Ingreso típico del hogar (UYU, sin valor locativo)",
+        yaxis={"categoryorder": "total ascending"},
+        showlegend=False, width=800, height=550, title_x=0.5,
     )
     return fig
 
@@ -409,18 +433,24 @@ def plot_hacinamiento_por(resumen: pd.DataFrame, criterio: str):
 
 
 def plot_razon_dependencia_por(resumen: pd.DataFrame, criterio: str):
-    """Barras: razón de dependencia demográfica, según un criterio cualquiera (ej. departamento)."""
-    columna_x = resumen.columns[0]
+    """Barras horizontales: razón de dependencia demográfica, según un
+    criterio cualquiera (en la práctica, siempre departamento — 19
+    categorías, algunas con nombres largos como "TREINTA Y TRES"). Barras
+    horizontales, no verticales, por el mismo motivo que
+    `plot_condiciones_vivienda`: se leen sin inclinar la cabeza (Cleveland
+    & McGill, 1984).
+    """
+    columna_y = resumen.columns[0]
     fig = px.bar(
-        resumen.sort_values("razon_dependencia", ascending=False),
-        x=columna_x, y="razon_dependencia",
+        resumen, y=columna_y, x="razon_dependencia", orientation="h",
         title=f"Razón de dependencia demográfica según {criterio}", text="razon_dependencia",
         color_discrete_sequence=["#5a7fa6"],
     )
     fig.update_traces(texttemplate="%{text:.1f}", textposition="outside")
     fig.update_layout(
-        xaxis_title=criterio.capitalize(), yaxis_title="Razón de dependencia (%)",
-        width=950, height=550, title_x=0.5, showlegend=False,
+        yaxis_title="", xaxis_title="Razón de dependencia (%)",
+        yaxis={"categoryorder": "total ascending"},
+        width=850, height=550, title_x=0.5, showlegend=False,
     )
     return fig
 
@@ -595,11 +625,16 @@ def plot_tasas_por_grupo(resumen: pd.DataFrame, columna_grupo: str, titulo: str)
     return fig
 
 
-def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel: str):
-    """Barras simples: % ponderado (promedio mensual) por grupo — informalidad,
-    subempleo, desempleo, lo que corresponda según el título."""
+def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str):
+    """Barras horizontales: % ponderado (promedio mensual) por grupo —
+    informalidad, subempleo, desempleo, lo que corresponda según el
+    título. Horizontales para leerse sin inclinar la cabeza cuando el
+    grupo es departamento (19 categorías, algunas con nombres largos —
+    Cleveland & McGill, 1984); no perjudica los casos con pocas
+    categorías (sexo, nivel educativo), que se leen igual de bien así.
+    """
     fig = px.bar(
-        resumen, x=columna_grupo, y="pct_promedio",
+        resumen, y=columna_grupo, x="pct_promedio", orientation="h",
         title=titulo,
         color=columna_grupo,
         color_discrete_sequence=px.colors.qualitative.Safe,
@@ -607,8 +642,9 @@ def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, ti
     )
     fig.update_traces(textposition="outside")
     fig.update_layout(
-        xaxis_title=xlabel, yaxis_title="% (ponderado, promedio mensual)",
-        showlegend=False, width=650, height=500, title_x=0.5,
+        yaxis_title="", xaxis_title="% (ponderado, promedio mensual)",
+        yaxis={"categoryorder": "total ascending"},
+        showlegend=False, width=750, height=500, title_x=0.5,
     )
     return fig
 
