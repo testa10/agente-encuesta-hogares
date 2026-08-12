@@ -58,6 +58,16 @@ def test_plantilla_finalizacion_omite_el_link_del_formato_no_generado():
     assert 'href="/informe.html"' in html
 
 
+def test_plantilla_finalizacion_ofrece_crear_un_nuevo_informe():
+    html = plantilla_finalizacion(pdf_disponible=True, html_disponible=True)
+    assert 'value="nuevo_informe"' in html
+    assert 'value="terminar"' in html
+    # no debe prometer que la pestana se puede cerrar en la rama de "nuevo
+    # informe" (va a abrir una pestana nueva, igual que las pantallas de
+    # procesamiento) - solo en la rama que de verdad termina el flujo.
+    assert "e.submitter" in html
+
+
 def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
     # A diferencia de plantilla_finalizacion (que sí es el cierre real del
     # flujo), estas pantallas de "procesando" siempre van seguidas de una

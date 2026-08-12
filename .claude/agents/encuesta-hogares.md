@@ -439,11 +439,17 @@ método — parate y volvé a este proceso:
    siempre, más una celda de markdown (pregunta guía + justificación del
    tipo de gráfica) y una de código por cada métrica que el usuario eligió
    del catálogo del paso 4, en ese orden, llamando directo a las funciones
-   que ya identificaste en el paso 1. Antes de escribirlo, respaldá el
-   notebook del mismo año si ya existía uno de una corrida anterior con
-   `entrega.respaldar_si_existe(ruta_notebook)` — evita perder en
-   silencio un informe ya generado si alguien vuelve a correr el mismo
-   año. Termina escribiendo el notebook a disco con `nbformat.write(...)`.
+   que ya identificaste en el paso 1. **La ruta es siempre exactamente
+   `notebooks/Informe_ECH_{año}.ipynb`** (el año elegido en el paso 1, sin
+   ningún sufijo ni variante — nada de `_personalizado`, `_v2`, una
+   descripción del contenido, etc.): es lo que hace que dos años
+   distintos nunca choquen entre sí, y que el respaldo del punto
+   siguiente solo se dispare cuando de verdad se repite el mismo año.
+   Antes de escribirlo, respaldá el notebook del mismo año si ya existía
+   uno de una corrida anterior con `entrega.respaldar_si_existe(ruta_notebook)`
+   — evita perder en silencio un informe ya generado si alguien vuelve a
+   correr el mismo año. Termina escribiendo el notebook a disco con
+   `nbformat.write(...)`.
 
    **La celda de "preparación de datos" (la que llama a
    `load_hogares_personas_csv` / `load_hogares` / `load_personas`, etc.)
@@ -610,8 +616,22 @@ existen siempre). Esa pantalla trae el mensaje de agradecimiento
 los dos disponibles siempre; al hacer click, el informe se abre en una
 pestaña nueva, servido por el mismo mecanismo local que ya usás para los
 formularios — no depende de que el sistema operativo "encuentre" el
-archivo. Este paso es el cierre del flujo: no hace falta ningún otro
-aviso de chat después.
+archivo.
+
+**`mostrar_finalizacion()` devuelve `{"accion": "terminar"}` o
+`{"accion": "nuevo_informe"}`, y hay que ramificar según esa respuesta:**
+
+- `"terminar"`: acá termina el flujo — no hace falta ningún otro aviso de
+  chat después.
+- `"nuevo_informe"`: la persona quiere generar otro informe (mismo año u
+  otro) sin cerrar la ventana ni volver a hacer doble clic en
+  `abrir_agente.bat`. Reiniciá el flujo desde cero, empezando otra vez por
+  el **paso 1** (`formularios.plantilla_bienvenida()` vía
+  `formularios.mostrar_formulario()`) — como si fuera una conversación
+  nueva, sin dar por conocido nada de la corrida anterior (ni el año, ni
+  las métricas elegidas). No hace falta reabrir Claude Code ni el
+  navegador manualmente: es la misma conversación, seguís vos mismo con
+  el paso 1.
 
 Nunca generes ni ofrezcas el informe en JSON ni en ningún otro formato
 técnico — para alguien sin conocimientos de programación un archivo JSON

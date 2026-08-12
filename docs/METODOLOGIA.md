@@ -141,6 +141,11 @@ barrio y la otra del hogar.
      en vez de invocar `jupyter nbconvert` directo.
    - Corregir el `<title>` del HTML generado (por defecto queda con el
      nombre del archivo).
+   - **El HTML final se guarda siempre como exactamente
+     `notebooks/Informe_ECH_{AÑO}.html`** — mismo criterio que el nombre
+     del notebook (paso 5.2 de `.claude/agents/encuesta-hogares.md`): sin
+     sufijos ni variantes, para que dos años nunca choquen y el respaldo
+     de abajo se dispare solo cuando de verdad se repite el mismo año.
    - **Antes de guardar el HTML final con ese nombre**, llamá a
      `entrega.respaldar_si_existe(ruta_html_final)` — si ya existía un
      informe de una corrida anterior para ese mismo año (ej. alguien
@@ -219,7 +224,13 @@ Pasos:
    Usá `header_template` / `footer_template` (no CSS `@page { @bottom-center }`)
    para la numeración de página: Chromium no soporta las cajas de margen de
    `@page` en su motor de impresión, solo esas plantillas HTML de Playwright.
-5. Nombrá el archivo de forma clara, ej. `Informe_ECH_{AÑO}.pdf`.
+5. **El nombre del archivo es siempre exactamente `Informe_ECH_{AÑO}.pdf`**
+   (el año elegido en el paso 1, sin ningún sufijo ni variante — nada de
+   `_personalizado`, `_v2`, una descripción del contenido, etc.). No es
+   solo una cuestión de prolijidad: es lo que hace que dos años distintos
+   nunca choquen entre sí, y que `entrega.respaldar_si_existe()` (ver
+   paso 8 de la sección 5) respalde correctamente solo cuando se repite
+   el mismo año.
 6. Copiá el PDF a la carpeta de Descargas del usuario, además de dejarlo en
    el proyecto — respaldando ahí también el que hubiera de una corrida
    anterior, por la misma razón del paso 8 de la sección 5:

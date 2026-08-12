@@ -287,7 +287,12 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
     y/o el HTML del informe. A diferencia de `start` desde la terminal (poco
     confiable — se vio en la práctica que podía fallar en silencio), estos
     links los sirve este mismo servidor local, así que abrirlos es un click
-    normal del navegador. Bloquea hasta que el usuario aprieta "Listo".
+    normal del navegador. Bloquea hasta que el usuario elige una opción.
+
+    El resultado trae `{"accion": "terminar"}` o `{"accion": "nuevo_informe"}`
+    — este último significa que el agente tiene que reiniciar el flujo desde
+    el paso 1 (ver .claude/agents/encuesta-hogares.md), no terminar la
+    conversación.
     """
     resultado: dict = {}
     evento = threading.Event()
@@ -323,7 +328,8 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
 
         def do_POST(self):
             largo = int(self.headers.get("Content-Length", 0))
-            self.rfile.read(largo)
+            cuerpo = self.rfile.read(largo)
+            resultado.update(json.loads(cuerpo))
             respuesta = b'{"ok": true}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -379,20 +385,25 @@ def plantilla_finalizacion(pdf_disponible: bool, html_disponible: bool) -> str:
   Hogares. Podés abrir tu informe con los botones de abajo, las veces que
   quieras.</p>
   {botones_html}
-  <form id="form" style="margin-top:24px;">
-    <button type="submit">Listo, gracias →</button>
+  <form id="form" style="margin-top:24px; display:flex; flex-direction:column; gap:10px;">
+    <button type="submit" name="accion" value="nuevo_informe" class="boton-accion boton-secundario">🔄 Crear un nuevo informe</button>
+    <button type="submit" name="accion" value="terminar" class="boton-accion boton-primario">Listo, gracias →</button>
   </form>
 </div>
 <script>
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
+  const accion = e.submitter ? e.submitter.value : 'terminar';
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
-    body: JSON.stringify({{}})}});
+    body: JSON.stringify({{accion: accion}})}});
+  const esNuevo = accion === 'nuevo_informe';
   document.getElementById('tarjeta').innerHTML = `
     <div class="listo">
-      <div class="check">🙏</div>
-      <h1>¡Gracias!</h1>
-      <p>Ya podés cerrar esta pestaña.</p>
+      <div class="check">${{esNuevo ? '🔄' : '🙏'}}</div>
+      <h1>${{esNuevo ? 'Preparando un nuevo informe…' : '¡Gracias!'}}</h1>
+      <p>${{esNuevo
+        ? 'Ya te vamos a abrir el primer formulario en una pestaña nueva.'
+        : 'Ya podés cerrar esta pestaña.'}}</p>
     </div>`;
 }});
 </script></body></html>"""
