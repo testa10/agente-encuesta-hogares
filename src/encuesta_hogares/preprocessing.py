@@ -89,6 +89,8 @@ def prepare_hogares_extendido(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     df["tiene_cable"] = df["tipo_abonado"] == 1.0
     for col in ["tiene_internet", "internet_fija", "internet_movil", "tiene_pc", "tiene_streaming"]:
         df[col] = decode_si_no(df[col])
+    if "tiene_tablet_ibirapita" in df.columns:
+        df["tiene_tablet_ibirapita"] = decode_si_no(df["tiene_tablet_ibirapita"])
 
     df["pobre"] = df["pobre"] == 1.0
     df["indigente"] = df["indigente"] == 1.0
@@ -193,6 +195,112 @@ def melt_delitos(victimizacion: pd.DataFrame) -> pd.DataFrame:
         })
         partes.append(parte)
     return pd.concat(partes, ignore_index=True)
+
+
+def _clasificar_tipo_hogar_codigos(codigos: set) -> str:
+    """Clasifica un hogar según los códigos de parentesco (e30) de sus
+    integrantes que no son el jefe/a — ver config.PARENTESCO_CODIGOS_*.
+    Taxonomía CELADE: Unipersonal, Nuclear, Extendido, Compuesto, Sin núcleo.
+    """
+    if not codigos:
+        return "Unipersonal"
+    if codigos & config.PARENTESCO_CODIGOS_NO_PARIENTE:
+        return "Compuesto"
+    tiene_nucleo = bool(codigos & config.PARENTESCO_CODIGOS_NUCLEO)
+    tiene_extenso = bool(codigos & config.PARENTESCO_CODIGOS_EXTENSO)
+    if tiene_nucleo and tiene_extenso:
+        return "Extendido"
+    if tiene_nucleo:
+        return "Nuclear"
+    return "Sin núcleo"
+
+
+def clasificar_tipo_hogar(personas: pd.DataFrame) -> pd.DataFrame:
+    """Clasifica cada hogar por su composición (taxonomía CELADE/CEPAL,
+    ver config.PARENTESCO_LABELS) a partir de `parentesco_jefe` (e30) de
+    todas las personas del hogar. Devuelve una fila por hogar con:
+    - `tipo_hogar`: Unipersonal / Nuclear / Extendido / Compuesto / Sin núcleo.
+    - `monoparental`: hay hijos (parentesco 3/4/5) pero no cónyuge (2).
+    - `jefe_sexo` / `jefe_edad`: sexo y edad de quien tiene parentesco_jefe == 1,
+      para poder cruzar tipo de hogar con jefatura sin otro merge aparte.
+
+    No depende de ninguna variable de tecnología — es composición del hogar
+    pura, según la taxonomía estándar que usa CEPAL/CELADE en toda la región.
+    """
+    por_hogar = personas.groupby("id_hogar")["parentesco_jefe"].apply(
+        lambda s: _clasificar_tipo_hogar_codigos(set(s.dropna().astype(int)) - {1})
+    )
+    resultado = por_hogar.rename("tipo_hogar").reset_index()
+
+    tiene_conyuge = personas.groupby("id_hogar")["parentesco_jefe"].apply(lambda s: (s == 2).any())
+    tiene_hijos = personas.groupby("id_hogar")["parentesco_jefe"].apply(lambda s: s.isin([3, 4, 5]).any())
+    resultado = resultado.merge(tiene_conyuge.rename("_tiene_conyuge"), on="id_hogar")
+    resultado = resultado.merge(tiene_hijos.rename("_tiene_hijos"), on="id_hogar")
+    resultado["monoparental"] = resultado["_tiene_hijos"] & ~resultado["_tiene_conyuge"]
+    resultado = resultado.drop(columns=["_tiene_conyuge", "_tiene_hijos"])
+
+    jefes = personas.loc[personas["parentesco_jefe"] == 1, ["id_hogar", "sexo", "edad"]].copy()
+    jefes["jefe_sexo"] = classify_sexo(jefes["sexo"])
+    jefes = jefes.rename(columns={"edad": "jefe_edad"})[["id_hogar", "jefe_sexo", "jefe_edad"]]
+    return resultado.merge(jefes, on="id_hogar", how="left")
+
+
+def compute_hacinamiento(hogares: pd.DataFrame, umbral: float = config.UMBRAL_HACINAMIENTO) -> pd.DataFrame:
+    """Marca cada hogar como hacinado si tiene más de `umbral` personas por
+    cuarto (`cantidad_habitaciones`, que ya excluye baño y cocina — ver
+    config.py). Umbral clásico usado por INE/CEPAL para la región (no es el
+    método más nuevo de umbral ajustado por composición del hogar de la
+    UE/OCDE — ver la nota en config.UMBRAL_HACINAMIENTO).
+    """
+    df = hogares.copy()
+    df["personas_por_cuarto"] = (df["total_personas"] / df["cantidad_habitaciones"]).round(2)
+    df["hacinado"] = df["personas_por_cuarto"] > umbral
+    return df
+
+
+def compute_cohorte_generacional(hogares_con_jefe: pd.DataFrame, anio: int) -> pd.Series:
+    """Aproxima la cohorte generacional del HOGAR a partir de la edad del
+    jefe/a (`jefe_edad`, ver clasificar_tipo_hogar) y el año de la encuesta
+    — no de cada integrante, porque las variables de tecnología de este
+    proyecto (cable/internet/PC/streaming) son del hogar, no de cada
+    persona: la única variable de tenencia individual (celular, e60) se
+    discontinuó en el cuestionario 2024, así que basar esto en edad
+    individual rompería para ese año (ver nota de "ruido de 2019" en
+    .claude/agents/encuesta-hogares.md).
+    """
+    anio_nacimiento = anio - hogares_con_jefe["jefe_edad"]
+    return pd.cut(anio_nacimiento, bins=config.COHORTE_BINS, labels=config.COHORTE_LABELS)
+
+
+def clasificar_calidad_conexion(df_extendido: pd.DataFrame) -> pd.Series:
+    """Clasifica la conexión de cada hogar en 3 niveles ordinales, en vez
+    de la variable binaria tiene/no tiene internet: "Sin conexión", "Solo
+    móvil", "Banda ancha fija" — inspirado en el estándar "Meaningful
+    Connectivity" de UIT/A4AI (ver .claude/agents/encuesta-hogares.md).
+    Si el hogar tiene banda ancha fija, esa gana aunque también tenga
+    móvil (es la conexión de mejor calidad de las dos).
+    """
+    resultado = pd.Series("Sin conexión", index=df_extendido.index)
+    resultado[df_extendido["internet_movil"] == True] = "Solo móvil"  # noqa: E712
+    resultado[df_extendido["internet_fija"] == True] = "Banda ancha fija"  # noqa: E712
+    return resultado
+
+
+def compute_indice_acceso_digital(df_extendido: pd.DataFrame) -> pd.Series:
+    """Suma 0-4 de tenencia de cada tecnología (cable, internet, PC,
+    streaming) — un puntaje compuesto simple de acceso digital del hogar,
+    en vez de mirar cada tecnología por separado. Inspirado en el enfoque
+    de "canasta digital básica" de CEPAL (desarrollodigital.cepal.org).
+
+    Las columnas ya decodificadas (`decode_si_no`) quedan en dtype
+    `object` (True/False/NaN), no numérico — sumarlas tal cual falla o da
+    un dtype no numérico si hay algún "sin dato" (99) en el medio.
+    `.astype("boolean")` las pasa al tipo nullable de pandas antes de
+    sumar: un "sin dato" en una tecnología cuenta como 0 para el índice de
+    ese hogar (no falta el hogar entero), sin romper el tipo de dato.
+    """
+    columnas = list(config.TECNOLOGIAS_LABELS.keys())
+    return df_extendido[columnas].astype("boolean").sum(axis=1).astype("Int64")
 
 
 def compute_penetracion_nacional(hogares: pd.DataFrame) -> pd.DataFrame:

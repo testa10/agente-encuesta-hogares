@@ -71,6 +71,9 @@ HOGARES_COLUMNS = {
     "YSVL": "ingreso_hogar",          # ingreso del hogar sin valor locativo
     "ht3": "menores_14",
     "ht5": "ocupados_hogar",
+    # --- Ampliación: hogares (sin tecnología) y brecha digital "real" ---
+    "d9": "cantidad_habitaciones",         # excluye baño y cocina (definición CEPAL de "cuarto")
+    "d21_15_5": "tiene_tablet_ibirapita",  # 1=Sí/2=No/99=Sin dato
 }
 
 # Variables de estado estructural de la vivienda (todas 1=Sí/2=No/99=Sin dato).
@@ -99,6 +102,7 @@ PERSONAS_COLUMNS = {
     "PT1": "ingresos_personales",
     "pobpcoac": "condicion_actividad_cod",
     "e60": "tiene_celular_persona",  # 1=Sí/2=No/99=Sin dato
+    "e30": "parentesco_jefe",        # relación de parentesco con el jefe/a de hogar (14 categorías)
 }
 
 # ============================================================================
@@ -144,6 +148,8 @@ HOGARES_COLUMNS_CSV = {
     "indig06": "indigente",
     "YSVL": "ingreso_hogar",
     "d24": "menores_14",
+    "d9": "cantidad_habitaciones",
+    "d21_15_5": "tiene_tablet_ibirapita",
 }
 
 # Solo las 4 preguntas de "problemas de la vivienda" (módulo C5) que el INE
@@ -168,6 +174,7 @@ PERSONAS_COLUMNS_CSV = {
     "e27": "edad",
     "PT1": "ingresos_personales",
     "POBPCOAC": "condicion_actividad_cod",
+    "e30": "parentesco_jefe",
 }
 
 
@@ -227,6 +234,69 @@ POBPCOAC_GRUPOS = {
     10.0: "Inactivos",
     11.0: "Inactivos",
 }
+
+# ============================================================================
+# Hogares (composición, sin ninguna variable de tecnología) y Brecha Digital
+# (con marco internacional, más allá de "tiene/no tiene"). Fuentes: CEPAL/
+# CELADE (jefatura de hogar, tipos de hogar, hacinamiento, dependencia
+# demográfica), UIT/ITU + A4AI ("Meaningful Connectivity"), y el paper de
+# Muñoz (UdelaR, Revista de Ciencias Sociales) que aplica el enfoque de
+# cohorte generacional a esta misma encuesta. Ver
+# .claude/agents/encuesta-hogares.md para el detalle y los links.
+# ============================================================================
+
+# Relación de parentesco con el jefe/a de hogar (e30) — 14 categorías del
+# cuestionario, usadas para clasificar el tipo de hogar (ver
+# preprocessing.clasificar_tipo_hogar). Mismos códigos en .sav y CSV.
+PARENTESCO_LABELS = {
+    1: "Jefe/a de hogar",
+    2: "Esposo/a o compañero/a",
+    3: "Hijo/a de ambos",
+    4: "Hijo/a solo del jefe/a",
+    5: "Hijo/a solo del esposo/a o compañero/a",
+    6: "Yerno/nuera",
+    7: "Padre/madre",
+    8: "Suegro/a",
+    9: "Hermano/a",
+    10: "Cuñado/a",
+    11: "Nieto/a",
+    12: "Otro pariente",
+    13: "Otro no pariente",
+    14: "Servicio doméstico o familiar del mismo",
+}
+
+# Códigos de e30 usados para clasificar el tipo de hogar (taxonomía CELADE):
+# núcleo familiar básico (cónyuge o hijos), parientes fuera del núcleo, y
+# no parientes. El jefe/a (código 1) no entra en ningún grupo — está
+# siempre presente por definición y no aporta información de clasificación.
+PARENTESCO_CODIGOS_NUCLEO = {2, 3, 4, 5}
+PARENTESCO_CODIGOS_EXTENSO = {6, 7, 8, 9, 10, 11, 12}
+PARENTESCO_CODIGOS_NO_PARIENTE = {13, 14}
+
+# Umbral de hacinamiento: más de 2 personas por cuarto (cantidad_habitaciones,
+# que ya excluye baño y cocina — ver HOGARES_COLUMNS). Es el criterio clásico
+# usado históricamente por INE/CEPAL para la región - existe un método más
+# reciente (UE/OCDE, adoptado por CEPAL) que ajusta el umbral según la
+# composición del hogar en vez de un número fijo; no se implementó todavía
+# por su complejidad, queda como mejora futura documentada en
+# docs/METODOLOGIA.md.
+UMBRAL_HACINAMIENTO = 2.0
+
+# Cortes generacionales estándar (año de nacimiento), para aproximar
+# "cohorte" a partir de la edad del jefe/a de hogar y el año de la encuesta
+# (ver preprocessing.compute_cohorte_generacional). Es una aproximación de
+# corte transversal - agrupa por año de nacimiento estimado dentro de esta
+# única corrida, no sigue a las mismas personas a través de varios años
+# como sí hace el estudio de referencia (Muñoz, UdelaR, con la ECH
+# 2009-2019 en panel).
+COHORTE_BINS = [-float("inf"), 1945, 1964, 1980, 1996, float("inf")]
+COHORTE_LABELS = [
+    "Generación silenciosa (hasta 1945)",
+    "Baby boomers (1946-1964)",
+    "Generación X (1965-1980)",
+    "Millennials (1981-1996)",
+    "Generación Z (1997 en adelante)",
+]
 
 # ============================================================================
 # FIES (seguridad alimentaria) — solo disponible para algunos años, y solo

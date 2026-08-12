@@ -4,6 +4,11 @@ from encuesta_hogares.preprocessing import (
     classify_edad_grupo,
     classify_nivel_economico,
     classify_sexo,
+    clasificar_calidad_conexion,
+    clasificar_tipo_hogar,
+    compute_cohorte_generacional,
+    compute_hacinamiento,
+    compute_indice_acceso_digital,
     compute_penetracion_nacional,
     decode_si_no,
     melt_delitos,
@@ -94,6 +99,93 @@ def test_prepare_hogares_extendido_tolera_columnas_de_vivienda_faltantes():
     df = prepare_hogares_extendido(ejemplo)
     assert df["goteras"].tolist() == [True, False, True, False]
     assert "humedad_techos" not in df.columns
+
+
+def _personas_hogares_ejemplo():
+    # Hogar 1: solo el jefe -> Unipersonal.
+    # Hogar 2: jefe + conyuge + hijo -> Nuclear.
+    # Hogar 3: jefe + conyuge + hijo + suegro -> Extendido.
+    # Hogar 4: jefe + hijo, sin conyuge -> Nuclear y monoparental.
+    # Hogar 5: jefe + otro no pariente -> Compuesto.
+    # Hogar 6: jefe + hermano, sin nucleo -> Sin núcleo.
+    return pd.DataFrame(
+        {
+            "id_hogar": [1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6],
+            "parentesco_jefe": [1, 1, 2, 3, 1, 2, 3, 8, 1, 3, 1, 13, 1, 9],
+            "sexo": [1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1],
+            "edad": [70, 40, 38, 10, 55, 56, 20, 80, 35, 8, 45, 30, 60, 58],
+        }
+    )
+
+
+def test_clasificar_tipo_hogar_taxonomia_celade():
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    assert resultado.loc[1, "tipo_hogar"] == "Unipersonal"
+    assert resultado.loc[2, "tipo_hogar"] == "Nuclear"
+    assert resultado.loc[3, "tipo_hogar"] == "Extendido"
+    assert resultado.loc[4, "tipo_hogar"] == "Nuclear"
+    assert resultado.loc[5, "tipo_hogar"] == "Compuesto"
+    assert resultado.loc[6, "tipo_hogar"] == "Sin núcleo"
+
+
+def test_clasificar_tipo_hogar_marca_monoparental():
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    assert bool(resultado.loc[2, "monoparental"]) is False  # tiene cónyuge
+    assert bool(resultado.loc[4, "monoparental"]) is True  # hijo sin cónyuge
+
+
+def test_clasificar_tipo_hogar_agrega_sexo_y_edad_del_jefe():
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    assert resultado.loc[1, "jefe_sexo"] == "1-Hombre"
+    assert resultado.loc[1, "jefe_edad"] == 70
+    assert resultado.loc[3, "jefe_sexo"] == "2-Mujer"
+
+
+def test_compute_hacinamiento_marca_por_encima_del_umbral():
+    hogares = pd.DataFrame({"id_hogar": [1, 2, 3], "total_personas": [6.0, 4.0, 2.0], "cantidad_habitaciones": [2.0, 2.0, 2.0]})
+    resultado = compute_hacinamiento(hogares)
+    # 6/2=3.0 (>2, hacinado), 4/2=2.0 (no supera el umbral), 2/2=1.0 (no hacinado)
+    assert resultado["hacinado"].tolist() == [True, False, False]
+
+
+def test_compute_cohorte_generacional():
+    hogares = pd.DataFrame({"jefe_edad": [80, 50, 30, 20]})
+    resultado = compute_cohorte_generacional(hogares, anio=2024)
+    # nacimientos aprox: 1944, 1974, 1994, 2004
+    assert list(resultado.astype(str)) == [
+        "Generación silenciosa (hasta 1945)",
+        "Generación X (1965-1980)",
+        "Millennials (1981-1996)",
+        "Generación Z (1997 en adelante)",
+    ]
+
+
+def test_clasificar_calidad_conexion():
+    df = pd.DataFrame(
+        {
+            "internet_fija": [True, False, False],
+            "internet_movil": [False, True, False],
+        }
+    )
+    resultado = clasificar_calidad_conexion(df)
+    assert resultado.tolist() == ["Banda ancha fija", "Solo móvil", "Sin conexión"]
+
+
+def test_clasificar_calidad_conexion_fija_gana_si_tiene_ambas():
+    df = pd.DataFrame({"internet_fija": [True], "internet_movil": [True]})
+    assert clasificar_calidad_conexion(df).tolist() == ["Banda ancha fija"]
+
+
+def test_compute_indice_acceso_digital():
+    df = pd.DataFrame(
+        {
+            "tiene_cable": [True, False, True],
+            "tiene_internet": [True, True, False],
+            "tiene_pc": [True, False, False],
+            "tiene_streaming": [False, False, False],
+        }
+    )
+    assert compute_indice_acceso_digital(df).tolist() == [3, 1, 1]
 
 
 def test_prepare_hogares_montevideo_ignora_mayusculas():

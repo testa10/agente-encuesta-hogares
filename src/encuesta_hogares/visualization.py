@@ -365,6 +365,177 @@ def plot_composicion_hogar(resumen_composicion: pd.DataFrame, titulo: str, color
     return fig
 
 
+# ============================================================================
+# Hogares (composición, sin tecnología) y Brecha Digital (con marco
+# internacional) — ver la nota de fuentes en config.py.
+# ============================================================================
+
+def plot_pct_pobres_indigentes(resultado: dict):
+    """Barras horizontales: % de hogares pobres y % en indigencia."""
+    data = {"Condición": ["Pobres", "Indigentes"], "Porcentaje": [resultado["pct_pobres"], resultado["pct_indigentes"]]}
+    fig = px.bar(
+        data, y="Condición", x="Porcentaje", orientation="h",
+        title="Hogares en situación de pobreza e indigencia",
+        width=800, height=350, color_discrete_sequence=["#d1495b"],
+    )
+    fig.update_traces(width=0.5, text=data["Porcentaje"], textposition="auto")
+    fig.update_layout(xaxis_title="% de hogares", yaxis_title="", title_x=0.5)
+    return fig
+
+
+def plot_tasa_jefatura_femenina(resultado: dict):
+    """Barras horizontales: % de hogares con jefe hombre vs. jefa mujer."""
+    pct_mujer = resultado["pct_jefatura_femenina"]
+    data = {"Jefatura": ["Jefe hombre", "Jefa mujer"], "Porcentaje": [round(100 - pct_mujer, 2), pct_mujer]}
+    fig = px.bar(
+        data, y="Jefatura", x="Porcentaje", orientation="h",
+        title="Jefatura de hogar por sexo",
+        width=800, height=350, color_discrete_sequence=["#5a7fa6"],
+    )
+    fig.update_traces(width=0.5, text=data["Porcentaje"], textposition="auto")
+    fig.update_layout(xaxis_title="% de hogares", yaxis_title="", title_x=0.5)
+    return fig
+
+
+def plot_tipos_hogar(resumen: pd.DataFrame):
+    """Barras horizontales: % de hogares de cada tipo (taxonomía CELADE), de mayor a menor."""
+    fig = px.bar(
+        resumen, x="pct_hogares", y="tipo_hogar", orientation="h",
+        title="Tipos de hogar", text="pct_hogares",
+        color_discrete_sequence=["#66a182"],
+    )
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+    fig.update_layout(
+        xaxis_title="% de hogares", yaxis_title="", yaxis={"categoryorder": "total ascending"},
+        width=800, height=450, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
+def plot_hacinamiento_por(resumen: pd.DataFrame, criterio: str):
+    """Barras: % de hogares en situación de hacinamiento, según un criterio cualquiera."""
+    columna_x = resumen.columns[0]
+    fig = px.bar(
+        resumen, x=columna_x, y="pct_hacinamiento",
+        title=f"Hacinamiento según {criterio}", text="pct_hacinamiento",
+        color_discrete_sequence=["#d1495b"],
+    )
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+    fig.update_layout(
+        xaxis_title=criterio.capitalize(), yaxis_title="% de hogares hacinados",
+        yaxis_range=[0, max(resumen["pct_hacinamiento"].max() * 1.3, 5)],
+        width=800, height=500, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
+def plot_razon_dependencia_por(resumen: pd.DataFrame, criterio: str):
+    """Barras: razón de dependencia demográfica, según un criterio cualquiera (ej. departamento)."""
+    columna_x = resumen.columns[0]
+    fig = px.bar(
+        resumen.sort_values("razon_dependencia", ascending=False),
+        x=columna_x, y="razon_dependencia",
+        title=f"Razón de dependencia demográfica según {criterio}", text="razon_dependencia",
+        color_discrete_sequence=["#5a7fa6"],
+    )
+    fig.update_traces(texttemplate="%{text:.1f}", textposition="outside")
+    fig.update_layout(
+        xaxis_title=criterio.capitalize(), yaxis_title="Razón de dependencia (%)",
+        width=950, height=550, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
+def plot_pct_unipersonales_mayores(resultado: dict):
+    """Barras horizontales: de los hogares unipersonales, % con jefe/a de 65+ vs. menor."""
+    pct_mayores = resultado["pct_unipersonales_mayores"]
+    data = {
+        "Edad del integrante": ["65 años o más", "Menos de 65"],
+        "Porcentaje": [pct_mayores, round(100 - pct_mayores, 2)],
+    }
+    fig = px.bar(
+        data, y="Edad del integrante", x="Porcentaje", orientation="h",
+        title="Hogares unipersonales según edad de su integrante",
+        width=800, height=350, color_discrete_sequence=["#8d6ab8"],
+    )
+    fig.update_traces(width=0.5, text=data["Porcentaje"], textposition="auto")
+    fig.update_layout(xaxis_title="% de hogares unipersonales", yaxis_title="", title_x=0.5)
+    return fig
+
+
+def plot_brecha_digital_por_cohorte(brecha_df: pd.DataFrame):
+    """Barras agrupadas: penetración de cada tecnología por cohorte generacional del jefe/a de hogar."""
+    fig = px.bar(
+        brecha_df, x="cohorte", y="pct_penetracion", color="tecnologia",
+        barmode="group", title="Brecha digital por cohorte generacional",
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig.update_layout(
+        xaxis_title="Cohorte generacional (según edad del jefe/a de hogar)", yaxis_title="Penetración (%)",
+        legend_title="Tecnología", width=950, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_brecha_digital_por_jefatura(brecha_df: pd.DataFrame):
+    """Barras agrupadas: penetración de cada tecnología según el sexo del jefe/a de hogar."""
+    fig = px.bar(
+        brecha_df, x="jefe_sexo", y="pct_penetracion", color="tecnologia",
+        barmode="group", title="Brecha digital según sexo del jefe/a de hogar",
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig.update_layout(
+        xaxis_title="Sexo del jefe/a de hogar", yaxis_title="Penetración (%)",
+        legend_title="Tecnología", width=800, height=500, title_x=0.5,
+    )
+    return fig
+
+
+def plot_calidad_conexion_por(tabla_pct: pd.DataFrame, criterio: str):
+    """Barras 100% apiladas: calidad de conexión (sin conexión / solo móvil
+    / banda ancha fija) según un criterio cualquiera (ej. nivel económico).
+    """
+    return _plot_barras_100_apiladas(
+        tabla_pct,
+        titulo=f"Calidad de la conexión a internet según {criterio}",
+        xlabel=criterio.capitalize(),
+    )
+
+
+def plot_indice_acceso_digital_por(resumen: pd.DataFrame, criterio: str):
+    """Barras: promedio del índice de acceso digital (0 a 4), según un criterio cualquiera."""
+    columna_x = resumen.columns[0]
+    fig = px.bar(
+        resumen, x=columna_x, y="indice_promedio",
+        title=f"Índice de acceso digital según {criterio}", text="indice_promedio",
+        color_discrete_sequence=["#66a182"],
+    )
+    fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+    fig.update_layout(
+        xaxis_title=criterio.capitalize(), yaxis_title="Índice promedio (0 a 4)",
+        yaxis_range=[0, 4.5],
+        width=800, height=500, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
+def plot_adopcion_tablet_ibirapita(resumen: pd.DataFrame, criterio: str):
+    """Barras: % de hogares con tablet del Plan Ibirapitá, según un criterio cualquiera."""
+    columna_x = resumen.columns[0]
+    fig = px.bar(
+        resumen, x=columna_x, y="pct_con_tablet",
+        title="Adopción de tablets del Plan Ibirapitá", text="pct_con_tablet",
+        color_discrete_sequence=["#8d6ab8"],
+    )
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+    fig.update_layout(
+        xaxis_title=criterio.capitalize(), yaxis_title="% de hogares con tablet",
+        yaxis_range=[0, max(resumen["pct_con_tablet"].max() * 1.3, 5)],
+        width=800, height=500, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
 def plot_prevalencia_inseguridad_alimentaria(prevalencia: dict):
     """Barras simples: % de hogares (ponderado) en inseguridad alimentaria
     moderada-o-severa y severa, a nivel nacional."""

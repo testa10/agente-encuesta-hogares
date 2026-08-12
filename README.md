@@ -4,10 +4,11 @@ Este proyecto le permite a un usuario técnico (con conocimientos
 estadísticos) o no técnico generar un informe de la Encuesta Continua de
 Hogares del INE Uruguay, repitiéndolo cada vez que consiga un nuevo año
 de datos — sin tener que volver a explicar desde cero cómo se hace, ni
-programar. El catálogo cubre nivel económico y brecha digital, pobreza,
-territorio (Montevideo y el resto del país), composición del hogar,
-vivienda, y — cuando el año elegido tiene esos datos disponibles —
-seguridad alimentaria, empleo, y seguridad y victimización.
+programar. El catálogo se elige en dos pasos: primero qué **bloques
+temáticos** incluir (Brecha Digital, Hogares, Territorio, Vivienda, y —
+cuando el año elegido tiene esos datos disponibles — Seguridad
+Alimentaria, Empleo, Seguridad y Victimización — ninguno viene elegido de
+antemano), y después qué métricas puntuales de cada bloque.
 
 En vez de un análisis fijo, este proyecto incluye un **agente**: un asistente
 de inteligencia artificial (Claude) que hace el trabajo — carga los datos,
@@ -135,22 +136,29 @@ queda de fondo, trabajando; no hace falta que la mires. Cada una de estas
 pantallas trae, además, un enlace para **salir sin terminar el informe**,
 por si en algún momento decidís no seguir.
 
-Una de esas pantallas te deja elegir, de un catálogo, qué métricas querés
-que tenga tu informe (organizadas por tema, cada una con una explicación
-breve), y también proponer una que no esté en la lista si se te ocurre
-algo puntual. Si el agente encuentra un problema con algo que propusiste
-(por ejemplo, un cruce que no se puede hacer de forma confiable con los
-datos disponibles), te lo va a mostrar en otra pantalla, con una
-alternativa que sí funcione — ahí elegís si la aceptás, proponés otra
-cosa, o la dejás afuera del informe.
+Primero vas a ver una pantalla para elegir qué **bloques temáticos**
+querés en el informe — Brecha Digital, Hogares, Territorio, Vivienda, y
+(si hay datos para el año elegido) Seguridad Alimentaria, Empleo,
+Seguridad y Victimización. Ninguno viene marcado de antemano, ni siquiera
+Brecha Digital: elegís los que te interesen, uno, varios o todos.
+
+Después de eso, otra pantalla te deja elegir, de un catálogo, qué
+métricas puntuales querés dentro de los bloques que ya elegiste
+(organizadas por tema, cada una con una explicación breve), y también
+proponer una que no esté en la lista si se te ocurre algo puntual. Si el
+agente encuentra un problema con algo que propusiste (por ejemplo, un
+cruce que no se puede hacer de forma confiable con los datos
+disponibles), te lo va a mostrar en otra pantalla, con una alternativa
+que sí funcione — ahí elegís si la aceptás, proponés otra cosa, o la
+dejás afuera del informe.
 
 **Después de confirmar el catálogo, esperá — un informe tarda bastante.**
 No es un cálculo instantáneo: el agente arma y revisa una por una todas
 las gráficas que elegiste. Como referencia real (catálogo completo, las
-47 métricas de las ocho categorías): **alrededor de 25 a 30 minutos**.
-Eligiendo menos métricas tarda menos, más o menos en proporción a
-cuántas elegiste. Esto también consume una porción real de tu uso de
-Claude Code (en la corrida de referencia, el equivalente a unos 95
+44 métricas de los siete bloques): **alrededor de 25 a 30 minutos**.
+Eligiendo menos bloques o menos métricas tarda menos, más o menos en
+proporción a cuántas elegiste. Esto también consume una porción real de
+tu uso de Claude Code (en la corrida de referencia, el equivalente a unos 95
 llamados a herramientas) — no es un error ni algo colgado si la terminal
 sigue trabajando un buen rato sin que pase nada nuevo en pantalla.
 

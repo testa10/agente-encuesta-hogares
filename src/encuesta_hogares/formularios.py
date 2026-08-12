@@ -167,56 +167,55 @@ function salirDelFlujo() {
 }
 """
 
-_CATEGORIAS_METRICAS = [
-    ("1 · Nivel económico y brecha digital", [
+# Diccionario, no lista: cada bloque tiene una clave estable
+# ("brecha_digital", "hogares", etc.) que usan plantilla_areas() y
+# plantilla_catalogo() para saber cuáles eligió el usuario — ninguno se
+# incluye por defecto, todos son opt-in (ver plantilla_areas).
+_CATEGORIAS_METRICAS = {
+    "brecha_digital": ("1 · Brecha Digital", [
         (1, "Brecha digital por nivel económico", "compara, en una sola gráfica, el acceso a TV cable, internet, computadora y streaming según el nivel económico del hogar."),
-        (2, "Acceso a TV cable por nivel económico", "qué porcentaje de hogares tiene TV cable en cada nivel económico."),
-        (3, "Acceso a internet por nivel económico", "lo mismo, para la conexión a internet."),
-        (4, "Acceso a celular por nivel económico", "lo mismo, para la tenencia de celular."),
-        (5, "Diferencia entre el nivel económico más alto y el más bajo", "cuántos puntos porcentuales separan a esos dos grupos en el acceso a cada tecnología."),
+        (2, "Brecha digital por cohorte generacional", "compara el acceso a cada tecnología entre generaciones (baby boomers, generación X, millennials, etc.), según la edad del jefe/a de hogar."),
+        (3, "Calidad de la conexión a internet por nivel económico", "no es solo tener o no tener: compara sin conexión, solo por celular, o banda ancha fija, entre niveles económicos."),
+        (4, "Brecha digital según jefatura de hogar", "compara el acceso a cada tecnología entre hogares con jefe hombre y jefa mujer."),
+        (5, "Índice de acceso digital por nivel económico", "un puntaje de 0 a 4 (cuántas de las cuatro tecnologías tiene el hogar), comparado entre niveles económicos."),
+        (6, "Adopción de tablets del Plan Ibirapitá", "en hogares con jefe/a de 65 años o más, qué porcentaje tiene una tablet de este programa estatal de inclusión digital."),
     ]),
-    ("2 · Pobreza", [
-        (6, "Cuántos hogares son pobres o indigentes en Montevideo", "un resumen simple de contexto."),
-        (7, "Acceso a TV cable según pobreza", "compara hogares pobres y no pobres."),
-        (8, "Acceso a internet según pobreza", "lo mismo, para internet."),
-        (9, "Acceso a celular según pobreza", "lo mismo, para celular."),
-        (10, "Acceso a TV cable según indigencia", "la misma comparación, para hogares en situación de indigencia."),
+    "hogares": ("2 · Hogares", [
+        (7, "Cuántos hogares son pobres o indigentes en Montevideo", "un resumen simple de contexto."),
+        (8, "Jefatura de hogar femenina", "qué porcentaje de hogares tiene una jefa mujer, y cómo se relaciona con la pobreza del hogar."),
+        (9, "Hacinamiento", "qué porcentaje de hogares tiene más de 2 personas por cuarto, según su nivel económico."),
+        (10, "Tipos de hogar", "cuántos hogares son unipersonales, nucleares, extendidos, compuestos o sin núcleo."),
+        (11, "Razón de dependencia demográfica", "cuántas personas menores de 15 o mayores de 65 hay por cada 100 en edad activa, comparado entre departamentos."),
+        (12, "Hogares unipersonales de adultos mayores", "de los hogares de una sola persona, qué porcentaje corresponde a alguien de 65 años o más."),
     ]),
-    ("3 · Territorio (barrios y país)", [
-        (11, "Suscripción a TV cable por barrio", "qué barrios tienen más y menos hogares abonados."),
-        (12, "Clasificación de barrios por nivel de suscripción", "agrupa los barrios en cuatro niveles."),
-        (13, "Relación entre el barrio y el nivel económico", "si los barrios con más suscripción coinciden con los de mayor nivel económico."),
-        (14, "Montevideo frente al resto del país", "cómo se compara con los demás departamentos."),
-        (15, "Detalle de los barrios más y menos conectados", "una tabla puntual para consultar barrio por barrio."),
+    "territorio": ("3 · Territorio (barrios y país)", [
+        (13, "Suscripción a TV cable por barrio", "qué barrios tienen más y menos hogares abonados."),
+        (14, "Clasificación de barrios por nivel de suscripción", "agrupa los barrios en cuatro niveles."),
+        (15, "Relación entre el barrio y el nivel económico", "si los barrios con más suscripción coinciden con los de mayor nivel económico."),
+        (16, "Montevideo frente al resto del país", "cómo se compara con los demás departamentos."),
+        (17, "Detalle de los barrios más y menos conectados", "una tabla puntual para consultar barrio por barrio."),
     ]),
-    ("4 · Hogar y demografía", [
-        (16, "Tamaño y composición del hogar según TV cable", "cantidad de personas, menores de 14 y ocupados, según conectividad."),
-        (17, "Ingreso del hogar según conectividad a TV cable", "el ingreso típico del hogar (sin valor locativo), comparado entre hogares con y sin cable."),
-        (18, "Tamaño y composición del hogar según internet", "la misma comparación del punto 16, pero según acceso a internet en vez de TV cable."),
-        (19, "Situación ocupacional según TV cable", "ocupados/desocupados/inactivos, según conectividad."),
-        (20, "Situación ocupacional según celular e internet", "la misma comparación, para esas tecnologías."),
+    "vivienda": ("4 · Vivienda y tecnología", [
+        (18, "Condiciones de la vivienda según celular", "humedad, goteras, grietas, etc., según acceso a celular."),
+        (19, "Condiciones de la vivienda según streaming", "lo mismo, según streaming."),
+        (20, "Condiciones de la vivienda según internet", "lo mismo, según internet."),
+        (21, "Qué tecnología marca más diferencia en la vivienda", "compara las tres tecnologías en una sola vista."),
+        (22, "¿El streaming reemplaza a la TV cable?", "si conviven ambos servicios o no."),
     ]),
-    ("5 · Vivienda y tecnología", [
-        (21, "Condiciones de la vivienda según celular", "humedad, goteras, grietas, etc., según acceso a celular."),
-        (22, "Condiciones de la vivienda según streaming", "lo mismo, según streaming."),
-        (23, "Condiciones de la vivienda según internet", "lo mismo, según internet."),
-        (24, "Qué tecnología marca más diferencia en la vivienda", "compara las tres tecnologías en una sola vista."),
-        (25, "¿El streaming reemplaza a la TV cable?", "si conviven ambos servicios o no."),
-    ]),
-]
+}
 
 # Categoría aparte (no en _CATEGORIAS_METRICAS): solo existe para los años que
 # tienen el archivo base_FIES_{año}.csv (ver config.datos_disponibles). El
 # agente se la agrega a plantilla_catalogo() con incluir_fies=True cuando
 # corresponde — nunca aparece si el año elegido no tiene esos datos.
-_CATEGORIA_FIES = ("6 · Seguridad alimentaria (submuestra de hogares)", [
-    (26, "Prevalencia de inseguridad alimentaria", "qué porcentaje de hogares está en inseguridad alimentaria moderada o severa, y cuántos en severa."),
-    (27, "Inseguridad alimentaria por quintil de ingreso", "cómo varía entre el 20% de hogares con menos ingreso y el 20% con más."),
-    (28, "Inseguridad alimentaria por región", "Montevideo comparado con el resto del país."),
-    (29, "Diferencia entre el quintil más pobre y el más rico", "cuántos puntos porcentuales separan a esos dos grupos."),
-    (30, "Inseguridad alimentaria severa por quintil de ingreso", "la misma comparación del punto 27, pero solo para el caso más grave."),
-    (31, "Inseguridad alimentaria en hogares con menores de 18 años", "compara hogares con y sin menores de edad."),
-    (32, "Inseguridad alimentaria en hogares con niños de 0 a 5 años", "la misma comparación, mirando solo a la primera infancia."),
+_CATEGORIA_FIES = ("5 · Seguridad alimentaria (submuestra de hogares)", [
+    (23, "Prevalencia de inseguridad alimentaria", "qué porcentaje de hogares está en inseguridad alimentaria moderada o severa, y cuántos en severa."),
+    (24, "Inseguridad alimentaria por quintil de ingreso", "cómo varía entre el 20% de hogares con menos ingreso y el 20% con más."),
+    (25, "Inseguridad alimentaria por región", "Montevideo comparado con el resto del país."),
+    (26, "Diferencia entre el quintil más pobre y el más rico", "cuántos puntos porcentuales separan a esos dos grupos."),
+    (27, "Inseguridad alimentaria severa por quintil de ingreso", "la misma comparación del punto 24, pero solo para el caso más grave."),
+    (28, "Inseguridad alimentaria en hogares con menores de 18 años", "compara hogares con y sin menores de edad."),
+    (29, "Inseguridad alimentaria en hogares con niños de 0 a 5 años", "la misma comparación, mirando solo a la primera infancia."),
 ])
 
 # Igual que _CATEGORIA_FIES: solo existe para los años que tienen los 12
@@ -225,29 +224,29 @@ _CATEGORIA_FIES = ("6 · Seguridad alimentaria (submuestra de hogares)", [
 # dato — primero se le pregunta al usuario si la quiere, con
 # plantilla_areas(), porque procesar los 12 meses es bastante más pesado
 # que las demás categorías.
-_CATEGORIA_EMPLEO = ("7 · Empleo", [
-    (33, "Tasas de actividad, empleo y desempleo", "el panorama laboral general del año, promediado entre los 12 meses."),
-    (34, "Brecha de género en el mercado laboral", "compara las tasas de actividad, empleo y desempleo entre hombres y mujeres."),
-    (35, "Desempleo por departamento", "en qué departamentos la tasa de desempleo es más alta o más baja."),
-    (36, "Informalidad laboral por sexo", "qué porcentaje de ocupados no aporta a la seguridad social, comparando hombres y mujeres."),
-    (37, "Informalidad laboral por nivel educativo", "la misma comparación, según el nivel educativo del ocupado."),
-    (38, "Subempleo por sexo", "qué porcentaje de ocupados querría trabajar más horas de las que tiene, comparando hombres y mujeres."),
-    (39, "Desempleo juvenil (14 a 24 años) comparado con el resto", "si los jóvenes tienen una tasa de desempleo distinta al resto de la población activa."),
-    (40, "Situación ocupacional por sector formal/informal", "si son más los empleados, cuentapropistas o empleadores en cada sector."),
+_CATEGORIA_EMPLEO = ("6 · Empleo", [
+    (30, "Tasas de actividad, empleo y desempleo", "el panorama laboral general del año, promediado entre los 12 meses."),
+    (31, "Brecha de género en el mercado laboral", "compara las tasas de actividad, empleo y desempleo entre hombres y mujeres."),
+    (32, "Desempleo por departamento", "en qué departamentos la tasa de desempleo es más alta o más baja."),
+    (33, "Informalidad laboral por sexo", "qué porcentaje de ocupados no aporta a la seguridad social, comparando hombres y mujeres."),
+    (34, "Informalidad laboral por nivel educativo", "la misma comparación, según el nivel educativo del ocupado."),
+    (35, "Subempleo por sexo", "qué porcentaje de ocupados querría trabajar más horas de las que tiene, comparando hombres y mujeres."),
+    (36, "Desempleo juvenil (14 a 24 años) comparado con el resto", "si los jóvenes tienen una tasa de desempleo distinta al resto de la población activa."),
+    (37, "Situación ocupacional por sector formal/informal", "si son más los empleados, cuentapropistas o empleadores en cada sector."),
 ])
 
 # Igual que _CATEGORIA_EMPLEO: solo se ofrece si el usuario la eligió en
 # plantilla_areas(). No incluye percepción de seguridad (v1) — no hay
 # diccionario de valores publicado para esa variable, ver
 # .claude/agents/encuesta-hogares.md.
-_CATEGORIA_SEGURIDAD = ("8 · Seguridad y victimización", [
-    (41, "Prevalencia de victimización por tipo de delito", "qué porcentaje de personas sufrió cada tipo de delito en el mes anterior a la entrevista (no es una cifra anual)."),
-    (42, "Victimización general por sexo", "haber sufrido al menos un delito en el mes anterior a la entrevista, comparando hombres y mujeres."),
-    (43, "Victimización general por departamento", "lo mismo, Montevideo comparado con el resto del país."),
-    (44, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
-    (45, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, cuántos hicieron la denuncia presencial en la comisaría."),
-    (46, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
-    (47, "Casos con violencia por tipo de delito", "de quienes fueron víctimas, en cuántos casos los autores amenazaron o ejercieron violencia."),
+_CATEGORIA_SEGURIDAD = ("7 · Seguridad y victimización", [
+    (38, "Prevalencia de victimización por tipo de delito", "qué porcentaje de personas sufrió cada tipo de delito en el mes anterior a la entrevista (no es una cifra anual)."),
+    (39, "Victimización general por sexo", "haber sufrido al menos un delito en el mes anterior a la entrevista, comparando hombres y mujeres."),
+    (40, "Victimización general por departamento", "lo mismo, Montevideo comparado con el resto del país."),
+    (41, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
+    (42, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, cuántos hicieron la denuncia presencial en la comisaría."),
+    (43, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
+    (44, "Casos con violencia por tipo de delito", "de quienes fueron víctimas, en cuántos casos los autores amenazaron o ejercieron violencia."),
 ])
 
 
@@ -558,37 +557,57 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 </script></body></html>"""
 
 
-def plantilla_areas(empleo_disponible: bool, seguridad_disponible: bool) -> str:
-    """Paso 3.5 (opcional): antes del catálogo, si además de Hogares (que
-    siempre se incluye) hay datos de Empleo y/o Seguridad para el año
-    elegido, preguntale al usuario cuáles quiere sumar — selección
-    múltiple, puede elegir ninguna, una o las dos. Solo llamar a esta
-    función si `empleo_disponible or seguridad_disponible` es True; si
-    ninguna está disponible, saltar directo al catálogo (no mostrar un
-    formulario vacío).
+def plantilla_areas(fies_disponible: bool, empleo_disponible: bool, seguridad_disponible: bool) -> str:
+    """Paso 3.5: qué bloques temáticos quiere el usuario en el informe.
+
+    **Ningún bloque viene marcado por defecto ni se asume — ni siquiera
+    Brecha Digital o Hogares.** Antes, esos dos (más Territorio y Vivienda)
+    se incluían siempre en el catálogo sin preguntar, dando por sentado que
+    a cualquiera le interesa la penetración tecnológica; ahora son una
+    elección más, al mismo nivel que FIES/Empleo/Seguridad — nadie ve nada
+    de ningún bloque que no haya marcado acá primero.
+
+    Brecha Digital, Hogares, Territorio y Vivienda siempre se ofrecen como
+    opción (dependen únicamente de los datos de Hogares, que ya se validó
+    que existen en el paso 3). FIES/Empleo/Seguridad solo se ofrecen si
+    `config.datos_disponibles(anio)` los tiene para el año elegido — pasale
+    esos tres flags tal cual salen de ahí.
     """
-    opciones = []
+    opciones = [
+        ("brecha_digital", "Brecha Digital",
+         "acceso, calidad de conexión y uso de tecnología (TV cable, internet, computadora, streaming) en los hogares."),
+        ("hogares", "Hogares",
+         "composición del hogar, pobreza, jefatura, hacinamiento — sin ninguna variable de tecnología."),
+        ("territorio", "Territorio",
+         "distribución geográfica: por barrio de Montevideo, y comparado con el resto del país."),
+        ("vivienda", "Vivienda y tecnología",
+         "condiciones estructurales de la vivienda, según acceso a distintas tecnologías."),
+    ]
+    if fies_disponible:
+        opciones.append((
+            "fies", "Seguridad alimentaria",
+            "inseguridad alimentaria en los hogares (submuestra), según ingreso y composición del hogar.",
+        ))
     if empleo_disponible:
-        opciones.append(
-            '<label class="metrica"><input type="checkbox" name="area" value="empleo">'
-            '<span class="texto"><b>Empleo</b> — <span class="explicacion">'
-            "actividad, desempleo, informalidad y subempleo.</span></span></label>"
-        )
+        opciones.append(("empleo", "Empleo", "actividad, desempleo, informalidad y subempleo."))
     if seguridad_disponible:
-        opciones.append(
-            '<label class="metrica"><input type="checkbox" name="area" value="seguridad">'
-            '<span class="texto"><b>Seguridad y victimización</b> — <span class="explicacion">'
-            "percepción de seguridad y hechos delictivos sufridos por el hogar.</span></span></label>"
-        )
-    opciones_html = "\n".join(opciones)
+        opciones.append((
+            "seguridad", "Seguridad y victimización",
+            "percepción de seguridad y hechos delictivos sufridos por el hogar.",
+        ))
+
+    opciones_html = "\n".join(
+        f'<label class="metrica"><input type="checkbox" name="area" value="{valor}">'
+        f'<span class="texto"><b>{nombre}</b> — <span class="explicacion">{explicacion}</span></span></label>'
+        for valor, nombre, explicacion in opciones
+    )
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<title>¿Qué más querés incluir en el informe?</title>
+<title>¿Qué querés incluir en el informe?</title>
 <style>{_ESTILO}</style></head><body>
 <div class="tarjeta" id="tarjeta">
-  <h1>¿Querés sumar algo más al informe?</h1>
-  <p class="subtitulo">El panorama de Hogares siempre se incluye. Para este
-  año también hay datos de estas áreas — marcá las que te interesen (podés
-  elegir varias, o ninguna).</p>
+  <h1>¿Qué querés incluir en el informe?</h1>
+  <p class="subtitulo">Marcá los temas que te interesen — podés elegir uno,
+  varios, o todos. Ninguno viene marcado de antemano.</p>
   <form id="form">
     {opciones_html}
     <button type="submit">Continuar →</button>
@@ -608,28 +627,43 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 </script></body></html>"""
 
 
-def plantilla_catalogo(incluir_fies: bool = False, incluir_empleo: bool = False, incluir_seguridad: bool = False) -> str:
+def plantilla_catalogo(
+    incluir_brecha_digital: bool = False,
+    incluir_hogares: bool = False,
+    incluir_territorio: bool = False,
+    incluir_vivienda: bool = False,
+    incluir_fies: bool = False,
+    incluir_empleo: bool = False,
+    incluir_seguridad: bool = False,
+) -> str:
     """Paso 5: catálogo de métricas por categoría + propuesta libre. El informe
     final siempre se entrega en PDF y HTML — no se pregunta preferencia acá.
 
-    `incluir_fies` agrega la categoría de seguridad alimentaria — solo debe
-    ser True si `config.datos_disponibles(anio)["fies"]` es True para el año
-    elegido. `incluir_empleo`/`incluir_seguridad` agregan Empleo y
-    Seguridad/Victimización — solo deben ser True si el usuario las eligió
-    en `plantilla_areas()` (no alcanza con que el dato exista, acá sí hay
-    que preguntar antes, por lo pesado que es procesar los datos). Ver
-    .claude/agents/encuesta-hogares.md. Si no corresponde, la categoría ni
-    aparece: no es una opción que el usuario pueda marcar y quede vacía,
-    directamente no existe en el formulario.
+    **Todos los parámetros son opt-in y ninguno tiene que ver con qué datos
+    existen, sino con qué bloques eligió el usuario en `plantilla_areas()`**
+    (que ya filtró FIES/Empleo/Seguridad por disponibilidad real — acá ya no
+    hace falta volver a chequear eso). Si un bloque no fue elegido, su
+    categoría ni aparece: no es una opción marcable que quede vacía,
+    directamente no existe en el formulario. Ver
+    .claude/agents/encuesta-hogares.md.
     """
     bloques = []
     barra = '<div class="barra-acciones"><button type="button" onclick="marcarTodas(true)">Seleccionar todas</button><button type="button" onclick="marcarTodas(false)">Ninguna</button></div>'
-    categorias = (
-        _CATEGORIAS_METRICAS
-        + ([_CATEGORIA_FIES] if incluir_fies else [])
-        + ([_CATEGORIA_EMPLEO] if incluir_empleo else [])
-        + ([_CATEGORIA_SEGURIDAD] if incluir_seguridad else [])
-    )
+    categorias = []
+    if incluir_brecha_digital:
+        categorias.append(_CATEGORIAS_METRICAS["brecha_digital"])
+    if incluir_hogares:
+        categorias.append(_CATEGORIAS_METRICAS["hogares"])
+    if incluir_territorio:
+        categorias.append(_CATEGORIAS_METRICAS["territorio"])
+    if incluir_vivienda:
+        categorias.append(_CATEGORIAS_METRICAS["vivienda"])
+    if incluir_fies:
+        categorias.append(_CATEGORIA_FIES)
+    if incluir_empleo:
+        categorias.append(_CATEGORIA_EMPLEO)
+    if incluir_seguridad:
+        categorias.append(_CATEGORIA_SEGURIDAD)
     for titulo, metricas in categorias:
         items = "\n".join(
             f'<label class="metrica"><input type="checkbox" name="m" value="{num}">'
@@ -644,7 +678,7 @@ def plantilla_catalogo(incluir_fies: bool = False, incluir_empleo: bool = False,
 <style>{_ESTILO}</style></head><body>
 <div class="tarjeta" id="tarjeta" style="max-width:760px;">
   <h1>Elegí las métricas de tu informe</h1>
-  <div class="subtitulo">Los datos básicos (barrio, composición del hogar) ya van incluidos siempre. Marcá lo que te interese agregar.</div>
+  <div class="subtitulo">Estas son las métricas de los temas que elegiste. Marcá las que te interesen — ninguna viene tildada de antemano.</div>
   {barra}
   <form id="form">
     {catalogo_html}

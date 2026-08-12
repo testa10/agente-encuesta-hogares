@@ -22,18 +22,51 @@ def test_plantilla_datos_muestra_la_carpeta_y_el_anio():
     assert "https://ejemplo.ine/ficha" in html
 
 
-def test_plantilla_catalogo_incluye_las_25_metricas():
+def test_plantilla_catalogo_no_incluye_nada_por_defecto():
+    # Ningún bloque se incluye por defecto - ni siquiera Brecha Digital o
+    # Hogares, que antes venían siempre. Cada uno es opt-in.
     html = plantilla_catalogo()
-    for numero in range(1, 26):
+    assert "Brecha Digital" not in html
+    assert "Hogares" not in html
+    assert "Territorio" not in html
+    assert "Vivienda" not in html
+    assert 'value="1"' not in html
+
+
+def test_plantilla_catalogo_incluye_las_44_metricas_con_todos_los_bloques():
+    html = plantilla_catalogo(
+        incluir_brecha_digital=True,
+        incluir_hogares=True,
+        incluir_territorio=True,
+        incluir_vivienda=True,
+        incluir_fies=True,
+        incluir_empleo=True,
+        incluir_seguridad=True,
+    )
+    for numero in range(1, 45):
         assert f'value="{numero}"' in html
-    # las 5 categorías
-    assert "Nivel económico y brecha digital" in html
-    assert "Pobreza" in html
+    # los 7 bloques
+    assert "Brecha Digital" in html
+    assert "Hogares" in html
     assert "Territorio" in html
-    assert "Hogar y demografía" in html
     assert "Vivienda y tecnología" in html
+    assert "Seguridad alimentaria" in html
+    assert "6 · Empleo" in html
+    assert "Seguridad y victimización" in html
     # el informe siempre se entrega en PDF y HTML - no se pregunta acá
     assert 'name="pdf"' not in html
+
+
+def test_plantilla_catalogo_cada_bloque_base_es_independiente():
+    html_solo_hogares = plantilla_catalogo(incluir_hogares=True)
+    assert "Hogares" in html_solo_hogares
+    assert "Brecha Digital" not in html_solo_hogares
+    assert "Territorio" not in html_solo_hogares
+    assert "Vivienda" not in html_solo_hogares
+    for numero in range(7, 13):
+        assert f'value="{numero}"' in html_solo_hogares
+    for numero in [1, 13, 18]:
+        assert f'value="{numero}"' not in html_solo_hogares
 
 
 def test_plantilla_revision_incluye_las_tres_salidas():
@@ -81,7 +114,7 @@ def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
     pantallas = [
         plantilla_bienvenida(),
         plantilla_datos("2024", r"C:\ruta\data\2024"),
-        plantilla_areas(True, True),
+        plantilla_areas(True, True, True),
         plantilla_catalogo(),
         plantilla_revision("propuesta", "problema", "alternativa"),
     ]
@@ -99,7 +132,7 @@ def test_todas_las_pantallas_del_flujo_guiado_ofrecen_salir():
     pantallas = [
         plantilla_bienvenida(),
         plantilla_datos("2024", r"C:\ruta\data\2024"),
-        plantilla_areas(True, True),
+        plantilla_areas(True, True, True),
         plantilla_catalogo(),
         plantilla_revision("propuesta", "problema", "alternativa"),
     ]
@@ -117,49 +150,64 @@ def test_plantilla_arranque_ofrece_empezar_y_salir():
 def test_plantilla_catalogo_no_incluye_fies_por_defecto():
     html = plantilla_catalogo()
     assert "Seguridad alimentaria" not in html
-    assert 'value="26"' not in html
+    assert 'value="23"' not in html
 
 
 def test_plantilla_catalogo_incluye_fies_cuando_se_pide():
     html = plantilla_catalogo(incluir_fies=True)
     assert "Seguridad alimentaria" in html
-    for numero in range(26, 33):
+    for numero in range(23, 30):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_incluye_empleo_cuando_se_pide():
     html = plantilla_catalogo(incluir_empleo=True)
-    assert "7 · Empleo" in html
-    for numero in range(33, 41):
+    assert "6 · Empleo" in html
+    for numero in range(30, 38):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_sin_empleo_por_defecto():
     html = plantilla_catalogo()
-    assert 'value="33"' not in html
+    assert 'value="30"' not in html
+
+
+def test_plantilla_areas_siempre_ofrece_los_cuatro_bloques_base():
+    # Brecha Digital, Hogares, Territorio y Vivienda no dependen de FIES/
+    # Empleo/Seguridad - se ofrecen siempre, ninguno tildado de antemano.
+    html = plantilla_areas(fies_disponible=False, empleo_disponible=False, seguridad_disponible=False)
+    assert 'value="brecha_digital"' in html
+    assert 'value="hogares"' in html
+    assert 'value="territorio"' in html
+    assert 'value="vivienda"' in html
+    assert 'value="fies"' not in html
+    assert 'value="empleo"' not in html
+    assert 'value="seguridad"' not in html
 
 
 def test_plantilla_areas_muestra_solo_lo_disponible():
-    html_ninguna = plantilla_areas(empleo_disponible=False, seguridad_disponible=False)
+    html_ninguna = plantilla_areas(fies_disponible=False, empleo_disponible=False, seguridad_disponible=False)
+    assert 'value="fies"' not in html_ninguna
     assert 'value="empleo"' not in html_ninguna
     assert 'value="seguridad"' not in html_ninguna
 
-    html_empleo = plantilla_areas(empleo_disponible=True, seguridad_disponible=False)
+    html_empleo = plantilla_areas(fies_disponible=False, empleo_disponible=True, seguridad_disponible=False)
     assert 'value="empleo"' in html_empleo
     assert 'value="seguridad"' not in html_empleo
 
-    html_ambas = plantilla_areas(empleo_disponible=True, seguridad_disponible=True)
-    assert 'value="empleo"' in html_ambas
-    assert 'value="seguridad"' in html_ambas
+    html_todas = plantilla_areas(fies_disponible=True, empleo_disponible=True, seguridad_disponible=True)
+    assert 'value="fies"' in html_todas
+    assert 'value="empleo"' in html_todas
+    assert 'value="seguridad"' in html_todas
 
 
 def test_plantilla_catalogo_incluye_seguridad_cuando_se_pide():
     html = plantilla_catalogo(incluir_seguridad=True)
     assert "Seguridad y victimización" in html
-    for numero in range(41, 48):
+    for numero in range(38, 45):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_sin_seguridad_por_defecto():
     html = plantilla_catalogo()
-    assert 'value="41"' not in html
+    assert 'value="38"' not in html

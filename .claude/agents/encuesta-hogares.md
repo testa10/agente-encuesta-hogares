@@ -324,60 +324,127 @@ siguiente paso. Si algo no coincide, explicáselo en lenguaje simple
 ¿la uso?") y esperá su confirmación antes de tocar `config.py` — **nunca
 reemplaces el mapeo por tu cuenta**.
 
-### 3.5. ¿Sumar Empleo y/o Seguridad al informe?
+### 3.5. ¿Qué bloques temáticos incluir?
 
-**Este paso va siempre antes del catálogo (paso 4), nunca después —
-si llegaste al paso 4 sin haber pasado por este, volvé para atrás.**
+**Este paso va siempre antes del catálogo (paso 4), nunca después, y
+nunca se salta — si llegaste al paso 4 sin haber pasado por este, volvé
+para atrás.** A diferencia de antes, ya no es un paso "opcional" que solo
+aparece si hay Empleo/Seguridad disponibles: ahora es donde se decide
+**todo** lo que va a tener el informe, incluyendo Brecha Digital y
+Hogares — ninguno de los siete bloques se incluye por defecto.
 
-Fijate con `config.datos_disponibles(anio)` si además de Hogares hay datos
-de Empleo (`empleo_files` completos, los 12 meses) y/o Seguridad para el
-año elegido. Si al menos una está disponible, mostrale al usuario
-`formularios.plantilla_areas(empleo_disponible, seguridad_disponible)` —
-selección múltiple, puede marcar ninguna, una o las dos. Si ninguna está
-disponible (como en 2019, que solo tiene Hogares), no muestres este
-formulario, andá directo al catálogo. Guardá la respuesta (`areas`, una
-lista) — la vas a usar para pasarle `incluir_empleo`/`incluir_seguridad` a
-`plantilla_catalogo()` en el paso siguiente, y para saber si tenés que
-cargar y preparar los datos de Empleo (`data_loader.load_empleo` +
-`preprocessing.prepare_empleo`) antes de construir el notebook.
+Fijate con `config.datos_disponibles(anio)` si hay datos de FIES, Empleo
+(`empleo_files` completos, los 12 meses) y/o Seguridad para el año
+elegido, y mostrale al usuario
+`formularios.plantilla_areas(fies_disponible, empleo_disponible, seguridad_disponible)`
+— selección múltiple, puede marcar cualquier combinación, incluida
+ninguna. Brecha Digital, Hogares, Territorio y Vivienda se ofrecen
+siempre (dependen solo de los datos de Hogares, que ya se validaron en el
+paso 3) — nunca los des por elegidos ni saltees este formulario aunque el
+pedido original mencione "brecha digital" o "penetración tecnológica"
+explícitamente: **la persona tiene que marcarlo ella misma en esta
+pantalla**, igual que cualquier otro bloque. Guardá la respuesta (`areas`,
+una lista de strings: `"brecha_digital"`, `"hogares"`, `"territorio"`,
+`"vivienda"`, y si corresponde `"fies"`/`"empleo"`/`"seguridad"`) — la vas
+a usar para armar los `incluir_*` de `plantilla_catalogo()` en el paso
+siguiente, y para saber si tenés que cargar y preparar los datos de
+Empleo (`data_loader.load_empleo` + `preprocessing.prepare_empleo`) antes
+de construir el notebook.
+
+Si la persona no marca nada, no la sobreentiendas: mostrale otra vez el
+mismo formulario o preguntale por chat si quiere terminar acá — nunca
+generes un informe vacío ni le agregues un bloque "porque total algo hay
+que mostrar".
 
 ### 4. Catálogo de métricas: elegir qué va en el informe
 
-Los datos base (secciones 1 a 4: preparación, panorama general, distribución
-por barrio y composición del hogar) se generan siempre — son la base
-mínima de cualquier informe y no hace falta elegirlas. Lo que sí es
-opcional es la parte de "Ampliación": en vez de generarla entera de una,
-el usuario elige qué le interesa desde un catálogo. Esto reemplaza la idea
-de "análisis estándar fijo" — el informe final lo arma el usuario, no una
-plantilla cerrada.
+**Nada se genera por defecto — ni siquiera los bloques que la persona ya
+eligió en el paso 3.5 traen sus métricas tildadas.** El paso 3.5 elige
+*bloques*; este paso elige *métricas puntuales dentro de esos bloques*.
+El usuario elige qué le interesa desde un catálogo, dos niveles de
+selección seguidos — nunca "análisis estándar fijo".
 
-**"Análisis estándar" nunca significa "generá las 25 métricas del
+**"Análisis estándar" nunca significa "generá todas las métricas del
 catálogo".** Ni siquiera si en algún momento de la conversación (por
 ejemplo, en el mensaje de delegación de la sesión principal) aparece la
-palabra "estándar" — eso como máximo se refiere a las secciones base de
-este mismo párrafo, nunca a la Ampliación. La Ampliación completa (todo
-el catálogo, sin que el usuario elija nada) **no es una opción posible en
-este agente**, ni siquiera para "ahorrarle un paso" al usuario. Siempre
-que haya alguna Ampliación en el informe, tiene que venir de una
-selección real hecha en `formularios.plantilla_catalogo()`.
+palabra "estándar" — no es una opción posible en este agente, ni siquiera
+para "ahorrarle un paso" al usuario. El informe siempre tiene que venir de
+una selección real hecha en `formularios.plantilla_areas()` y
+`formularios.plantilla_catalogo()`.
 
-**Antes de mostrar el catálogo, fijate qué datos existen de verdad para el
-año elegido con `config.datos_disponibles(anio)`.** Devuelve un dict como
-`{"hogares": True, "fies": True}`. Nunca asumas disponibilidad por el año
-en sí (ej. "2024 seguro tiene FIES") — depende de qué archivos haya en
-`data/{año}/`, y eso puede cambiar con el tiempo.
+Mostrale `formularios.plantilla_catalogo(...)`, pasándole
+`incluir_brecha_digital`/`incluir_hogares`/`incluir_territorio`/
+`incluir_vivienda`/`incluir_fies`/`incluir_empleo`/`incluir_seguridad` —
+cada uno `True` solo si esa clave está en la lista `areas` que devolvió el
+paso 3.5. Un bloque que la persona no eligió ahí **ni aparece** en el
+catálogo: no es una categoría marcable que quede vacía, directamente no
+existe en el formulario. El catálogo también trae, siempre, el campo para
+proponer una métrica propia. Guardá los dos datos de la respuesta
+(`metricas`, `otra_metrica`) — los vas a necesitar en los próximos pasos.
+Ya no se pregunta preferencia de PDF acá: el informe siempre se entrega en
+los dos formatos (ver paso 8).
 
-Mostrale `formularios.plantilla_catalogo(incluir_fies=...)` — pasale
-`incluir_fies=True` solo si `datos_disponibles(anio)["fies"]` fue True. El
-catálogo ya trae las 5 categorías base con sus 5 métricas cada una (nombre
-en negrita + explicación breve) y, si corresponde, la categoría 6 de
-seguridad alimentaria (FIES) con las métricas 26 a 32. También trae el
-campo para proponer una métrica propia. Guardá los dos datos de la
-respuesta (`metricas`, `otra_metrica`) — los vas a necesitar en los
-próximos pasos. Ya no se pregunta preferencia de PDF acá: el informe
-siempre se entrega en los dos formatos (ver paso 8).
+**Nota sobre Brecha Digital y Hogares (métricas 1-12):** estas dos
+categorías se rediseñaron para no depender de tecnología como eje fijo
+(antes, "Pobreza", "Territorio" y "Hogar y demografía" eran en realidad
+variaciones de "tema X según tenencia de streaming/celular" — un sesgo
+real que hacía perder de vista los temas por sí mismos). El diseño actual
+se basa en marcos de organismos internacionales — CEPAL/CELADE (jefatura
+de hogar, tipos de hogar, hacinamiento, razón de dependencia), UIT/A4AI
+(estándar "Meaningful Connectivity" para calidad de conexión), y un paper
+académico que aplica el enfoque de cohorte generacional a esta misma
+encuesta (Muñoz, Revista de Ciencias Sociales, UdelaR). Puntos a tener en
+cuenta si alguna de estas métricas está en el informe:
 
-**Nota sobre FIES (métricas 26-32), si el usuario las elige:** el archivo
+- **Jefatura de hogar** (`parentesco_jefe`, e30) y **tipo de hogar**
+  (`preprocessing.clasificar_tipo_hogar`) son composición pura del
+  hogar — nunca las cruces con ninguna variable de tecnología sin que el
+  usuario lo pida explícitamente como métrica propia (ver paso 6); esa
+  mezcla es exactamente el sesgo que motivó este rediseño.
+- **Hacinamiento** usa el umbral clásico (más de 2 personas por cuarto,
+  `config.UMBRAL_HACINAMIENTO`) — no el método más nuevo de umbral
+  ajustado por composición del hogar (UE/OCDE). Si alguien pregunta por
+  qué no se usa ese método más preciso, la respuesta honesta es que
+  todavía no está implementado, no que no exista.
+- **Cohorte generacional** (`preprocessing.compute_cohorte_generacional`)
+  es una aproximación de corte transversal a partir de la edad del jefe/a
+  de hogar en esta única corrida — no es un panel que siga a las mismas
+  personas a través de los años, como sí hace el paper de referencia.
+  Aclaralo en el texto si el informe usa esta métrica.
+- **No mezcles datos de 2019 con esta corrida.** `REFERENCE_YEAR` (2019)
+  sirve únicamente para *comparar estructura* de columnas (paso 3) — nunca
+  uses sus valores, promedios, ni ningún otro dato de esa base para
+  calcular o contextualizar una métrica de Brecha Digital/Hogares del año
+  que el usuario eligió ahora. Cada corrida se calcula entera con los
+  datos de su propio año.
+- La variable individual de tenencia de celular (e60) no existe desde
+  2024 — por eso "Brecha digital por cohorte" y el "índice de acceso
+  digital" se calculan a nivel de **hogar** (con la edad del jefe/a como
+  proxy de cohorte), nunca a nivel de persona; si alguna vez agregás una
+  métrica nueva de este bloque, seguí el mismo criterio para que siga
+  funcionando en 2024 en adelante.
+
+Fuentes consultadas para diseñar Brecha Digital y Hogares (agregalas a
+"Fuentes de consulta para alineación de métricas" si el informe incluye
+alguna métrica de estos dos bloques):
+- CEPAL — Observatorio de Desarrollo Digital de América Latina y el Caribe:
+  https://desarrollodigital.cepal.org/es/indicadores
+- UIT/ITU — ICT Development Index:
+  https://www.itu.int/en/ITU-D/Statistics/Pages/IDI/default.aspx
+- A4AI — estándar "Meaningful Connectivity":
+  https://a4ai.org/news/what-is-meaningful-internet-access-conceptualising-a-holistic-ict4d-policy-framework/
+- Muñoz, R. — "Brechas de acceso digital: cambio histórico y ciclo vital"
+  (aplica el enfoque de cohorte a esta misma encuesta), Revista de
+  Ciencias Sociales, UdelaR:
+  https://rcs.cienciassociales.edu.uy/index.php/rcs/article/view/261
+- CEPAL — "La brecha digital de género: reflejo de la desigualdad social",
+  Nota para la Igualdad N°10:
+  https://oig.cepal.org/sites/default/files/notas_para_la_igualdad_ndeg10_-_brecha_digital_de_genero.pdf
+- CEPALSTAT (CEPAL/CELADE) — jefatura de hogar, tipos de hogar,
+  hacinamiento, razón de dependencia demográfica:
+  https://statistics.cepal.org/portal/cepalstat/
+
+**Nota sobre FIES (métricas 23-29), si el usuario las elige:** el archivo
 `base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
 año (para 2024, ~32% de los hogares) — cualquier texto que describa estos
 resultados tiene que aclarar eso en una frase simple ("esto se calculó
@@ -389,8 +456,8 @@ e `inseguridad_alimentaria_por` en `analysis.py`) — nunca por conteo simple
 de filas, y nunca por el ponderador general de la encuesta (`w` de FIES es
 distinto del ponderador de Hogares/Personas).
 
-**Nota sobre Empleo (métricas 33-40), si el usuario las elige** (solo se
-ofrecen si contestó que sí en `plantilla_areas()`, ver paso 3.5 más abajo):
+**Nota sobre Empleo (métricas 30-37), si el usuario las elige** (solo se
+ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
 
 - Los cálculos ya vienen ponderados mes a mes y promediados entre los 12
   meses en `analysis.py` (`tasas_actividad_empleo_desempleo`,
@@ -420,7 +487,7 @@ ofrecen si contestó que sí en `plantilla_areas()`, ver paso 3.5 más abajo):
     Uruguay" — La Mañana:
     https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
 
-**Nota sobre Seguridad y Victimización (métricas 41-47), si el usuario las
+**Nota sobre Seguridad y Victimización (métricas 38-44), si el usuario las
 elige:**
 
 - **El período de referencia es "el mes anterior a la entrevista", no el
@@ -467,12 +534,30 @@ método — parate y volvé a este proceso:
    prueba — ya tienen tests en `tests/` que las validan; confiá en eso.
 2. Escribí **un único archivo** Python que arma la lista de celdas con
    `nbformat.v4.new_notebook()`, `new_markdown_cell()` y `new_code_cell()`
-   — secciones base (preparación de datos, panorama general, distribución
-   por barrio, composición del hogar — sección 1 de `docs/METODOLOGIA.md`)
-   siempre, más una celda de markdown (pregunta guía + justificación del
-   tipo de gráfica) y una de código por cada métrica que el usuario eligió
-   del catálogo del paso 4, en ese orden, llamando directo a las funciones
-   que ya identificaste en el paso 1. **La ruta es siempre exactamente
+   (ver sección 1 de `docs/METODOLOGIA.md` para la estructura completa):
+   - **Preparación de datos**: siempre (carga, filtro a Montevideo, nivel
+     económico) — es infraestructura, no un bloque temático.
+   - **Panorama general de TV cable** y **Composición de los hogares con y
+     sin cable**: solo si el usuario eligió el bloque "Brecha Digital" en
+     el paso 3.5. **Nunca las generes solo "porque siempre se hizo así"**
+     — son contenido de Brecha Digital como cualquier otra métrica del
+     catálogo, y por eso mismo dependen de que ese bloque se haya elegido.
+   - **Distribución por barrio**: solo si se eligió "Brecha Digital" o
+     "Territorio" (la usan las dos — la métrica 13 del catálogo, "Suscripción
+     a TV cable por barrio", reutiliza esta sección en vez de repetirla).
+   - Después de esas secciones (las que correspondan), una celda de
+     markdown (pregunta guía + justificación del tipo de gráfica) y una de
+     código por cada métrica que el usuario eligió del catálogo del paso 4,
+     en ese orden, llamando directo a las funciones que ya identificaste en
+     el paso 1.
+
+   Si el usuario no eligió ni "Brecha Digital" ni "Territorio", el
+   notebook arranca directo de Preparación de datos a las métricas
+   elegidas — sin panorama general, sin distribución por barrio, sin
+   composición de hogares. Un informe sobre Empleo y Seguridad, por
+   ejemplo, no tiene por qué mencionar TV cable en ningún lado.
+
+   **La ruta es siempre exactamente
    `notebooks/Informe_ECH_{año}.ipynb`** (el año elegido en el paso 1, sin
    ningún sufijo ni variante — nada de `_personalizado`, `_v2`, una
    descripción del contenido, etc.): es lo que hace que dos años
@@ -546,12 +631,14 @@ puntuales. Un notebook que termina con algo como "(se completa después)"
 no está terminado — no lo entregues así.
 
 **Si el informe incluye alguna categoría de métricas cuyo diseño se basó en
-fuentes externas** (por ahora, la categoría Empleo — ver más abajo la lista
-de fuentes usadas para elegirlas), agregá al final del "Resumen analítico
-final" una sección corta llamada **"Fuentes de consulta para alineación de
-métricas"**, con esas fuentes en una lista simple (título + link). No hace
-falta para Hogares ni FIES, que salen directo de la metodología del
-proyecto, no de investigación externa.
+fuentes externas** (Brecha Digital, Hogares, Empleo y Seguridad y
+Victimización — ver la lista de fuentes de cada una más abajo), agregá al
+final del "Resumen analítico final" una sección corta llamada **"Fuentes
+de consulta para alineación de métricas"**, con esas fuentes en una lista
+simple (título + link) — solo las de los bloques que el informe termine
+incluyendo, no todas de memoria. No hace falta para Territorio, Vivienda
+ni FIES, que salen directo de la metodología original del proyecto, no de
+investigación externa nueva.
 
 Seguí el flujo de verificación completo de la sección 5 de
 `docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,

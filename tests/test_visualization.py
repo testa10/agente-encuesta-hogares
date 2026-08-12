@@ -34,3 +34,87 @@ def test_plot_penetracion_nacional_ancla_el_eje_x_en_cero():
     fig = viz.plot_penetracion_nacional(df)
 
     assert fig.layout.xaxis.range[0] == 0
+
+
+# ============================================================================
+# Hogares y Brecha Digital: funciones nuevas, sin ninguna corrida real
+# todavía - smoke tests simples (corren sin error, devuelven una figura) en
+# vez de los tests de regresión de arriba, que existen para bugs ya vistos.
+# ============================================================================
+
+def test_plot_pct_pobres_indigentes_no_falla():
+    fig = viz.plot_pct_pobres_indigentes({"pct_pobres": 5.3, "pct_indigentes": 0.2})
+    assert fig is not None
+
+
+def test_plot_tasa_jefatura_femenina_no_falla():
+    fig = viz.plot_tasa_jefatura_femenina({"pct_jefatura_femenina": 42.0, "total_hogares": 100})
+    assert fig is not None
+
+
+def test_plot_tipos_hogar_no_falla():
+    df = pd.DataFrame({"tipo_hogar": ["Nuclear", "Unipersonal"], "pct_hogares": [60.0, 40.0]})
+    fig = viz.plot_tipos_hogar(df)
+    assert fig is not None
+
+
+def test_plot_hacinamiento_por_no_falla():
+    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "5-Alto"], "pct_hacinamiento": [15.0, 2.0]})
+    fig = viz.plot_hacinamiento_por(df, "nivel económico")
+    assert fig is not None
+
+
+def test_plot_razon_dependencia_por_no_falla():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "SALTO"], "razon_dependencia": [45.0, 55.0]})
+    fig = viz.plot_razon_dependencia_por(df, "departamento")
+    assert fig is not None
+
+
+def test_plot_pct_unipersonales_mayores_no_falla():
+    fig = viz.plot_pct_unipersonales_mayores({"pct_unipersonales_mayores": 60.0, "total_unipersonales": 50})
+    assert fig is not None
+
+
+def test_plot_brecha_digital_por_cohorte_no_falla():
+    df = pd.DataFrame(
+        {
+            "cohorte": ["Millennials (1981-1996)", "Baby boomers (1946-1964)"],
+            "tecnologia": ["Internet", "Internet"],
+            "pct_penetracion": [90.0, 60.0],
+        }
+    )
+    fig = viz.plot_brecha_digital_por_cohorte(df)
+    assert fig is not None
+
+
+def test_plot_brecha_digital_por_jefatura_no_falla():
+    df = pd.DataFrame(
+        {
+            "jefe_sexo": ["1-Hombre", "2-Mujer"],
+            "tecnologia": ["Internet", "Internet"],
+            "pct_penetracion": [80.0, 78.0],
+        }
+    )
+    fig = viz.plot_brecha_digital_por_jefatura(df)
+    assert fig is not None
+
+
+def test_plot_calidad_conexion_por_no_falla():
+    df = pd.DataFrame(
+        {"Sin conexión": [10.0, 2.0], "Solo móvil": [30.0, 8.0], "Banda ancha fija": [60.0, 90.0]},
+        index=pd.Index(["1-Bajo", "5-Alto"], name="nivel_economico"),
+    )
+    fig = viz.plot_calidad_conexion_por(df, "nivel económico")
+    assert fig is not None
+
+
+def test_plot_indice_acceso_digital_por_no_falla():
+    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "5-Alto"], "indice_promedio": [1.5, 3.5]})
+    fig = viz.plot_indice_acceso_digital_por(df, "nivel económico")
+    assert fig is not None
+
+
+def test_plot_adopcion_tablet_ibirapita_no_falla():
+    df = pd.DataFrame({"jefe_es_mayor": [True, False], "pct_con_tablet": [25.0, 1.0]})
+    fig = viz.plot_adopcion_tablet_ibirapita(df, "jefe es mayor")
+    assert fig is not None

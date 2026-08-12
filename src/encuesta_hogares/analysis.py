@@ -332,6 +332,167 @@ def diferencia_entre_tablas(
     return (a - b).round(2)
 
 
+# ============================================================================
+# Hogares (composición, sin tecnología) y Brecha Digital (con marco
+# internacional) — ver la nota de fuentes en config.py y el detalle
+# metodológico en .claude/agents/encuesta-hogares.md.
+# ============================================================================
+
+def pct_pobres_indigentes(hogares_extendido: pd.DataFrame) -> dict:
+    """% de hogares pobres y % en indigencia (el grado más severo, un
+    subconjunto de los pobres)."""
+    return {
+        "pct_pobres": round(hogares_extendido["pobre"].mean() * 100, 2),
+        "pct_indigentes": round(hogares_extendido["indigente"].mean() * 100, 2),
+    }
+
+
+def tasa_jefatura_femenina(tipo_hogar: pd.DataFrame) -> dict:
+    """% de hogares cuyo jefe/a es mujer, sobre el total de hogares con
+    jefatura identificada. Indicador estándar CEPAL/CELADE."""
+    total = int(tipo_hogar["jefe_sexo"].notna().sum())
+    mujeres = int((tipo_hogar["jefe_sexo"] == "2-Mujer").sum())
+    return {"pct_jefatura_femenina": round(mujeres / total * 100, 2), "total_hogares": total}
+
+
+def tipos_hogar_resumen(tipo_hogar: pd.DataFrame) -> pd.DataFrame:
+    """% de hogares de cada tipo (Unipersonal/Nuclear/Extendido/Compuesto/
+    Sin núcleo — ver preprocessing.clasificar_tipo_hogar), de mayor a menor."""
+    resumen = (
+        tipo_hogar["tipo_hogar"]
+        .value_counts(normalize=True)
+        .mul(100)
+        .round(2)
+        .rename("pct_hogares")
+        .rename_axis("tipo_hogar")
+        .reset_index()
+    )
+    return resumen.sort_values("pct_hogares", ascending=False).reset_index(drop=True)
+
+
+def pct_hacinamiento_por(hogares_hacinamiento: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% de hogares en situación de hacinamiento (ver
+    preprocessing.compute_hacinamiento), agrupado por una columna cualquiera."""
+    resumen = (
+        hogares_hacinamiento.groupby(columna_grupo, observed=True)["hacinado"]
+        .mean()
+        .mul(100)
+        .round(2)
+        .reset_index()
+        .rename(columns={"hacinado": "pct_hacinamiento"})
+    )
+    return resumen
+
+
+def razon_dependencia_demografica(personas: pd.DataFrame) -> float:
+    """(menores de 15 + mayores de 65) / población en edad activa (15-64) x 100.
+    Indicador demográfico estándar CEPAL/CELADE — es una relación
+    *potencial* (por edad), no mide actividad económica real."""
+    menores = (personas["edad"] < 15).sum()
+    mayores = (personas["edad"] >= 65).sum()
+    activos = personas["edad"].between(15, 64).sum()
+    return round((menores + mayores) / activos * 100, 2)
+
+
+def razon_dependencia_por(personas_con_grupo: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """Razón de dependencia demográfica (ver `razon_dependencia_demografica`),
+    agrupada por una columna cualquiera (ej. departamento)."""
+    filas = []
+    for grupo, sub in personas_con_grupo.groupby(columna_grupo):
+        menores = (sub["edad"] < 15).sum()
+        mayores = (sub["edad"] >= 65).sum()
+        activos = sub["edad"].between(15, 64).sum()
+        razon = round((menores + mayores) / activos * 100, 2) if activos else None
+        filas.append({columna_grupo: grupo, "razon_dependencia": razon})
+    return pd.DataFrame(filas)
+
+
+def pct_unipersonales_mayores(tipo_hogar: pd.DataFrame) -> dict:
+    """De los hogares unipersonales, qué % tiene 65 años o más (su único
+    integrante es, por definición, el jefe/a). CEPAL: en América Latina esto
+    puede señalar vulnerabilidad, a diferencia de países desarrollados donde
+    suele leerse como autonomía — ver nota en
+    .claude/agents/encuesta-hogares.md."""
+    unipersonales = tipo_hogar[tipo_hogar["tipo_hogar"] == "Unipersonal"]
+    total = len(unipersonales)
+    mayores = int((unipersonales["jefe_edad"] >= 65).sum())
+    return {
+        "pct_unipersonales_mayores": round(mayores / total * 100, 2) if total else 0.0,
+        "total_unipersonales": total,
+    }
+
+
+def brecha_digital_por_cohorte(df_extendido_con_cohorte: pd.DataFrame) -> pd.DataFrame:
+    """% de penetración de cada tecnología, por cohorte generacional del
+    jefe/a de hogar (ver preprocessing.compute_cohorte_generacional). Mismo
+    cálculo que `brecha_digital_por_nivel_economico`, agrupado por cohorte."""
+    tecnologias = list(config.TECNOLOGIAS_LABELS.keys())
+    resumen = (
+        df_extendido_con_cohorte.groupby("cohorte", observed=True)[tecnologias]
+        .mean()
+        .mul(100)
+        .round(2)
+        .reset_index()
+        .melt(id_vars="cohorte", var_name="tecnologia", value_name="pct_penetracion")
+    )
+    resumen["tecnologia"] = resumen["tecnologia"].map(config.TECNOLOGIAS_LABELS)
+    return resumen
+
+
+def brecha_digital_por_jefatura(df_extendido_con_jefatura: pd.DataFrame) -> pd.DataFrame:
+    """% de penetración de cada tecnología, según si el hogar tiene jefe o
+    jefa mujer. CEPAL documenta que en la región la brecha de género ya casi
+    no está en la tenencia del hogar sino en el uso individual — no
+    encontrar diferencia acá es un resultado consistente con esa literatura,
+    no un resultado vacío (ver .claude/agents/encuesta-hogares.md)."""
+    tecnologias = list(config.TECNOLOGIAS_LABELS.keys())
+    resumen = (
+        df_extendido_con_jefatura.groupby("jefe_sexo", observed=True)[tecnologias]
+        .mean()
+        .mul(100)
+        .round(2)
+        .reset_index()
+        .melt(id_vars="jefe_sexo", var_name="tecnologia", value_name="pct_penetracion")
+    )
+    resumen["tecnologia"] = resumen["tecnologia"].map(config.TECNOLOGIAS_LABELS)
+    return resumen
+
+
+def indice_acceso_digital_por(df_con_indice: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """Promedio del índice de acceso digital (0-4, ver
+    preprocessing.compute_indice_acceso_digital), agrupado por una columna
+    cualquiera."""
+    return (
+        df_con_indice.groupby(columna_grupo, observed=True)["indice_acceso_digital"]
+        .mean()
+        .round(2)
+        .reset_index()
+        .rename(columns={"indice_acceso_digital": "indice_promedio"})
+    )
+
+
+def adopcion_tablet_ibirapita_por(hogares_extendido: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% de hogares con tablet del Plan Ibirapitá (programa estatal de
+    inclusión digital para personas mayores), agrupado por una columna
+    cualquiera (ej. si el jefe/a de hogar es adulto mayor).
+
+    `tiene_tablet_ibirapita` sale de `decode_si_no` en dtype `object`
+    (True/False/NaN) — `.astype("boolean")` la pasa al tipo nullable de
+    pandas antes de promediar, si no `.mean()`/`.round()` pueden fallar o
+    dar un resultado no numérico cuando hay algún "sin dato" (ver
+    preprocessing.compute_indice_acceso_digital, mismo motivo)."""
+    return (
+        hogares_extendido.assign(tiene_tablet_ibirapita=hogares_extendido["tiene_tablet_ibirapita"].astype("boolean"))
+        .groupby(columna_grupo, observed=True)["tiene_tablet_ibirapita"]
+        .mean()
+        .astype("float64")
+        .mul(100)
+        .round(2)
+        .reset_index()
+        .rename(columns={"tiene_tablet_ibirapita": "pct_con_tablet"})
+    )
+
+
 def situacion_ocupacional_por(df_combinado: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
     """% de personas por condición de actividad (Ocupados/Desocupados/Inactivos),
     agrupado por una columna cualquiera (ej. `tipo_abonado`, o una columna de

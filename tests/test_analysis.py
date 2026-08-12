@@ -1,6 +1,9 @@
 import pandas as pd
 
 from encuesta_hogares.analysis import (
+    adopcion_tablet_ibirapita_por,
+    brecha_digital_por_cohorte,
+    brecha_digital_por_jefatura,
     brecha_por_grupo,
     composicion_hogar_por,
     condiciones_vivienda_diferencia,
@@ -8,16 +11,24 @@ from encuesta_hogares.analysis import (
     diferencia_entre_categorias,
     diferencia_entre_tablas,
     filtrar_segmento,
+    indice_acceso_digital_por,
     ingreso_hogar_mediano_por_departamento,
     inseguridad_alimentaria_por,
+    pct_hacinamiento_por,
+    pct_pobres_indigentes,
     pct_ponderado_por,
+    pct_unipersonales_mayores,
     prevalencia_inseguridad_alimentaria,
     proporcion_cruzada,
+    razon_dependencia_demografica,
+    razon_dependencia_por,
     resumen_conectividad,
     situacion_ocupacional_por,
     tasa_mensual_promedio_por,
     tasas_actividad_empleo_desempleo,
     tasas_actividad_empleo_desempleo_por,
+    tasa_jefatura_femenina,
+    tipos_hogar_resumen,
 )
 
 
@@ -280,3 +291,112 @@ def test_diferencia_entre_tablas_cruza_por_indice():
     diferencia = diferencia_entre_tablas(tabla_a, tabla_b, "tipo", "pct")
     assert diferencia["X"] == 30.0
     assert diferencia["Y"] == 0.0
+
+
+# ============================================================================
+# Hogares y Brecha Digital
+# ============================================================================
+
+def test_pct_pobres_indigentes():
+    df = pd.DataFrame({"pobre": [True, True, False, False], "indigente": [True, False, False, False]})
+    resultado = pct_pobres_indigentes(df)
+    assert resultado == {"pct_pobres": 50.0, "pct_indigentes": 25.0}
+
+
+def test_tasa_jefatura_femenina():
+    df = pd.DataFrame({"jefe_sexo": ["1-Hombre", "2-Mujer", "2-Mujer", "1-Hombre", None]})
+    resultado = tasa_jefatura_femenina(df)
+    assert resultado == {"pct_jefatura_femenina": 50.0, "total_hogares": 4}
+
+
+def test_tipos_hogar_resumen_ordena_de_mayor_a_menor():
+    df = pd.DataFrame({"tipo_hogar": ["Nuclear", "Nuclear", "Nuclear", "Unipersonal", "Extendido"]})
+    resumen = tipos_hogar_resumen(df)
+    assert resumen.iloc[0]["tipo_hogar"] == "Nuclear"
+    assert resumen.iloc[0]["pct_hogares"] == 60.0
+
+
+def test_pct_hacinamiento_por():
+    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"], "hacinado": [True, False, False]})
+    resumen = pct_hacinamiento_por(df, "nivel_economico").set_index("nivel_economico")
+    assert resumen.loc["1-Bajo", "pct_hacinamiento"] == 50.0
+    assert resumen.loc["5-Alto", "pct_hacinamiento"] == 0.0
+
+
+def test_razon_dependencia_demografica():
+    # 2 menores de 15, 1 mayor de 65, 3 en edad activa (15-64) -> 3/3*100 = 100.0
+    personas = pd.DataFrame({"edad": [5, 10, 70, 20, 40, 60]})
+    assert razon_dependencia_demografica(personas) == 100.0
+
+
+def test_razon_dependencia_por():
+    personas = pd.DataFrame(
+        {
+            "departamento": ["MONTEVIDEO", "MONTEVIDEO", "MONTEVIDEO", "SALTO", "SALTO"],
+            "edad": [5, 30, 40, 30, 40],
+        }
+    )
+    resumen = razon_dependencia_por(personas, "departamento").set_index("departamento")
+    assert resumen.loc["MONTEVIDEO", "razon_dependencia"] == 50.0
+    assert resumen.loc["SALTO", "razon_dependencia"] == 0.0
+
+
+def test_pct_unipersonales_mayores():
+    df = pd.DataFrame(
+        {
+            "tipo_hogar": ["Unipersonal", "Unipersonal", "Unipersonal", "Nuclear"],
+            "jefe_edad": [70, 30, 68, 40],
+        }
+    )
+    resultado = pct_unipersonales_mayores(df)
+    assert resultado == {"pct_unipersonales_mayores": round(2 / 3 * 100, 2), "total_unipersonales": 3}
+
+
+def test_pct_unipersonales_mayores_sin_unipersonales():
+    df = pd.DataFrame({"tipo_hogar": ["Nuclear"], "jefe_edad": [40]})
+    resultado = pct_unipersonales_mayores(df)
+    assert resultado == {"pct_unipersonales_mayores": 0.0, "total_unipersonales": 0}
+
+
+def test_brecha_digital_por_cohorte():
+    df = pd.DataFrame(
+        {
+            "cohorte": ["Millennials (1981-1996)", "Millennials (1981-1996)", "Baby boomers (1946-1964)"],
+            "tiene_cable": [True, False, True],
+            "tiene_internet": [True, True, False],
+            "tiene_pc": [True, True, False],
+            "tiene_streaming": [True, False, False],
+        }
+    )
+    resumen = brecha_digital_por_cohorte(df)
+    fila = resumen[(resumen["cohorte"] == "Millennials (1981-1996)") & (resumen["tecnologia"] == "TV Cable")]
+    assert fila["pct_penetracion"].iloc[0] == 50.0
+
+
+def test_brecha_digital_por_jefatura():
+    df = pd.DataFrame(
+        {
+            "jefe_sexo": ["1-Hombre", "1-Hombre", "2-Mujer"],
+            "tiene_cable": [True, False, True],
+            "tiene_internet": [True, True, True],
+            "tiene_pc": [True, True, True],
+            "tiene_streaming": [False, False, True],
+        }
+    )
+    resumen = brecha_digital_por_jefatura(df)
+    fila = resumen[(resumen["jefe_sexo"] == "1-Hombre") & (resumen["tecnologia"] == "TV Cable")]
+    assert fila["pct_penetracion"].iloc[0] == 50.0
+
+
+def test_indice_acceso_digital_por():
+    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"], "indice_acceso_digital": [1, 3, 4]})
+    resumen = indice_acceso_digital_por(df, "nivel_economico").set_index("nivel_economico")
+    assert resumen.loc["1-Bajo", "indice_promedio"] == 2.0
+    assert resumen.loc["5-Alto", "indice_promedio"] == 4.0
+
+
+def test_adopcion_tablet_ibirapita_por():
+    df = pd.DataFrame({"jefe_es_mayor": [True, True, False], "tiene_tablet_ibirapita": [True, False, False]})
+    resumen = adopcion_tablet_ibirapita_por(df, "jefe_es_mayor").set_index("jefe_es_mayor")
+    assert resumen.loc[True, "pct_con_tablet"] == 50.0
+    assert resumen.loc[False, "pct_con_tablet"] == 0.0

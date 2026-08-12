@@ -13,22 +13,23 @@ sección pueden variar si se agregan o quitan preguntas, pero el orden lógico
 se mantiene):
 
 1. **Preparación de datos**: cargar Hogares y Personas, filtrar a Montevideo,
-   clasificar nivel económico.
-2. **Análisis preliminar**: cuántos hogares tienen la tecnología principal
-   (TV cable) en total.
-3. **Distribución por barrio**: % de abonados por barrio, clasificado en
-   cuartiles (nivel de suscripción del **barrio**, no del hogar — ver
-   sección 4 de este documento).
-4. **Composición de los hogares** con y sin la tecnología principal (edad,
-   sexo).
-5. **Ampliación del análisis**, organizada en "Entornos" temáticos:
-   - Entorno 1 — Nivel económico del hogar (brecha digital, acceso por
-     tecnología).
-   - Entorno 2 — Nivel de pobreza del hogar.
-   - Entorno 3 — Otros factores del hogar y el territorio (sustitución
-     tecnológica, condiciones de vivienda, composición del hogar, situación
-     ocupacional, alcance nacional).
-6. **Resumen analítico final**, organizado por los mismos Entornos, con
+   clasificar nivel económico. Es la única parte que se genera siempre —
+   toda infraestructura, sin contenido temático propio.
+2. **Panorama general de TV cable**, **Distribución por barrio** y
+   **Composición de los hogares con y sin cable** — a diferencia del punto
+   1, **estas tres NO se generan siempre**: son contenido del bloque
+   "Brecha Digital" (y, para Distribución por barrio, también del bloque
+   "Territorio" — ver `.claude/agents/encuesta-hogares.md`, paso 5.2), así
+   que solo se arman si el usuario eligió alguno de esos bloques en el
+   paso 3.5. No asumir que a todos les interesa la tecnología es la misma
+   razón por la que el catálogo dejó de incluir esos bloques por defecto —
+   aplicarla acá y no en el catálogo hubiera sido inconsistente.
+3. **Bloques elegidos**, cada uno organizado como "Entorno" temático propio
+   (Brecha Digital, Hogares, Territorio, Vivienda, y — si corresponde —
+   Seguridad Alimentaria, Empleo, Seguridad y Victimización): el usuario
+   elige qué bloques quiere (paso 3.5) y qué métricas de cada uno (paso 4).
+4. **Resumen analítico final**, organizado por los mismos bloques que
+   terminó teniendo el informe (nunca por una lista fija de Entornos), con
    cifras reales (nunca estimadas) y redactado para un lector no técnico.
 
 Cada subsección nueva sigue el mismo patrón: **una pregunta guía en
