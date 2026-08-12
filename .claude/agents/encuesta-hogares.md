@@ -688,7 +688,7 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
 
    Si de verdad hace falta código nuevo, escribilo **una sola vez, bien**,
    basándote en el patrón de una función parecida que ya exista (ej.
-   `condiciones_vivienda_por`, `situacion_ocupacional_por`) — no lo escribas
+   `condiciones_vivienda_por`, `tasas_actividad_empleo_desempleo_por`) — no lo escribas
    a los tumbos, corrigiendo y volviendo a correr `pytest` en un ciclo de
    prueba y error. Si te encontrás editando el mismo archivo de test tres
    o cuatro veces seguidas, pará: significa que no leíste bien el patrón
@@ -821,7 +821,7 @@ compuerta de calidad antes de tocar ningún archivo permanente:
    sostiene esa métrica esté generalizado y prolijo — no atado a un caso
    puntual (ej. un departamento específico). Generalizalo si hace falta,
    siguiendo el mismo criterio que ya usan `condiciones_vivienda_por`,
-   `situacion_ocupacional_por`, `composicion_hogar_por`.
+   `tasas_actividad_empleo_desempleo_por`, `tipos_hogar_resumen`.
 2. Agregá la entrada correspondiente a `_CATEGORIAS_METRICAS` en
    `src/encuesta_hogares/formularios.py`, con el mismo formato que las
    demás (número corrido, nombre en negrita, explicación breve en una

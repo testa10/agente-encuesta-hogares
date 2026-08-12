@@ -195,36 +195,6 @@ def _plot_barras_100_apiladas(tabla_pct: pd.DataFrame, titulo: str, xlabel: str)
     return fig
 
 
-def plot_acceso_por_nivel_economico(tabla_pct: pd.DataFrame, tecnologia: str):
-    """Barras 100% apiladas: acceso a una tecnología según el nivel económico del hogar."""
-    return _plot_barras_100_apiladas(
-        tabla_pct,
-        titulo=f"Acceso a {tecnologia} según nivel económico del hogar",
-        xlabel="Nivel económico",
-    )
-
-
-def plot_acceso_por_pobreza(tabla_pct: pd.DataFrame, tecnologia: str):
-    """Barras 100% apiladas: acceso a una tecnología según la condición de pobreza del hogar."""
-    return _plot_barras_100_apiladas(
-        tabla_pct,
-        titulo=f"Acceso a {tecnologia} según condición de pobreza del hogar",
-        xlabel="Condición de pobreza",
-    )
-
-
-def plot_situacion_ocupacional(tabla_ocupacion: pd.DataFrame, criterio: str):
-    """Barras 100% apiladas: condición de actividad de las personas según un
-    criterio de conectividad cualquiera (tipo de abonado, acceso a celular,
-    acceso a internet, etc.).
-    """
-    return _plot_barras_100_apiladas(
-        tabla_ocupacion,
-        titulo=f"Condición de actividad de las personas según {criterio}",
-        xlabel=criterio.capitalize(),
-    )
-
-
 def _plot_heatmap_cruzado(tabla_pct: pd.DataFrame, titulo: str, xlabel: str, ylabel: str):
     """Heatmap de una tabla cruzada de proporciones entre dos variables categóricas."""
     fig, ax = plt.subplots(figsize=(6, 4.5))
@@ -243,39 +213,6 @@ def plot_streaming_vs_cable(tabla_streaming: pd.DataFrame):
         xlabel="Tiene streaming",
         ylabel="Tiene TV cable",
     )
-
-
-def plot_internet_vs_cable(tabla_internet: pd.DataFrame):
-    return _plot_heatmap_cruzado(
-        tabla_internet,
-        titulo="TV cable según tipo de conexión a internet",
-        xlabel="Tipo de conexión a internet",
-        ylabel="Tiene TV cable",
-    )
-
-
-def plot_ingreso_hogar_barras(df_extendido: pd.DataFrame):
-    """Barras simples con el ingreso típico (el de la mitad de los hogares) del
-    hogar, según conectividad a TV cable — más fácil de leer que un boxplot
-    para alguien sin formación en estadística: solo hay que comparar el alto
-    de las dos barras.
-    """
-    ingreso_sin = df_extendido.loc[~df_extendido["tiene_cable"], "ingreso_hogar"].dropna().median()
-    ingreso_con = df_extendido.loc[df_extendido["tiene_cable"], "ingreso_hogar"].dropna().median()
-
-    fig = px.bar(
-        x=["Sin cable", "Con cable"], y=[ingreso_sin, ingreso_con],
-        title="Ingreso típico del hogar según conectividad a TV cable",
-        color=["Sin cable", "Con cable"],
-        color_discrete_map={"Sin cable": "#d1495b", "Con cable": "#66a182"},
-        text=[f"{ingreso_sin:,.0f}", f"{ingreso_con:,.0f}"],
-    )
-    fig.update_traces(textposition="outside")
-    fig.update_layout(
-        xaxis_title="", yaxis_title="Ingreso típico del hogar (UYU, sin valor locativo)",
-        showlegend=False, width=650, height=500, title_x=0.5,
-    )
-    return fig
 
 
 def plot_ingreso_hogar_departamento(serie: pd.Series):
@@ -339,29 +276,6 @@ def plot_condiciones_vivienda_diferencia(diferencias: pd.DataFrame):
         legend_title="", width=900, height=550, title_x=0.5,
     )
     fig.add_vline(x=0, line_color="gray")
-    return fig
-
-
-def plot_composicion_hogar(resumen_composicion: pd.DataFrame, titulo: str, color_map: dict):
-    """Barras agrupadas: composición promedio del hogar según un criterio de conectividad cualquiera."""
-    df_plot = resumen_composicion.melt(
-        id_vars="grupo",
-        value_vars=["tamano_promedio", "promedio_menores_14", "promedio_ocupados"],
-        var_name="metrica", value_name="promedio",
-    )
-    etiquetas = {
-        "tamano_promedio": "Tamaño del hogar",
-        "promedio_menores_14": "Menores de 14 años",
-        "promedio_ocupados": "Personas ocupadas",
-    }
-    df_plot["metrica"] = df_plot["metrica"].map(etiquetas)
-    fig = px.bar(
-        df_plot, x="metrica", y="promedio", color="grupo", barmode="group",
-        title=titulo,
-        color_discrete_map=color_map,
-    )
-    fig.update_layout(xaxis_title="", yaxis_title="Promedio por hogar", legend_title="",
-                       width=800, height=450, title_x=0.5)
     return fig
 
 

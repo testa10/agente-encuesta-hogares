@@ -5,7 +5,6 @@ from encuesta_hogares.analysis import (
     brecha_digital_por_cohorte,
     brecha_digital_por_jefatura,
     brecha_por_grupo,
-    composicion_hogar_por,
     condiciones_vivienda_diferencia,
     condiciones_vivienda_por,
     diferencia_entre_categorias,
@@ -23,7 +22,6 @@ from encuesta_hogares.analysis import (
     razon_dependencia_demografica,
     razon_dependencia_por,
     resumen_conectividad,
-    situacion_ocupacional_por,
     tasa_mensual_promedio_por,
     tasas_actividad_empleo_desempleo,
     tasas_actividad_empleo_desempleo_por,
@@ -117,36 +115,6 @@ def test_condiciones_vivienda_diferencia():
     diferencia = condiciones_vivienda_diferencia(resumen, "Sin celular", "Con celular")
     assert diferencia["Goteras en techos"] == -50.0
     assert diferencia["Humedad en cimientos"] == -10.0
-
-
-def test_situacion_ocupacional_excluye_menores():
-    df = pd.DataFrame(
-        {
-            "tipo_abonado": ["Con cable", "Con cable", "Con cable", "Sin cable"],
-            "condicion_actividad_cod": [1.0, 2.0, 6.0, 2.0],  # 1 = menor de 14
-        }
-    )
-    tabla = situacion_ocupacional_por(df, "tipo_abonado")
-    # Con cable: 1 ocupado + 1 inactivo (el menor de 14 se excluye) -> 50/50
-    assert tabla.loc["Con cable", "Ocupados"] == 50.0
-    assert tabla.loc["Con cable", "Inactivos"] == 50.0
-
-
-def test_composicion_hogar_por_agrupa_por_cualquier_columna():
-    df = pd.DataFrame(
-        {
-            "tiene_internet": [True, True, False, False],
-            "total_personas": [4.0, 2.0, 3.0, 1.0],
-            "menores_14": [2.0, 0.0, 1.0, 0.0],
-            "ocupados_hogar": [1.0, 2.0, 1.0, 1.0],
-        }
-    )
-    resumen = composicion_hogar_por(
-        df, "tiene_internet", {False: "Sin internet", True: "Con internet"}
-    )
-    fila_con = resumen[resumen["grupo"] == "Con internet"].iloc[0]
-    assert fila_con["tamano_promedio"] == 3.0
-    assert fila_con["promedio_menores_14"] == 1.0
 
 
 def test_ingreso_hogar_mediano_por_departamento():

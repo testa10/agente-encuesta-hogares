@@ -129,26 +129,6 @@ def condiciones_vivienda_diferencia(resumen: pd.DataFrame, col_sin: str, col_con
     return (tabla[col_con] - tabla[col_sin]).round(2)
 
 
-def composicion_hogar_por(df_extendido: pd.DataFrame, columna_grupo: str, etiquetas: dict) -> pd.DataFrame:
-    """Tamaño promedio del hogar, y promedio de menores de 14 y de ocupados,
-    agrupado por una columna booleana cualquiera (ej. `tiene_cable`,
-    `tiene_internet`).
-    """
-    resumen = (
-        df_extendido.groupby(columna_grupo)
-        .agg(
-            tamano_promedio=("total_personas", "mean"),
-            promedio_menores_14=("menores_14", "mean"),
-            promedio_ocupados=("ocupados_hogar", "mean"),
-        )
-        .round(2)
-        .rename(index=etiquetas)
-        .reset_index()
-        .rename(columns={columna_grupo: "grupo"})
-    )
-    return resumen
-
-
 def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos: list) -> pd.Series:
     """Ingreso típico (mediana, más robusta a valores extremos que el
     promedio) del hogar, sin valor locativo, para los departamentos
@@ -491,16 +471,3 @@ def adopcion_tablet_ibirapita_por(hogares_extendido: pd.DataFrame, columna_grupo
         .reset_index()
         .rename(columns={"tiene_tablet_ibirapita": "pct_con_tablet"})
     )
-
-
-def situacion_ocupacional_por(df_combinado: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% de personas por condición de actividad (Ocupados/Desocupados/Inactivos),
-    agrupado por una columna cualquiera (ej. `tipo_abonado`, o una columna de
-    acceso a celular/internet ya etiquetada como "Con.../Sin...").
-
-    Excluye a los menores de 14 años (categoría 1 de pobpcoac), que no integran
-    la fuerza laboral.
-    """
-    df = df_combinado[df_combinado["condicion_actividad_cod"] != 1.0].copy()
-    df["condicion_actividad"] = df["condicion_actividad_cod"].map(config.POBPCOAC_GRUPOS)
-    return proporcion_cruzada(df, columna_grupo, "condicion_actividad")
