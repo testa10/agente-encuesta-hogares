@@ -439,8 +439,11 @@ método — parate y volvé a este proceso:
    siempre, más una celda de markdown (pregunta guía + justificación del
    tipo de gráfica) y una de código por cada métrica que el usuario eligió
    del catálogo del paso 4, en ese orden, llamando directo a las funciones
-   que ya identificaste en el paso 1. Termina escribiendo el notebook a
-   disco con `nbformat.write(...)`.
+   que ya identificaste en el paso 1. Antes de escribirlo, respaldá el
+   notebook del mismo año si ya existía uno de una corrida anterior con
+   `entrega.respaldar_si_existe(ruta_notebook)` — evita perder en
+   silencio un informe ya generado si alguien vuelve a correr el mismo
+   año. Termina escribiendo el notebook a disco con `nbformat.write(...)`.
 
    **La celda de "preparación de datos" (la que llama a
    `load_hogares_personas_csv` / `load_hogares` / `load_personas`, etc.)

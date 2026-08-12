@@ -141,6 +141,11 @@ barrio y la otra del hogar.
      en vez de invocar `jupyter nbconvert` directo.
    - Corregir el `<title>` del HTML generado (por defecto queda con el
      nombre del archivo).
+   - **Antes de guardar el HTML final con ese nombre**, llamá a
+     `entrega.respaldar_si_existe(ruta_html_final)` — si ya existía un
+     informe de una corrida anterior para ese mismo año (ej. alguien
+     corrió el mismo año dos veces), queda como "Informe_ECH_{AÑO}
+     (anterior).html" en vez de perderse en silencio.
 9. Generar el informe PDF profesional a partir de ese HTML, y copiarlo a la
    carpeta de Descargas del usuario (ver sección 6). Este paso es parte del
    resultado estándar que se le entrega al usuario — no es opcional ni algo
@@ -185,11 +190,12 @@ Pasos:
    simplifiques: cada regla ahí resuelve un problema real de paginación.
 4. Convertí ese HTML a PDF con Playwright (script corto, vía Bash con
    `python -c` o un archivo temporal), cronometrando el bloque con
-   `bitacora.medir()`:
+   `bitacora.medir()` y respaldando el PDF anterior si existía:
    ```python
    from playwright.sync_api import sync_playwright
-   from encuesta_hogares import bitacora
+   from encuesta_hogares import bitacora, entrega
 
+   entrega.respaldar_si_existe(ruta_pdf_salida)
    with bitacora.medir("conversion_pdf"):
        with sync_playwright() as p:
            browser = p.chromium.launch()
@@ -215,11 +221,15 @@ Pasos:
    `@page` en su motor de impresión, solo esas plantillas HTML de Playwright.
 5. Nombrá el archivo de forma clara, ej. `Informe_ECH_{AÑO}.pdf`.
 6. Copiá el PDF a la carpeta de Descargas del usuario, además de dejarlo en
-   el proyecto:
+   el proyecto — respaldando ahí también el que hubiera de una corrida
+   anterior, por la misma razón del paso 8 de la sección 5:
    ```python
    from pathlib import Path
    import shutil
-   shutil.copy(ruta_pdf_salida, Path.home() / "Downloads" / "Informe_ECH_{AÑO}.pdf")
+   from encuesta_hogares import entrega
+   ruta_descargas = Path.home() / "Downloads" / "Informe_ECH_{AÑO}.pdf"
+   entrega.respaldar_si_existe(ruta_descargas)
+   shutil.copy(ruta_pdf_salida, ruta_descargas)
    ```
    `Path.home() / "Downloads"` funciona igual en Windows y en Mac. Si esa
    carpeta no existe (poco común, pero puede pasar), avisale al usuario en
