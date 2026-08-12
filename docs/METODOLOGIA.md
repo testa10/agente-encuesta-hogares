@@ -134,6 +134,16 @@ barrio y la otra del hogar.
 7. Para cualquier gráfica nueva o modificada, extraer el PNG embebido del
    output de la celda y mirarlo — no asumir que "si no tiró error, se ve
    bien". Revisar que los números y el orden de las barras tengan sentido.
+   **Si hay que borrar PNGs viejos del scratchpad antes de una nueva
+   extracción, nunca uses un comodín en `rm` (ej. `rm -f celda_*.png`)** —
+   la herramienta de Bash rechaza los patrones glob en operaciones de
+   escritura/borrado, y esa aprobación interrumpe una corrida que se
+   supone que no necesita supervisión. Hacé el borrado con Python
+   (`pathlib.Path(carpeta).glob("celda_*.png")` y `.unlink()` en un bucle,
+   dentro del mismo script que ya estás corriendo con `run_python.bat`) —
+   mismo criterio que ya se sigue para editar el notebook (nbformat, nunca
+   JSON a mano) y para correr comandos largos (`bitacora.medir_comando`,
+   nunca `jupyter nbconvert` suelto).
 8. Generar el informe HTML sin código (para gente no técnica):
    - Copiar el notebook, filtrar del output los mensajes `stderr` de tipo
      `stream` (son warnings inofensivos de matplotlib, no errores reales).

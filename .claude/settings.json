@@ -11,6 +11,7 @@
       "Bash(explorer.exe *)",
       "Bash(cmd //c start *)",
       "Bash(cmd /c start *)",
+      "Bash(grep *)",
       "Write",
       "Edit"
     ],
