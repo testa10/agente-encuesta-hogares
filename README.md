@@ -138,23 +138,38 @@ datos disponibles), te lo va a mostrar en otra pantalla, con una
 alternativa que sí funcione — ahí elegís si la aceptás, proponés otra
 cosa, o la dejás afuera del informe.
 
+**Después de confirmar el catálogo, esperá — un informe tarda bastante.**
+No es un cálculo instantáneo: el agente arma y revisa una por una todas
+las gráficas que elegiste. Como referencia real (catálogo completo, las
+47 métricas de las cinco categorías): **alrededor de 25 a 30 minutos**.
+Eligiendo menos métricas tarda menos, más o menos en proporción a
+cuántas elegiste. Esto también consume una porción real de tu uso de
+Claude Code (en la corrida de referencia, el equivalente a unos 95
+llamados a herramientas) — no es un error ni algo colgado si la terminal
+sigue trabajando un buen rato sin que pase nada nuevo en pantalla.
+
 ## Paso 7: Revisar los resultados
 
-Vas a encontrar tres archivos nuevos:
-- Un notebook en `notebooks/` (por ejemplo `Analisis_ECH_2024.ipynb`), con
-  todo el análisis, código incluido — para quien quiera ver el detalle.
+Vas a encontrar tres archivos nuevos en `notebooks/`, todos con el año
+que elegiste en el nombre (ej. `Informe_ECH_2024.ipynb/.html/.pdf` — si
+volvés a correr el mismo año, el informe anterior no se pierde, queda
+guardado como "(anterior)"):
+- El notebook, con todo el análisis y el código incluido — para quien
+  quiera ver el detalle.
 - Un informe en HTML, sin código, pensado para compartir con cualquier
-  persona (por ejemplo `informe_ECH_2024.html`).
-- Si elegiste esa opción al completar el formulario inicial, un **informe
-  en PDF**, con formato de documento profesional (portada, tipografía
-  cuidada, gráficas ajustadas a la hoja), que el agente copia
-  automáticamente a tu **carpeta de Descargas** — no hace falta que lo
-  busques dentro del proyecto, aparece ahí solo, como cualquier archivo que
-  descargarías normalmente.
+  persona.
+- Un **informe en PDF**, con formato de documento profesional (portada,
+  tipografía cuidada, gráficas ajustadas a la hoja) — el agente siempre
+  genera los dos formatos, y además copia el PDF automáticamente a tu
+  **carpeta de Descargas**: no hace falta que lo busques dentro del
+  proyecto, aparece ahí solo, como cualquier archivo que descargarías
+  normalmente.
 
-Podés abrir el informe HTML haciendo doble clic sobre el archivo — se abre
-en el navegador, como una página web normal. El PDF se abre igual, con
-cualquier lector de PDF.
+La última pantalla del agente ya trae un botón para abrir cada formato
+directamente, además de un botón para **crear un nuevo informe** (otro
+año, u otra selección de métricas) sin tener que cerrar la ventana ni
+volver a hacer doble clic en `abrir_agente.bat` — vuelve directo al primer
+formulario, en la misma conversación.
 
 Con eso el trabajo del agente termina — el análisis queda guardado en tu
 propia computadora, nada se sube a ningún lado automáticamente ni el
