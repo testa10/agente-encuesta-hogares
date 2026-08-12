@@ -1,13 +1,13 @@
 # Agente de Análisis: Encuesta Continua de Hogares (ECH, INE Uruguay)
 
-Este proyecto te permite repetir, cada vez que consigas un nuevo año de
-datos de la Encuesta Continua de Hogares del INE Uruguay, un análisis
-completo de los hogares uruguayos — sin tener que volver a explicar desde
-cero cómo se hace, ni programar vos mismo. El catálogo cubre nivel
-económico y brecha digital, pobreza, territorio (Montevideo y el resto
-del país), composición del hogar, vivienda, y — cuando el año elegido
-tiene esos datos disponibles — seguridad alimentaria, empleo, y
-seguridad y victimización.
+Este proyecto le permite a un usuario técnico (con conocimientos
+estadísticos) o no técnico generar un reporte de la Encuesta Continua de
+Hogares del INE Uruguay, repitiéndolo cada vez que consiga un nuevo año
+de datos — sin tener que volver a explicar desde cero cómo se hace, ni
+programar. El catálogo cubre nivel económico y brecha digital, pobreza,
+territorio (Montevideo y el resto del país), composición del hogar,
+vivienda, y — cuando el año elegido tiene esos datos disponibles —
+seguridad alimentaria, empleo, y seguridad y victimización.
 
 En vez de un análisis fijo, este proyecto incluye un **agente**: un asistente
 de inteligencia artificial (Claude) que hace el trabajo — carga los datos,
