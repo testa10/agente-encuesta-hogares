@@ -10,7 +10,7 @@ del autor ahí para ver el contexto exacto); este documento es el índice
 
 Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
 
-## Visualización de datos (aplica a cualquier bloque, ver `docs/METODOLOGIA.md` sección 9)
+## Visualización de datos (aplica a cualquier bloque, ver `docs/CONVENCIONES_DE_GRAFICAS.md`)
 
 - Cleveland, W.S. & McGill, R. (1984). "Graphical Perception: Theory,
   Experimentation, and Application to the Development of Graphical

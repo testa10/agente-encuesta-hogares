@@ -10,11 +10,13 @@ conocimientos técnicos** a través de todo el proceso: desde ubicar los datos
 hasta publicar un informe final, con la misma calidad y rigor que la
 versión base de este análisis (año 2019).
 
-Antes de hacer nada, leé por completo `docs/METODOLOGIA.md` en este
-repositorio. Contiene las reglas de rigor estadístico, terminología y el
-flujo de verificación que tenés que seguir siempre. No es opcional ni
-decorativo: cada regla ahí existe porque en el proyecto original se detectó
-un problema real y se corrigió. Tratalo como tu fuente de verdad.
+Antes de hacer nada, leé por completo `docs/METODOLOGIA.md`,
+`docs/FLUJO_DE_TRABAJO.md` y `docs/CONVENCIONES_DE_GRAFICAS.md` en este
+repositorio (tres documentos separados: reglas de rigor estadístico y
+terminología, procedimientos paso a paso, y cómo justificar el tipo de
+gráfica elegido). No es opcional ni decorativo: cada regla ahí existe
+porque en el proyecto original se detectó un problema real y se
+corrigió. Tratalos como tu fuente de verdad.
 
 ## Qué Python usar (no lo busques, no lo adivines)
 
@@ -144,9 +146,10 @@ después de "orientarte" — la primera. Antes de esa llamada:
   proyecto primero", ni para "ver qué funciones ya existen". Todo eso lo
   hacés después, en los pasos que realmente lo piden (pasos 5 y 6), nunca
   antes del paso 1.
-- La única lectura permitida antes del formulario de bienvenida es
-  `docs/METODOLOGIA.md` (ya la tenés indicada más arriba, al principio de
-  este archivo) — nada más.
+- La única lectura permitida antes del formulario de bienvenida son
+  `docs/METODOLOGIA.md`, `docs/FLUJO_DE_TRABAJO.md` y
+  `docs/CONVENCIONES_DE_GRAFICAS.md` (ya las tenés indicadas más arriba,
+  al principio de este archivo) — nada más.
 - No corras `pytest`, no corras `nbconvert`, no inspecciones `data/` con
   Glob — ninguna de esas cosas tiene sentido todavía, porque ni siquiera
   sabés qué año eligió el usuario.
@@ -686,7 +689,7 @@ método — parate y volvé a este proceso:
    tiene que envolver esa carga con `bitacora.medir("carga_de_datos"):`**
    — es la única forma de saber, después, si el tiempo de la corrida se va
    en cargar los datos o en el resto del notebook (gráficas). Ver
-   `docs/METODOLOGIA.md` sección 5 para el resto de las mediciones
+   `docs/FLUJO_DE_TRABAJO.md`, sección 1, para el resto de las mediciones
    (ejecución del notebook, conversión a PDF).
 
    **Cómo terminar cada celda que llama a una función `viz.plot_*` —
@@ -710,10 +713,11 @@ método — parate y volvé a este proceso:
    verificar los números a mano en el camino. Envolvé la ejecución con
    `bitacora.medir_comando("ejecucion_notebook", [...])` en vez de invocar
    `jupyter nbconvert` directo (ver el ejemplo exacto en
-   `docs/METODOLOGIA.md`, sección 5, paso 5) — así queda registrado cuánto
-   tardó, para poder revisarlo después con `tools/resumen_sesiones.py`.
+   `docs/FLUJO_DE_TRABAJO.md`, sección 1, paso 5) — así queda registrado
+   cuánto tardó, para poder revisarlo después con
+   `tools/resumen_sesiones.py`.
 5. Ahí sí, revisá errores y gráficas como indica el flujo de verificación
-   (sección 5 de `docs/METODOLOGIA.md`).
+   (sección 1 de `docs/FLUJO_DE_TRABAJO.md`).
 
 Los textos que citan cifras (cuartiles, cortes, promedios) tenés que
 recalcularlos con los datos del año nuevo — nunca copiar los números del
@@ -733,14 +737,14 @@ Tufte, Knaflic, etc., según corresponda) **y la fórmula o definición
 exacta de la métrica cuando la tenga** (una tasa, un índice, una razón).
 El público de este informe es académico y profesional: la cita y la
 fórmula refuerzan que el número tiene sentido, no son ruido para evitar.
-Seguí la chuleta de la sección 9 de `docs/METODOLOGIA.md`, que trae la
+Seguí la chuleta de `docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la
 fuente exacta de cada patrón. Esa justificación va en la misma celda de
 markdown que la pregunta guía, no en el código.
 
 **Ninguna métrica queda solo como número o tabla de texto — todas llevan
 su gráfica, sin excepción**, incluidas las que resumen un solo valor o
 una diferencia entre dos grupos específicos (para estas últimas, usá
-`visualization.plot_dumbbell` — ver sección 9 de `docs/METODOLOGIA.md` —
+`visualization.plot_dumbbell` — ver `docs/CONVENCIONES_DE_GRAFICAS.md` —
 en vez de un `print()` con la resta ya calculada).
 
 **La última sección del notebook es siempre el "Resumen analítico final"
@@ -763,10 +767,10 @@ las de los bloques que el informe termine incluyendo, no todas de memoria.
 No hace falta para FIES, que sale directo de la metodología original del
 proyecto, no de investigación externa nueva.
 
-Seguí el flujo de verificación completo de la sección 5 de
-`docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,
+Seguí el flujo de verificación completo de la sección 1 de
+`docs/FLUJO_DE_TRABAJO.md` (tests, ejecución completa, chequeo de errores,
 revisión visual de cada gráfica, generación del informe HTML). No des el
-informe por terminado sin haber hecho los siete pasos.
+informe por terminado sin haber hecho todos los pasos.
 
 ### 6. Evaluar y construir las métricas propuestas por el usuario
 
@@ -838,10 +842,10 @@ reales antes de seguir.
 el formulario del catálogo (paso 4) ya no pregunta preferencia de PDF, así
 que no hay nada que revisar ahí:
 
-1. Generá el informe HTML sin código (sección 5, paso 8 de
-   `docs/METODOLOGIA.md`) — es la base de la que sale también el PDF.
-2. Seguí exactamente el procedimiento de la sección 6 de
-   `docs/METODOLOGIA.md` — portada + `docs/informe_estilo.css` →
+1. Generá el informe HTML sin código (sección 1, paso 8 de
+   `docs/FLUJO_DE_TRABAJO.md`) — es la base de la que sale también el PDF.
+2. Seguí exactamente el procedimiento de la sección 2 de
+   `docs/FLUJO_DE_TRABAJO.md` — portada + `docs/informe_estilo.css` →
    conversión con Chromium vía Playwright (nunca `nbconvert --to pdf`,
    que depende de una instalación de LaTeX) → copia a `Path.home() /
    "Downloads"`. Confirmá al final que el PDF se generó bien (cantidad de
@@ -938,7 +942,7 @@ compuerta de calidad antes de tocar ningún archivo permanente:
      tema por sí mismo. Si la respuesta es sí, la tecnología va en Brecha
      Digital, no mezclada en otro bloque — ver `docs/METODOLOGIA.md`.
    - Qué tipo de gráfica le corresponde y qué principio/fuente lo
-     respalda (sección 9 de `docs/METODOLOGIA.md`) — si la fuente no está
+     respalda (`docs/CONVENCIONES_DE_GRAFICAS.md`) — si la fuente no está
      ya en `docs/BIBLIOGRAFIA.md`, agregala ahí y en la nota del bloque
      correspondiente en este archivo, no solo en el docstring del código.
    - Con qué año/dataset se validó el resultado (no alcanza con que el

@@ -211,7 +211,7 @@ def diferencia_entre_categorias(
     Este número no reemplaza la gráfica: armar un `visualization.plot_dumbbell`
     con los dos valores originales de `tabla` (no solo esta diferencia), para
     no perder cuánto vale cada categoría por separado — ver
-    docs/METODOLOGIA.md, sección 9.
+    docs/CONVENCIONES_DE_GRAFICAS.md.
     """
     tabla = resumen.set_index(columna_grupo)
     return round(tabla.loc[categoria_a, columna_valor] - tabla.loc[categoria_b, columna_valor], 2)
@@ -539,7 +539,7 @@ def diferencia_entre_tablas(
 
     Este número no reemplaza la gráfica: armar un `visualization.plot_dumbbell`
     con `tabla_a` y `tabla_b` completas (no solo esta diferencia), una fila
-    por categoría de `columna_indice` — ver docs/METODOLOGIA.md, sección 9.
+    por categoría de `columna_indice` — ver docs/CONVENCIONES_DE_GRAFICAS.md.
     """
     a = tabla_a.set_index(columna_indice)[columna_valor]
     b = tabla_b.set_index(columna_indice)[columna_valor]

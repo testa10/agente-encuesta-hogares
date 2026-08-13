@@ -269,8 +269,13 @@ comparar el análisis de 2019 con el de 2024".
 **¿Dónde se documentan los criterios de rigor que sigue el agente?**
 En [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md), que reúne las reglas de
 rigor estadístico y claridad definidas durante la construcción del
-análisis original. Las fuentes académicas e institucionales detrás de
-cada métrica y cada tipo de gráfica están consolidadas en
+análisis original. Los procedimientos paso a paso (verificación,
+generación del PDF, publicación) están en
+[`docs/FLUJO_DE_TRABAJO.md`](docs/FLUJO_DE_TRABAJO.md), y las
+convenciones para justificar cada tipo de gráfica en
+[`docs/CONVENCIONES_DE_GRAFICAS.md`](docs/CONVENCIONES_DE_GRAFICAS.md).
+Las fuentes académicas e institucionales detrás de cada métrica y cada
+tipo de gráfica están consolidadas en
 [`docs/BIBLIOGRAFIA.md`](docs/BIBLIOGRAFIA.md).
 
 **¿El agente registra la actividad del usuario?**
@@ -303,7 +308,10 @@ agente-encuesta-hogares/
 │   └── agents/
 │       └── encuesta-hogares.md  # El agente: sus instrucciones de trabajo
 ├── docs/
-│   └── METODOLOGIA.md           # Reglas de rigor estadístico y claridad
+│   ├── METODOLOGIA.md              # Reglas de rigor estadístico y claridad
+│   ├── FLUJO_DE_TRABAJO.md         # Procedimientos: verificación, PDF, publicación, año nuevo
+│   ├── CONVENCIONES_DE_GRAFICAS.md # Qué tipo de gráfica usar y con qué fundamento
+│   └── BIBLIOGRAFIA.md             # Fuentes académicas consolidadas
 ├── src/
 │   └── encuesta_hogares/        # Código de análisis, reutilizable año a año
 ├── notebooks/                   # Informes generados (uno por año)

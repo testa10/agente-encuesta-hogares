@@ -8,20 +8,26 @@ código, ya sea una persona o una sesión de Claude Code.
 ## Antes de nada
 
 1. Instalación y estructura del proyecto: ver [`README.md`](README.md).
-2. **Leé [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md) entero antes de tocar
-   cualquier archivo permanente.** No es opcional — reúne las reglas de
-   rigor estadístico y claridad que existen porque en algún momento se
-   encontró un problema real. Las más importantes, resumidas:
+2. **Leé [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md),
+   [`docs/FLUJO_DE_TRABAJO.md`](docs/FLUJO_DE_TRABAJO.md) y
+   [`docs/CONVENCIONES_DE_GRAFICAS.md`](docs/CONVENCIONES_DE_GRAFICAS.md)
+   enteros antes de tocar cualquier archivo permanente.** No es opcional
+   — reúnen las reglas de rigor estadístico y claridad, los
+   procedimientos paso a paso, y las convenciones de gráficas que existen
+   porque en algún momento se encontró un problema real (los tres
+   documentos estaban originalmente mezclados en uno solo, separados por
+   este mismo motivo: se había vuelto difícil de navegar). Las reglas más
+   importantes, resumidas:
    - **Toda estadística de Hogares/Personas se pondera** por el factor de
      expansión muestral del INE — nunca `.mean()`/`.median()` simple. Usá
      los helpers ya armados (`analysis.pct_ponderado`,
      `media_ponderada_por`, `proporcion_ponderada`, `mediana_ponderada`).
      Un test (`test_verificacion_ponderacion.py`) revisa automáticamente
-     `analysis.py`/`preprocessing.py` buscando este descuido — si agregás
-     una función nueva que usa `.mean()`/`.median()`/`.value_counts()` sin
-     pasar por esos helpers, el test va a fallar hasta que la pondere o
-     documentes por qué no aplica (ver
-     `encuesta_hogares.verificacion_ponderacion.ALLOWLIST`).
+     `analysis.py`/`preprocessing.py`/`visualization.py` buscando este
+     descuido — si agregás una función nueva que usa
+     `.mean()`/`.median()`/`.value_counts()` sin pasar por esos helpers,
+     el test va a fallar hasta que la pondere o documentes por qué no
+     aplica (ver `encuesta_hogares.verificacion_ponderacion.ALLOWLIST`).
    - **Toda métrica lleva su gráfica**, sin excepción — ni un número
      suelto ni una tabla haciendo de gráfica.
    - **Toda justificación de gráfica cita la fuente** (principio de

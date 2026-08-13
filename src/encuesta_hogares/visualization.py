@@ -23,7 +23,7 @@ def plot_dumbbell(categorias: list, valores_a: list, valores_b: list, nombre_a: 
     Visualization Society) para comparar dos grupos específicos, en vez
     de una barra con la diferencia ya calculada — conserva los dos
     valores reales además de la brecha entre ellos, algo que una sola
-    barra de "diferencia" no muestra (ver docs/METODOLOGIA.md, sección 9).
+    barra de "diferencia" no muestra (ver docs/CONVENCIONES_DE_GRAFICAS.md).
 
     Plotly no trae este tipo de gráfica nativo (ni Plotly Express ni
     ninguna librería especializada mejor mantenida vale la pena sumar
@@ -129,7 +129,7 @@ def plot_penetracion_por_barrio(penetracion_por_barrio: pd.DataFrame):
 def plot_clasificacion_barrios(resumen: pd.DataFrame):
     """Barras: cantidad de barrios en cada nivel de suscripción. Es un
     conteo de categorías (no una distribución continua), por eso barras y
-    no boxplot/violin — ver docs/METODOLOGIA.md, sección 9.
+    no boxplot/violin — ver docs/CONVENCIONES_DE_GRAFICAS.md.
     """
     fig = px.bar(
         resumen, x="nivel_suscripcion", y="cantidad_barrios",
@@ -308,7 +308,7 @@ def plot_ingreso_hogar_departamento(serie: pd.Series):
 def plot_precariedad_estructural(resultado: dict):
     """Barras horizontales: % de hogares con y sin al menos una carencia
     estructural (índice de conteo de carencias — ver
-    docs/METODOLOGIA.md, sección 9, o analysis.precariedad_estructural).
+    docs/CONVENCIONES_DE_GRAFICAS.md, o analysis.precariedad_estructural).
     """
     data = {
         "Condición": ["Con carencia estructural", "Sin carencia estructural"],
