@@ -18,3 +18,37 @@ armado de tu parte compite con esa regla en vez de ayudarla.
 No respondas vos ninguna pregunta de alcance (año, métricas, formato de
 salida) antes de delegar — todas esas preguntas las hace el agente con
 sus propios formularios visuales.
+
+## Mantenimiento del proyecto (para vos, sesión principal — no para el agente)
+
+El proyecto vive en dos copias separadas a propósito: esta (con git, donde
+se desarrolla) y una copia en Documents que tiene que poder funcionar sola
+aunque esta no exista — es donde corre siempre el agente `encuesta-hogares`,
+que no tiene permiso de usar git. Eso significa que si el agente escribe
+código nuevo y reutilizable durante una corrida real (pasó de verdad: una
+función nueva en `analysis.py` quedó casi dos días sin publicar), ese
+código puede quedar atrapado ahí sin que nadie lo note.
+
+**Antes de dar por cerrada una sesión de trabajo en este proyecto** (sobre
+todo si el usuario mencionó haber corrido el agente), corré desde la copia
+de Documents:
+
+```bash
+python tools/verificar_sincronizacion.py
+```
+
+Si encuentra diferencias contra `origin/main`, revisalas — puede ser
+trabajo real del agente sin publicar (llevalo a esta copia y publicalo) o
+simplemente que Documents está atrasada.
+
+**Antes de publicar un cambio en `analysis.py`/`preprocessing.py` que
+toque cómo se leen o combinan los datos**, corré también:
+
+```bash
+run_python.bat tools/validar_con_datos_reales.py
+```
+
+Ejercita el pipeline completo contra los datos reales que haya en `data/`
+(si hay alguno) — atajó bugs reales esta sesión que los tests con datos
+sintéticos no detectaban (columnas de vivienda que cambian de 12 a 4 según
+el año, formato .sav vs .csv, base nacional vs. filtrada a Montevideo).
