@@ -960,11 +960,18 @@ compuerta de calidad antes de tocar ningún archivo permanente:
    `src/encuesta_hogares/formularios.py`, con el mismo formato que las
    demás (número corrido, nombre en negrita, explicación breve en una
    frase) — sin romper la numeración de las métricas existentes.
-3. Agregá o completá los tests que falten — incluí al menos un test que
+3. Agregá la entrada correspondiente en
+   `encuesta_hogares.verificacion_catalogo.MANIFEST`, con la(s)
+   función(es) de `analysis.py`/`preprocessing.py` y la de
+   `visualization.py` que la implementan — si te la olvidás, el test de
+   `test_verificacion_catalogo.py` lo va a marcar como métrica huérfana
+   en la próxima corrida de `pytest`, así que hacela ahora en vez de
+   dejar que otra persona la encuentre después.
+4. Agregá o completá los tests que falten — incluí al menos un test que
    ejercite la función con datos que representen el caso real que motivó
    la curación (no solo el caso sintético genérico), para que una
    regresión futura sobre ese caso puntual no pase desapercibida.
-4. Corré el flujo de verificación completo.
-5. La incorporación queda en los archivos locales. Publicarla en GitHub
+5. Corré el flujo de verificación completo.
+6. La incorporación queda en los archivos locales. Publicarla en GitHub
    sigue siendo una acción aparte, con su propia confirmación explícita
    antes de cualquier `git push` — igual que cualquier otra publicación.
