@@ -39,6 +39,7 @@ build/
 dist/
 .pytest_cache/
 .ipynb_checkpoints/
+.coverage
 
 # Editor
 *.log
