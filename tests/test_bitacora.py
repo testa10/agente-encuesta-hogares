@@ -131,6 +131,38 @@ def test_medir_comando_registra_error_si_el_comando_falla(tmp_path, monkeypatch)
     assert eventos[0]["tipo"] == "ejecucion_notebook_error"
 
 
+def test_sugerir_catalogo_registra_metrica_y_motivo(tmp_path, monkeypatch):
+    monkeypatch.setattr(bitacora, "LOG_PATH", tmp_path / "bitacora.jsonl")
+
+    bitacora.sugerir_catalogo(
+        metrica="Tasas de empleo por año",
+        motivo="Es el tipo de comparación que probablemente se vuelva a pedir",
+    )
+
+    eventos = bitacora.leer_eventos()
+    assert len(eventos) == 1
+    assert eventos[0]["tipo"] == "sugerencia_catalogo"
+    assert eventos[0]["metrica"] == "Tasas de empleo por año"
+    assert "probablemente" in eventos[0]["motivo"]
+
+
+def test_resumir_sesion_incluye_sugerencias_de_catalogo():
+    eventos = [
+        {"tipo": "formulario_mostrado", "timestamp": "2026-01-01T09:00:00+00:00"},
+        {
+            "tipo": "sugerencia_catalogo",
+            "timestamp": "2026-01-01T09:05:00+00:00",
+            "metrica": "Comparación por año",
+            "motivo": "reusable",
+        },
+    ]
+
+    r = bitacora.resumir_sesion(eventos)
+
+    assert len(r.sugerencias_catalogo) == 1
+    assert r.sugerencias_catalogo[0]["metrica"] == "Comparación por año"
+
+
 def test_resumir_sesion_incluye_pasos_medidos_ordenados_por_duracion():
     eventos = [
         {"tipo": "carga_de_datos_fin", "timestamp": "2026-01-01T09:00:00+00:00", "duracion_segundos": 5.0},

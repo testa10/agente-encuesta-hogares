@@ -77,6 +77,26 @@ def medir(nombre: str, **detalle):
         registrar(f"{nombre}_fin", duracion_segundos=round(time.monotonic() - inicio, 1), **detalle)
 
 
+def sugerir_catalogo(metrica: str, motivo: str) -> None:
+    """Registra que una métrica a medida (paso 6 del flujo del agente)
+    parece lo bastante reusable como para valer la pena incorporarla al
+    catálogo permanente — para que el dueño del proyecto la vea después
+    con `tools/resumen_sesiones.py`, revisando la bitácora cuando tenga
+    tiempo.
+
+    A propósito NO es una pregunta interactiva que el agente le haga al
+    usuario y espere respuesta: la consola de Claude Code corre en
+    segundo plano para la enorme mayoría de quien usa este agente (nunca
+    la abren, ni deberían necesitar hacerlo — ver "Qué Python usar" en
+    `.claude/agents/encuesta-hogares.md`), así que una pregunta bloqueante
+    ahí no la vería nadie, y el proceso puede cerrarse apenas la persona
+    termina o sale del flujo. Quedar registrado en un archivo que
+    sobrevive al cierre es la única forma confiable de que esto no se
+    pierda.
+    """
+    registrar("sugerencia_catalogo", metrica=metrica, motivo=motivo)
+
+
 def medir_comando(nombre: str, comando: list[str]) -> subprocess.CompletedProcess:
     """Corre un comando externo (ej. `jupyter nbconvert`) cronometrando
     cuánto tarda, y lo registra en la bitácora. Pensado para los pasos
@@ -137,6 +157,7 @@ class ResumenSesion:
     timeouts: int
     errores: list[dict] = field(default_factory=list)
     pasos_medidos: list[dict] = field(default_factory=list)
+    sugerencias_catalogo: list[dict] = field(default_factory=list)
 
 
 def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
@@ -152,4 +173,5 @@ def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
         timeouts=sum(1 for e in eventos if e["tipo"] == "formulario_timeout"),
         errores=[e for e in eventos if e["tipo"].endswith("_error")],
         pasos_medidos=sorted(pasos_medidos, key=lambda p: -p["duracion_segundos"]),
+        sugerencias_catalogo=[e for e in eventos if e["tipo"] == "sugerencia_catalogo"],
     )

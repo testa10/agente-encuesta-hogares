@@ -12,6 +12,13 @@ no funcionó": en vez de depender de que describa bien lo que vio, pedile
 el archivo logs/bitacora.jsonl de su computadora y corré esto para
 reconstruir la sesión con datos objetivos en vez de una descripción de
 memoria.
+
+También es donde aparecen las sugerencias que el agente fue dejando
+sobre métricas a medida que valdría la pena incorporar al catálogo
+permanente (`bitacora.sugerir_catalogo`, paso 6.5 del agente) — nunca se
+las pregunta a la persona en el momento (esa consola corre en segundo
+plano y casi nadie la abre), quedan acá para que el dueño del proyecto
+las revise cuando tenga tiempo.
 """
 
 import sys
@@ -39,6 +46,10 @@ def main() -> None:
         )
         for err in r.errores:
             print(f"    [{err['timestamp']}] {err['tipo']}: {err.get('mensaje', '')}")
+        if r.sugerencias_catalogo:
+            print("  sugerencias para el catálogo permanente (ver 'Curación del catálogo'):")
+            for s in r.sugerencias_catalogo:
+                print(f"    - {s.get('metrica', '?')}: {s.get('motivo', '')}")
         if r.pasos_medidos:
             print("  pasos medidos (de mayor a menor duración):")
             for paso in r.pasos_medidos:

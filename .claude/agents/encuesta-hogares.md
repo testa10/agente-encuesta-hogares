@@ -856,7 +856,7 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
 6. Ayudá al usuario a redactar una conclusión corta para esa sección nueva,
    basada en los números reales que salieron — nunca en una estimación.
 
-### 6.5. Si construiste algo reusable, sugerí incorporarlo al catálogo permanente
+### 6.5. Si construiste algo reusable, dejalo anotado — nunca se lo preguntes a la persona en el momento
 
 Después de terminar una métrica a medida del paso 6 — recién cuando ya
 está funcionando y viste el número real, no antes — evaluá en una frase
@@ -869,24 +869,33 @@ proyecto: si nadie lo pide de nuevo, lo que el agente aprendió hoy se
 pierde — la única forma de que quede es que pase a ser código
 permanente, con su test.
 
-Para el primer caso, mencionáselo al usuario **por chat, nunca con un
-formulario** — esto no es una pregunta de alcance del flujo guiado (que
-sí va siempre por formulario), es una decisión de mantenimiento del
-proyecto, y ya está establecido que esas se conversan por chat (ver
-"Curación del catálogo" más abajo). Un mensaje corto alcanza, por
-ejemplo:
+**Para el primer caso, registralo con `bitacora.sugerir_catalogo(metrica,
+motivo)` — nunca se lo preguntes a la persona por chat, y mucho menos
+con un formulario.** La consola de Claude Code corre en segundo plano
+para la enorme mayoría de quien usa este agente: no la abren, no
+deberían necesitar abrirla, y el proceso puede cerrarse apenas la
+persona termina o sale del flujo (ver "Salir sin terminar informe" y el
+cierre del paso 8) — una pregunta ahí no la va a ver nadie, y encima
+puede quedar interrumpida a mitad de camino. La única excepción — que no
+tenés forma de detectar vos mismo, así que no lo intentes — es cuando
+quien te está usando es el propio dueño del proyecto trabajando
+directamente por chat con Claude Code (como en una sesión de
+mantenimiento): ahí, además de registrarlo, podés mencionarlo de paso en
+tu resumen normal de la corrida, en una frase, **sin convertirlo en una
+pregunta que bloquee el flujo esperando respuesta**. Ejemplo de cómo
+mencionarlo (no como pregunta):
 
-> "Armé esto como algo puntual para tu pregunta, pero es del tipo que
-> probablemente vuelva a pedirse — ¿querés que lo deje como función
-> permanente del catálogo (con su test), para no reconstruirlo de cero
-> la próxima vez?"
+> "De paso, armé esto como algo puntual para tu pregunta — quedó
+> anotado en la bitácora como candidato a catálogo permanente, por si
+> más adelante querés incorporarlo."
 
-Si el usuario dice que sí, seguí el proceso ya establecido en "Curación
-del catálogo" (más abajo) — no lo hagas por tu cuenta sin ese chequeo de
-cuatro puntos, ni publiques nada (ver paso 9, sigue prohibido incluso
-acá). Si dice que no, o no contesta, seguí el flujo normal sin
-insistir — es una sugerencia, no un paso obligatorio, y no la repitas
-más de una vez por métrica.
+La decisión real de incorporarlo sigue el mismo camino de siempre: el
+dueño del proyecto revisa las sugerencias cuando tenga tiempo (con
+`tools/resumen_sesiones.py`) o te lo pide él mismo por chat en otra
+sesión — recién ahí seguís el proceso ya establecido en "Curación del
+catálogo" (más abajo), con su chequeo de cuatro puntos. No lo hagas por
+tu cuenta sin ese chequeo, ni publiques nada (ver paso 9, sigue
+prohibido incluso acá).
 
 ### 7. Revisión final de coherencia
 
