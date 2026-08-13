@@ -19,6 +19,7 @@ como guía en vez de una imaginada.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -46,9 +47,9 @@ def fix_doble_codificacion(value):
     crudo en bytes y comparando ambas codificaciones (no es un supuesto).
 
     El archivo ya se lee con `encoding="latin1"` (correcto para el resto de
-    los acentos, ej. "Paysandú", "San José", "Tacuarembó"), así que acá solo
-    hace falta re-codificar a bytes latin1 y decodificar como UTF-8 — si
-    eso falla (el texto ya estaba bien), se devuelve el valor sin tocar.
+    los acentos), así que acá solo hace falta re-codificar a bytes latin1 y
+    decodificar como UTF-8 — si eso falla (el texto ya estaba bien), se
+    devuelve el valor sin tocar.
     """
     if not isinstance(value, str):
         return value
@@ -56,6 +57,22 @@ def fix_doble_codificacion(value):
         return value.encode("latin1").decode("utf-8")
     except (UnicodeDecodeError, UnicodeEncodeError):
         return value
+
+
+def fix_entidad_html_rota(value):
+    """Corrige un tercer patrón de corrupción de acentos, distinto a los
+    dos de arriba — encontrado en los datos reales de 2025: caracteres
+    acentuados que llegan como `<XX>` (el código hexadecimal Latin-1 del
+    carácter, ej. `<e9>` para "é") en vez del carácter en sí, como si a
+    una entidad HTML numérica (`&#xE9;`) se le hubiera caído el `&#x` y el
+    `;` — visto en "San Jos<e9>" (San José), "Paysand<fa>" (Paysandú),
+    "Tacuaremb<f3>" (Tacuarembó). Verificado leyendo los bytes crudos del
+    archivo (`xxd`): el patrón está así, literal, en el CSV que publicó el
+    INE — no es un problema de cómo este proyecto lee el archivo.
+    """
+    if not isinstance(value, str):
+        return value
+    return re.sub(r"<([0-9a-fA-F]{2})>", lambda m: chr(int(m.group(1), 16)), value)
 
 
 def load_hogares(path: Path = config.HOGARES_FILE) -> pd.DataFrame:
@@ -83,13 +100,45 @@ def load_hogares_personas_csv(anio: int | str) -> tuple[pd.DataFrame, pd.DataFra
     A diferencia de `load_hogares()`, acá también se calcula
     "ocupados_hogar" (no viene precalculado en este formato): se cuenta, por
     hogar, cuántas personas tienen condicion_actividad_cod == 2 (Ocupados).
+
+    No todos los años tienen las mismas columnas — pobre06/indig06/YSVL
+    (metodología de pobreza/ingreso canasta 2006) conviven con
+    pobre17/indig17/YDA_SVL (canasta 2017) en 2024 (año de transición,
+    verificado contra los datos reales) y desde 2025 solo está la nueva.
+    Cuando las dos variantes de una misma columna están presentes, se
+    descarta la vieja y se usa la nueva — ver
+    `config.PREFERENCIA_METODOLOGIA_HOGARES`, decisión confirmada con el
+    usuario, no elegida en silencio por el código. Fuera de esas tres
+    columnas, se piden solo las de HOGARES_COLUMNS_CSV/PERSONAS_COLUMNS_CSV
+    que de verdad estén en el archivo (mismo criterio que `load_empleo`).
     """
-    columnas_hogar = list(config.HOGARES_COLUMNS_CSV)
-    columnas_persona = list(config.PERSONAS_COLUMNS_CSV)
+    ruta = config.hogares_csv_file(anio)
+    columnas_presentes = set(pd.read_csv(ruta, nrows=0, encoding="latin1").columns)
+    columnas_a_descartar = {
+        vieja for vieja, nueva in config.PREFERENCIA_METODOLOGIA_HOGARES.items()
+        if vieja in columnas_presentes and nueva in columnas_presentes
+    }
+    columnas_hogar = [
+        c for c in config.HOGARES_COLUMNS_CSV if c in columnas_presentes and c not in columnas_a_descartar
+    ]
+    columnas_persona = [c for c in config.PERSONAS_COLUMNS_CSV if c in columnas_presentes]
     columnas = sorted(set(columnas_hogar) | set(columnas_persona))
+
+    # Red de seguridad residual: PREFERENCIA_METODOLOGIA_HOGARES ya resuelve
+    # el caso conocido (canasta 2006 vs. 2017) — esto solo dispara si
+    # aparece una colisión nueva, todavía no vista, que nadie decidió cómo
+    # resolver.
+    destinos_hogar = [config.HOGARES_COLUMNS_CSV[c] for c in columnas_hogar]
+    duplicados = {d for d in destinos_hogar if destinos_hogar.count(d) > 1}
+    assert not duplicados, (
+        f"El archivo de {anio} trae más de una columna de origen para el "
+        f"mismo destino en Hogares ({duplicados}) — hay que decidir a mano "
+        f"cuál usar, no elegir en silencio."
+    )
+
     # encoding="latin1": el CSV combinado no viene en UTF-8 (ver
     # fix_doble_codificacion más arriba para el detalle de un caso mixto).
-    df = pd.read_csv(config.hogares_csv_file(anio), usecols=columnas, encoding="latin1")
+    df = pd.read_csv(ruta, usecols=columnas, encoding="latin1")
 
     personas = df.loc[:, columnas_persona].rename(columns=config.PERSONAS_COLUMNS_CSV)
 
@@ -101,7 +150,7 @@ def load_hogares_personas_csv(anio: int | str) -> tuple[pd.DataFrame, pd.DataFra
         .rename(columns=config.HOGARES_COLUMNS_CSV)
         .merge(ocupados_hogar, left_on="id_hogar", right_index=True, how="left")
     )
-    hogares["departamento"] = hogares["departamento"].map(fix_doble_codificacion)
+    hogares["departamento"] = hogares["departamento"].map(fix_doble_codificacion).map(fix_entidad_html_rota)
     return hogares, personas
 
 
@@ -132,7 +181,7 @@ def load_empleo(anio: int | str) -> pd.DataFrame:
         columnas_a_pedir = [c for c in columnas_originales if c in columnas_presentes]
         meses.append(pd.read_csv(archivo, usecols=columnas_a_pedir, encoding="latin1"))
     df = pd.concat(meses, ignore_index=True).rename(columns=config.EMPLEO_COLUMNS)
-    df["departamento"] = df["departamento"].map(fix_doble_codificacion)
+    df["departamento"] = df["departamento"].map(fix_doble_codificacion).map(fix_entidad_html_rota)
     return df
 
 
@@ -154,7 +203,7 @@ def load_victimizacion(anio: int | str) -> pd.DataFrame:
         .drop_duplicates("ID")
         .rename(columns={"ID": "id_hogar", "nom_dpto": "departamento"})
     )
-    departamentos["departamento"] = departamentos["departamento"].map(fix_doble_codificacion)
+    departamentos["departamento"] = departamentos["departamento"].map(fix_doble_codificacion).map(fix_entidad_html_rota)
     return df.merge(departamentos, on="id_hogar", how="left")
 
 

@@ -43,7 +43,7 @@ from encuesta_hogares import analysis, config, data_loader, preprocessing, visua
 
 def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     carpeta = config.DATA_DIR / anio
-    if list(carpeta.glob(f"ECH_{anio}.csv")):
+    if config.hogares_csv_file(anio).exists():
         return data_loader.load_hogares_personas_csv(anio)
     h_path = sorted(carpeta.glob("H_*.sav"))[0]
     p_path = sorted(carpeta.glob("P_*.sav"))[0]
@@ -153,7 +153,7 @@ def validar_anio(anio: str) -> None:
 
 def main() -> int:
     anios = sorted(p.name for p in config.DATA_DIR.iterdir() if p.is_dir() and p.name.isdigit()) if config.DATA_DIR.exists() else []
-    anios = [a for a in anios if list((config.DATA_DIR / a).glob("H_*.sav")) or list((config.DATA_DIR / a).glob(f"ECH_{a}.csv"))]
+    anios = [a for a in anios if list((config.DATA_DIR / a).glob("H_*.sav")) or config.hogares_csv_file(a).exists()]
 
     if not anios:
         print("No hay datos en data/ todavía — no es un error, es el estado normal de un clone limpio.")

@@ -10,6 +10,67 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.4.0] — 2026-08-13
+
+### Cambiado (cambia el número de pobreza/indigencia de 2024 — impacta la comparación con informes generados antes de esta versión)
+
+- **Pobreza e indigencia de 2024 ahora usan la metodología de canasta 2017
+  (antes: canasta 2006).** El INE publica las dos versiones a la vez en el
+  archivo de 2024 (año de transición) — se decidió (confirmado con el
+  usuario) preferir la metodología vigente para 2024 también, no solo
+  para 2025 en adelante, porque da comparabilidad real entre esos dos
+  años. Efecto real, verificado con los datos: la pobreza ponderada de
+  2024 pasa de 6.9% (canasta 2006) a 12.99% (canasta 2017) — un cambio
+  grande, esperado dado que es un cambio de vara de medición, no un error.
+  2019 queda como el único año con la metodología vieja sin alternativa
+  (no hay dato de canasta 2017 para ese año) — diferencia metodológica
+  documentada, mismo criterio que ya se usa para Vivienda (12 vs. 4
+  carencias entre años).
+
+### Agregado (soporte para datos de 2025)
+
+Encontrado y corregido durante la primera corrida real con datos de 2025
+— cada punto verificado contra los archivos reales, no supuesto:
+
+- El INE cambió varios nombres/formatos de archivo para 2025: los 12
+  mensuales de Empleo pasan de `ECH_MM_AA.csv` a `ECH_MM_AAAA.csv`, y el
+  combinado de Hogares/Personas pasa de `ECH_{año}.csv` a
+  `ECH_{año}_implantacion.csv`. `config.empleo_files`/`hogares_csv_file`
+  ahora reconocen ambos patrones.
+- Empleo 2025 dejó de traer `INFORMAL`/`SECTOR_F`/`SIT_OCUP`
+  precalculadas. Informalidad se recalcula desde `f82` (aporte a fondo de
+  pensión) con el mismo criterio que usa el paquete oficial de R del INE
+  para la ECH (`employment_restrictions()`,
+  github.com/calcita/ech/R/employment.R) — verificado contra la cifra que
+  publicó el propio INE para 2025 (21.94% calculado vs. 22.8% publicado).
+  Situación ocupacional por sector (métrica 40) sigue sin variable de
+  reemplazo identificada — no se le inventó ninguna.
+- `verificacion_catalogo.aviso_metricas_no_disponibles(año)`: nuevo
+  chequeo por métrica (no solo por bloque) que avisa antes de que el
+  usuario elija en el catálogo una métrica que no se puede calcular ese
+  año, en vez de que la corrida falle recién a mitad de camino.
+- `config.MESES_LABELS` y una regla nueva contra `print()` de estructuras
+  crudas de Python/pandas/numpy en una celda del informe (ver
+  `docs/METODOLOGIA.md`, sección 3) — encontrado en el informe real: una
+  lista de meses se imprimió como `[np.int64(1), ...]` y varias métricas
+  de Empleo mostraban el dict/DataFrame crudo debajo de su propia gráfica.
+- `analysis.tasas_actividad_empleo_desempleo_por_anio` +
+  `visualization.plot_tasas_por_anio`: comparación de una métrica entre
+  corridas de años no necesariamente consecutivos, con el eje temporal en
+  su escala real (no categórica) — para no sugerir visualmente una
+  tendencia continua entre años sin encuesta propia.
+- `formularios.plantilla_datos` ya no recibe la carpeta de destino como
+  parámetro de texto libre — la calcula ella misma con `config.DATA_DIR`.
+  Encontrado en una corrida real: la pantalla mostró `data/2025` (ruta
+  relativa) en vez de la ruta real de Windows. Tampoco promete ya un
+  formato de archivo fijo (antes decía "dos archivos .sav", ya falso
+  desde 2024).
+- `data_loader.fix_entidad_html_rota`: un tercer patrón de corrupción de
+  acentos en los CSV del INE (distinto a los dos ya conocidos) —
+  caracteres que llegan como `<e9>` en vez de "é", como una entidad HTML
+  numérica a la que se le cayó el `&#x`/`;`. Encontrado en departamentos
+  reales ("San Jos<e9>", "Paysand<fa>", "Tacuaremb<f3>").
+
 ## [0.3.2] — 2026-08-13
 
 ### Corregido (métricas 3, 9 y 11 — Brecha Digital: no tenían función de análisis propia)

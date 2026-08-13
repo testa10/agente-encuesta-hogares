@@ -112,6 +112,20 @@ def test_hogares_csv_file_sin_archivo_devuelve_ruta_esperada_igual(tmp_path, mon
     assert not ruta.exists()
 
 
+def test_hogares_csv_file_reconoce_el_patron_implantacion_2025_en_adelante(tmp_path, monkeypatch):
+    # Desde 2025 el INE nombra el archivo combinado ECH_{año}_implantacion.csv
+    # en vez de ECH_{año}.csv - verificado contra el archivo real que bajó
+    # el usuario, no una suposición.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    archivo = carpeta / "ECH_2025_implantacion.csv"
+    archivo.write_text("ID\n1\n")
+
+    assert config.hogares_csv_file(2025) == archivo
+    assert config.datos_disponibles(2025)["hogares"] is True
+
+
 def test_datos_disponibles_empleo_requiere_los_12_meses_completos(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     carpeta = tmp_path / "2024"

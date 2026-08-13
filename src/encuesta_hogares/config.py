@@ -169,6 +169,41 @@ HOGARES_COLUMNS_CSV = {
     "d9": "cantidad_habitaciones",
     "d21_15_5": "tiene_tablet_ibirapita",
     "W_ANO": "ponderador_hogar",  # mismo ponderador que "pesoano" en 2019, solo cambia el nombre
+    # El INE reemplazó la metodología de pobreza/ingreso (canasta de 2006 por
+    # la de 2017) — verificado contra los datos reales: 2025 ya no trae
+    # pobre06/indig06/YSVL, solo pobre17/indig17/YDA_SVL. 2024 resultó ser
+    # un año de transición: trae LAS DOS a la vez (no "nunca las dos juntas"
+    # como se pensó en un primer momento) — confirmado con el usuario que
+    # ante esa situación se prefiere la metodología nueva (canasta 2017)
+    # para 2024 también, no solo para 2025 en adelante, porque da
+    # comparabilidad hacia adelante entre 2024 y 2025 (2019 queda como el
+    # único año con la metodología vieja, sin alternativa — se documenta
+    # como diferencia metodológica, igual que ya se hace con Vivienda entre
+    # 12 y 4 carencias). Ver `config.PREFERENCIA_METODOLOGIA_HOGARES` y
+    # `data_loader.load_hogares_personas_csv`, que aplican esa preferencia.
+    # YDA_SVL verificado con los datos reales de 2025: mediana $64.309,
+    # mismo orden de magnitud que la mediana de ingreso de hogar que
+    # publicó el propio INE para 2025 ($72.600, cuarto trimestre) — la
+    # diferencia es esperable, no un desvío de criterio (nuestro dato es el
+    # promedio del año completo contra un trimestre puntual, además de la
+    # exclusión de valor locativo que ya tenía YSVL). pobre17/indig17 no
+    # son una inferencia propia — son la clasificación de pobreza que ya
+    # calcula el INE con la metodología vigente, solo cambió el nombre de
+    # la columna.
+    "pobre17": "pobre",
+    "indig17": "indigente",
+    "YDA_SVL": "ingreso_hogar",
+}
+
+# Cuando un archivo trae las dos variantes de una misma columna a la vez
+# (año de transición — pasó de verdad con 2024, ver la nota de arriba),
+# `data_loader.load_hogares_personas_csv` descarta la columna vieja (clave)
+# y se queda con la nueva (valor) — decisión confirmada con el usuario, no
+# tomada en silencio por el código.
+PREFERENCIA_METODOLOGIA_HOGARES = {
+    "pobre06": "pobre17",
+    "indig06": "indig17",
+    "YSVL": "YDA_SVL",
 }
 
 # Solo las 4 preguntas de "problemas de la vivienda" (módulo C5) que el INE
@@ -200,13 +235,23 @@ PERSONAS_COLUMNS_CSV = {
 
 
 def hogares_csv_file(anio: int | str) -> Path:
-    """Ruta al archivo combinado `data/{año}/ECH_{año}.csv` (ver nota más
-    arriba). `datos_disponibles()` ya lo detecta como fuente válida de
-    "hogares" para años que no tienen H_....sav.
+    """Ruta al archivo combinado de Hogares/Personas de un año.
+
+    El nombre cambió entre años: hasta 2024 es exactamente `ECH_{año}.csv`;
+    desde 2025 el INE lo publica como `ECH_{año}_implantacion.csv` —
+    verificado contra los archivos reales que bajó el usuario, no una
+    suposición. Se prueba el patrón "implantación" primero y se usa si
+    existe en disco; si no, se cae al patrón simple (exista o no
+    todavía) — así un año recién creado, sin descargar, sigue mostrando
+    un nombre de archivo esperado en vez de romper. `datos_disponibles()`
+    reutiliza esta misma función como fuente única de verdad, para que
+    los dos no puedan quedar desincronizados.
     """
     carpeta = DATA_DIR / str(anio)
-    candidatos = sorted(carpeta.glob(f"ECH_{anio}.csv"))
-    return candidatos[0] if candidatos else carpeta / f"ECH_{anio}.csv"
+    patron_implantacion = carpeta / f"ECH_{anio}_implantacion.csv"
+    if patron_implantacion.exists():
+        return patron_implantacion
+    return carpeta / f"ECH_{anio}.csv"
 
 TIPO_ABONADO_LABELS = {1.0: "Con cable", 2.0: "Sin cable"}
 
@@ -344,7 +389,7 @@ def datos_disponibles(anio: int | str) -> dict:
     """
     carpeta = DATA_DIR / str(anio)
     return {
-        "hogares": bool(list(carpeta.glob("H_*.sav")) or list(carpeta.glob(f"ECH_{anio}.csv"))),
+        "hogares": bool(list(carpeta.glob("H_*.sav")) or hogares_csv_file(anio).exists()),
         "fies": fies_file(anio).exists(),
         "empleo": all(archivo.exists() for archivo in empleo_files(anio)),
         "seguridad": victimizacion_file(anio).exists(),
