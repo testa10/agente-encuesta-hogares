@@ -41,18 +41,18 @@ import pandas as pd  # noqa: E402
 from encuesta_hogares import analysis, config, data_loader, preprocessing, visualization  # noqa: E402
 
 
-def _cargar_hogares(anio: str) -> pd.DataFrame:
+def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     carpeta = config.DATA_DIR / anio
     if list(carpeta.glob(f"ECH_{anio}.csv")):
-        hogares, _personas = data_loader.load_hogares_personas_csv(anio)
-        return hogares
+        return data_loader.load_hogares_personas_csv(anio)
     h_path = sorted(carpeta.glob("H_*.sav"))[0]
-    return data_loader.load_hogares(h_path)
+    p_path = sorted(carpeta.glob("P_*.sav"))[0]
+    return data_loader.load_hogares(h_path), data_loader.load_personas(p_path)
 
 
 def validar_anio(anio: str) -> None:
     print(f"\n{'=' * 60}\nAÑO {anio}\n{'=' * 60}")
-    hogares = _cargar_hogares(anio)
+    hogares, personas = _cargar_hogares_y_personas(anio)
     print(f"Hogares (nacional): {len(hogares)} — departamentos: {hogares['departamento'].nunique()}")
     assert hogares["departamento"].nunique() > 1, "se esperaban varios departamentos en la base nacional"
 
@@ -85,7 +85,23 @@ def validar_anio(anio: str) -> None:
     hogares_ext = preprocessing.prepare_hogares_extendido(hogares_mdeo)
     resumen_conectividad = analysis.resumen_conectividad(hogares_ext)
     assert resumen_conectividad.total_hogares > 0
-    print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_cable}% con cable")
+    assert 0 <= resumen_conectividad.pct_con_cable <= 100
+    print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_cable}% con cable (ponderado)")
+
+    pobres = analysis.pct_pobres_indigentes(hogares_ext)
+    assert 0 <= pobres["pct_pobres"] <= 100
+    print(f"Pobreza (ponderada): {pobres['pct_pobres']}% — sin ponderar sería {round(hogares_ext['pobre'].mean() * 100, 2)}%")
+
+    brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
+    assert visualization.plot_brecha_digital(brecha) is not None
+
+    # --- Hogares: composición vía Personas, requiere el merge completo ---
+    tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
+    resumen_tipos = analysis.tipos_hogar_resumen(tipo_hogar)
+    assert abs(resumen_tipos["pct_hogares"].sum() - 100.0) < 0.5
+    jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)
+    assert 0 <= jefatura["pct_jefatura_femenina"] <= 100
+    print(f"Tipos de hogar: OK ({len(resumen_tipos)} categorías) — jefatura femenina: {jefatura['pct_jefatura_femenina']}%")
 
     disponibles = config.datos_disponibles(anio)
     print(f"Datos opcionales disponibles: {disponibles}")

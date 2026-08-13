@@ -230,7 +230,7 @@ def _clasificar_tipo_hogar_codigos(codigos: set) -> str:
     return "Sin núcleo"
 
 
-def clasificar_tipo_hogar(personas: pd.DataFrame) -> pd.DataFrame:
+def clasificar_tipo_hogar(personas: pd.DataFrame, hogares: pd.DataFrame) -> pd.DataFrame:
     """Clasifica cada hogar por su composición (taxonomía CELADE/CEPAL,
     ver config.PARENTESCO_LABELS) a partir de `parentesco_jefe` (e30) de
     todas las personas del hogar. Devuelve una fila por hogar con:
@@ -238,6 +238,13 @@ def clasificar_tipo_hogar(personas: pd.DataFrame) -> pd.DataFrame:
     - `monoparental`: hay hijos (parentesco 3/4/5) pero no cónyuge (2).
     - `jefe_sexo` / `jefe_edad`: sexo y edad de quien tiene parentesco_jefe == 1,
       para poder cruzar tipo de hogar con jefatura sin otro merge aparte.
+    - `ponderador_hogar`: traído de `hogares` (solo se usan sus columnas
+      `id_hogar`/`ponderador_hogar`) — sin esto, cualquier estadística que
+      use el resultado (`tipos_hogar_resumen`, `tasa_jefatura_femenina`,
+      `pct_unipersonales_mayores`) quedaría sin ponderar por muestreo.
+      `personas` nunca trae su propio ponderador a propósito (ver
+      PERSONAS_COLUMNS en config.py) para no duplicar la columna al
+      mergear con el lado de Hogares.
 
     No depende de ninguna variable de tecnología — es composición del hogar
     pura, según la taxonomía estándar que usa CEPAL/CELADE en toda la región.
@@ -257,7 +264,8 @@ def clasificar_tipo_hogar(personas: pd.DataFrame) -> pd.DataFrame:
     jefes = personas.loc[personas["parentesco_jefe"] == 1, ["id_hogar", "sexo", "edad"]].copy()
     jefes["jefe_sexo"] = classify_sexo(jefes["sexo"])
     jefes = jefes.rename(columns={"edad": "jefe_edad"})[["id_hogar", "jefe_sexo", "jefe_edad"]]
-    return resultado.merge(jefes, on="id_hogar", how="left")
+    resultado = resultado.merge(jefes, on="id_hogar", how="left")
+    return resultado.merge(hogares[["id_hogar", "ponderador_hogar"]], on="id_hogar", how="left")
 
 
 def compute_hacinamiento(hogares: pd.DataFrame, umbral: float = config.UMBRAL_HACINAMIENTO) -> pd.DataFrame:

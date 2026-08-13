@@ -415,6 +415,10 @@ cuenta si alguna de estas métricas está en el informe:
   hogar — nunca las cruces con ninguna variable de tecnología sin que el
   usuario lo pida explícitamente como métrica propia (ver paso 6); esa
   mezcla es exactamente el sesgo que motivó este rediseño.
+  `clasificar_tipo_hogar(personas, hogares)` necesita las dos tablas (no
+  solo `personas`) para poder traer `ponderador_hogar` al resultado — ver
+  la regla de ponderación en la sección 2 de `docs/METODOLOGIA.md`, es
+  igual de no-negociable que el resto de esta lista.
 - **Hacinamiento** usa el umbral clásico (más de 2 personas por cuarto,
   `config.UMBRAL_HACINAMIENTO`) — no el método más nuevo de umbral
   ajustado por composición del hogar (UE/OCDE). Si alguien pregunta por

@@ -56,8 +56,41 @@ contra esta lista:
   "nivel de suscripción del barrio" mezclaba causa y efecto de forma
   confusa y no aportaba una conclusión clara — se sacó toda la sección.
 - **Celdas chicas**: si un grupo tiene muy pocos casos, la comparación no es
-  confiable. Antes de publicar una gráfica nueva, revisar el tamaño de cada
-  grupo (`.value_counts()` o `len()` del segmento).
+  confiable. Antes de publicar una gráfica nueva agrupada por algo, corré
+  `analysis.grupos_con_muestra_chica(df, columna_grupo)` sobre el
+  dataframe sin agrupar — si devuelve algún grupo, aclará en el texto que
+  esa estimación puntual tiene poca base muestral (umbral: n=30).
+- **Ponderación por muestreo — no negociable, no es "un detalle técnico".**
+  Toda estadística de Hogares/Personas (pobreza, hacinamiento, tipos de
+  hogar, jefatura, razón de dependencia, vivienda, territorio, brecha
+  digital) se calcula ponderada por `ponderador_hogar` (columna `pesoano`
+  en 2019, `W_ANO` desde 2024 — mismo ponderador, verificado idéntico para
+  todas las personas de un mismo hogar). Esto se agregó recién en esta
+  versión: antes, todo lo que no fuera FIES/Empleo/Victimización (que ya
+  traían su propio ponderador de módulo) se calculaba como proporción
+  simple sobre la muestra — un sesgo real, no cosmético: con datos de
+  2019, la pobreza de Montevideo da 6.71% sin ponderar contra 8.14%
+  ponderada correctamente, y a nivel nacional 4.79% contra 5.87% — una
+  diferencia de casi 1.1 puntos porcentuales, suficiente para cambiar una
+  conclusión. Nunca calcules una proporción/media/mediana de Hogares con
+  `.mean()`/`.median()`/`.value_counts()` simple — usá los helpers ya
+  armados para esto: `analysis.pct_ponderado`/`pct_ponderado_por` (%),
+  `media_ponderada_por` (promedio), `proporcion_ponderada` (value_counts
+  ponderado), `mediana_ponderada` (mediana). Si agregás una función nueva
+  de Hogares/Personas y no vas a ponderarla, dejá explícito por qué en el
+  docstring — no que se te haya olvidado.
+- **Límite conocido: sin intervalos de confianza ni test de significancia.**
+  Los microdatos públicos del INE no incluyen las variables de diseño
+  muestral (conglomerado/estrato) necesarias para calcular un error
+  estándar correcto en un diseño muestral complejo — calcularlo asumiendo
+  muestreo aleatorio simple (la única opción sin esas variables)
+  subestimaría el error real y daría una precisión falsa, peor que no
+  mostrar nada. Por eso ningún número de este proyecto lleva margen de
+  error ni "diferencia estadísticamente significativa": son estimaciones
+  puntuales ponderadas, no inferencia con incertidumbre cuantificada. Si
+  alguna vez el INE publica las variables de diseño, esto se puede
+  reconsiderar — hasta entonces, no simules una precisión que no se puede
+  respaldar.
 - **Correlación vs. causación**: el lenguaje debe ser siempre observacional
   ("los hogares con X tienen más probabilidad de Y"), nunca causal ("X
   provoca Y"), salvo que el diseño del estudio lo permita (no es el caso

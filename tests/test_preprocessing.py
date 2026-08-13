@@ -13,6 +13,7 @@ from encuesta_hogares.preprocessing import (
     decode_condiciones_vivienda,
     decode_si_no,
     melt_delitos,
+    merge_personas,
     prepare_empleo,
     prepare_fies,
     prepare_hogares_extendido,
@@ -85,6 +86,22 @@ def test_prepare_hogares_extendido_decodes_booleanos():
     assert df["goteras"].tolist() == [True, False, True, False]
 
 
+def test_merge_personas_no_duplica_el_ponderador():
+    # hogares_resumen ya trae ponderador_hogar (viene del lado de Hogares,
+    # ver config.HOGARES_COLUMNS) - personas nunca lo trae (a propósito,
+    # ver config.PERSONAS_COLUMNS). Si algún día se agregara a los dos
+    # lados, este merge lo duplicaría como "ponderador_hogar_x"/"_y" en vez
+    # de conservar una sola columna.
+    hogares_resumen = pd.DataFrame({"id_hogar": [1, 2], "tipo_abonado": [1.0, 2.0], "ponderador_hogar": [100.0, 200.0]})
+    personas = pd.DataFrame({"id_hogar": [1, 2], "edad": [30, 45], "sexo": [1, 2]})
+    combinado = merge_personas(hogares_resumen, personas)
+    assert "ponderador_hogar" in combinado.columns
+    assert "ponderador_hogar_x" not in combinado.columns
+    assert "ponderador_hogar_y" not in combinado.columns
+    assert combinado.set_index("id_hogar").loc[1, "ponderador_hogar"] == 100.0
+    assert combinado.set_index("id_hogar").loc[2, "ponderador_hogar"] == 200.0
+
+
 def test_decode_condiciones_vivienda_no_filtra_a_montevideo():
     df = pd.DataFrame(
         {
@@ -140,8 +157,12 @@ def _personas_hogares_ejemplo():
     )
 
 
+def _hogares_ponderador_ejemplo():
+    return pd.DataFrame({"id_hogar": [1, 2, 3, 4, 5, 6], "ponderador_hogar": [100.0, 200.0, 150.0, 80.0, 120.0, 90.0]})
+
+
 def test_clasificar_tipo_hogar_taxonomia_celade():
-    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo(), _hogares_ponderador_ejemplo()).set_index("id_hogar")
     assert resultado.loc[1, "tipo_hogar"] == "Unipersonal"
     assert resultado.loc[2, "tipo_hogar"] == "Nuclear"
     assert resultado.loc[3, "tipo_hogar"] == "Extendido"
@@ -151,16 +172,22 @@ def test_clasificar_tipo_hogar_taxonomia_celade():
 
 
 def test_clasificar_tipo_hogar_marca_monoparental():
-    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo(), _hogares_ponderador_ejemplo()).set_index("id_hogar")
     assert bool(resultado.loc[2, "monoparental"]) is False  # tiene cónyuge
     assert bool(resultado.loc[4, "monoparental"]) is True  # hijo sin cónyuge
 
 
 def test_clasificar_tipo_hogar_agrega_sexo_y_edad_del_jefe():
-    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo()).set_index("id_hogar")
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo(), _hogares_ponderador_ejemplo()).set_index("id_hogar")
     assert resultado.loc[1, "jefe_sexo"] == "1-Hombre"
     assert resultado.loc[1, "jefe_edad"] == 70
     assert resultado.loc[3, "jefe_sexo"] == "2-Mujer"
+
+
+def test_clasificar_tipo_hogar_agrega_ponderador():
+    resultado = clasificar_tipo_hogar(_personas_hogares_ejemplo(), _hogares_ponderador_ejemplo()).set_index("id_hogar")
+    assert resultado.loc[1, "ponderador_hogar"] == 100.0
+    assert resultado.loc[2, "ponderador_hogar"] == 200.0
 
 
 def test_compute_hacinamiento_marca_por_encima_del_umbral():

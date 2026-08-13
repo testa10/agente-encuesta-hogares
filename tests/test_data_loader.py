@@ -71,7 +71,7 @@ def test_load_hogares_personas_csv_corrige_departamento_mal_codificado(tmp_path,
         "d24": "0", "d25": "3", "d9": "3", "d21_15_5": "2", "e26": "1", "e27": "30", "e30": "1",
         "indig06": "0",
         "nom_dpto": "MARCADOR_DEPARTAMENTO",
-        "nper": "1", "pobre06": "0",
+        "nper": "1", "pobre06": "0", "W_ANO": "150.5",
     }
     encabezado = ",".join(columnas)
     fila = ",".join(valores[c] for c in columnas)
@@ -85,6 +85,15 @@ def test_load_hogares_personas_csv_corrige_departamento_mal_codificado(tmp_path,
 
     assert hogares.loc[0, "departamento"] == "Río Negro"
     assert len(personas) == 1
+    # El ponderador de muestreo llega a Hogares (viene de W_ANO). A
+    # propósito NO se mapea también en Personas (ver la nota en
+    # PERSONAS_COLUMNS_CSV en config.py): aunque el CSV combinado trae el
+    # mismo valor repetido por persona, mapearlo en los dos lados
+    # duplicaría la columna como "ponderador_hogar_x"/"_y" en cualquier
+    # merge posterior entre Hogares y Personas. Llega a las tablas de
+    # persona vía preprocessing.merge_personas, no desde acá.
+    assert hogares.loc[0, "ponderador_hogar"] == 150.5
+    assert "ponderador_hogar" not in personas.columns
 
 
 def test_load_victimizacion_agrega_departamento_por_join(tmp_path, monkeypatch):

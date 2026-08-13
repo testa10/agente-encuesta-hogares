@@ -76,6 +76,15 @@ HOGARES_COLUMNS = {
     # --- Ampliación: hogares (sin tecnología) y brecha digital "real" ---
     "d9": "cantidad_habitaciones",         # excluye baño y cocina (definición CEPAL de "cuarto")
     "d21_15_5": "tiene_tablet_ibirapita",  # 1=Sí/2=No/99=Sin dato
+    # Ponderador anual de expansión muestral (idéntico para todas las personas
+    # de un mismo hogar, verificado). Hasta ahora el proyecto solo ponderaba
+    # FIES/Empleo/Victimización (que traen su propio ponderador de módulo) y
+    # calculaba todo lo demás (pobreza, hacinamiento, tipos de hogar, vivienda,
+    # territorio, brecha digital) como proporción simple sin ponderar - un
+    # sesgo real: con datos de 2019, la pobreza da 4.79% sin ponderar contra
+    # 5.87% ponderada, casi 1.1 puntos porcentuales de diferencia. Ver
+    # docs/METODOLOGIA.md, sección de ponderación.
+    "pesoano": "ponderador_hogar",
 }
 
 # Variables de estado estructural de la vivienda (todas 1=Sí/2=No/99=Sin dato).
@@ -105,6 +114,13 @@ PERSONAS_COLUMNS = {
     "pobpcoac": "condicion_actividad_cod",
     "e60": "tiene_celular_persona",  # 1=Sí/2=No/99=Sin dato
     "e30": "parentesco_jefe",        # relación de parentesco con el jefe/a de hogar (14 categorías)
+    # OJO: "pesoano" (ponderador) a propósito NO se mapea acá, aunque
+    # también está en este archivo con el mismo valor que en Hogares
+    # (verificado). Si se mapeara en los dos lados, cualquier merge entre
+    # Hogares y Personas por id_hogar duplicaría la columna como
+    # "ponderador_hogar_x"/"_y". El ponderador viaja siempre desde el lado
+    # de Hogares (ver HOGARES_COLUMNS) y llega a las tablas de personas
+    # vía merge (ver preprocessing.merge_personas) - nunca se lee dos veces.
 }
 
 # ============================================================================
@@ -152,6 +168,7 @@ HOGARES_COLUMNS_CSV = {
     "d24": "menores_14",
     "d9": "cantidad_habitaciones",
     "d21_15_5": "tiene_tablet_ibirapita",
+    "W_ANO": "ponderador_hogar",  # mismo ponderador que "pesoano" en 2019, solo cambia el nombre
 }
 
 # Solo las 4 preguntas de "problemas de la vivienda" (módulo C5) que el INE
@@ -177,6 +194,8 @@ PERSONAS_COLUMNS_CSV = {
     "PT1": "ingresos_personales",
     "POBPCOAC": "condicion_actividad_cod",
     "e30": "parentesco_jefe",
+    # Mismo motivo que en PERSONAS_COLUMNS: W_ANO a propósito no se mapea
+    # acá, para no duplicar la columna al mergear con el lado de Hogares.
 }
 
 

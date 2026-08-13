@@ -10,6 +10,45 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.3.0] — 2026-08-13
+
+### Cambiado (cambia los números de casi todas las métricas de Hogares — impacta la comparación con informes generados antes de esta versión)
+
+- **Toda estadística de Hogares/Personas ahora se pondera por el
+  ponderador de muestreo del INE** (`pesoano` en 2019, `W_ANO` desde
+  2024). Antes, solo FIES/Empleo/Victimización ponderaban (cada uno con
+  su propio ponderador de módulo) — pobreza, hacinamiento, tipos de
+  hogar, jefatura, razón de dependencia, vivienda, territorio y brecha
+  digital se calculaban como proporción simple sobre la muestra, sin
+  corregir por el diseño muestral. Encontrado en una revisión real:
+  hallazgo verificado con datos de 2019, pobreza nacional 4.79% sin
+  ponderar contra 5.87% ponderada — casi 1.1 puntos porcentuales de
+  diferencia, suficiente para cambiar una conclusión.
+- Nuevos helpers genéricos de ponderación en `analysis.py`:
+  `pct_ponderado`/`pct_ponderado_por` (ya existía, ahora reutilizado
+  también para Hogares), `media_ponderada_por`, `proporcion_ponderada`,
+  `mediana_ponderada`.
+- `preprocessing.clasificar_tipo_hogar` ahora requiere un segundo
+  parámetro `hogares` (antes solo `personas`), para poder traer el
+  ponderador al resultado — cualquier llamada existente con un solo
+  argumento hay que actualizarla.
+- `ResumenConectividad` (dataclass) cambió `pct_con_cable`/`pct_sin_cable`
+  de propiedades calculadas a campos precalculados y ponderados — el uso
+  externo (`resumen.pct_con_cable`) no cambia, pero ahora refleja la
+  población, no la muestra.
+
+### Agregado
+
+- `analysis.grupos_con_muestra_chica`: detecta grupos con menos de 30
+  observaciones (umbral clásico de institutos de estadística) antes de
+  publicar una métrica agrupada — operacionaliza la regla de "celdas
+  chicas" que ya estaba escrita en `docs/METODOLOGIA.md` pero nunca tuvo
+  una implementación concreta.
+- Nueva sección en `docs/METODOLOGIA.md` documentando por qué el proyecto
+  **no** calcula intervalos de confianza ni tests de significancia (los
+  microdatos públicos no traen las variables de diseño muestral
+  necesarias — calcularlo igual daría una precisión falsa).
+
 ## [0.2.0] — 2026-08-12
 
 ### Cambiado (impacta la comparación entre informes de distintos años/corridas)

@@ -12,19 +12,26 @@ from encuesta_hogares.analysis import (
     diferencia_entre_tablas,
     estrato_promedio_por,
     filtrar_segmento,
+    grupos_con_muestra_chica,
     indice_acceso_digital_por,
     indice_desarrollo_territorial,
     ingreso_hogar_mediano_por_departamento,
     inseguridad_alimentaria_por,
+    media_ponderada_por,
+    mediana_ponderada,
     pct_hacinamiento_por,
     pct_pobres_indigentes,
     pct_pobres_por,
+    pct_ponderado,
     pct_ponderado_por,
     pct_unipersonales_mayores,
+    porcentaje_por_sexo,
     precariedad_estructural,
     precariedad_estructural_por,
     prevalencia_inseguridad_alimentaria,
+    promedio_edad_por_grupo,
     proporcion_cruzada,
+    proporcion_ponderada,
     razon_dependencia_demografica,
     razon_dependencia_por,
     resumen_conectividad,
@@ -37,13 +44,83 @@ from encuesta_hogares.analysis import (
 
 
 def test_resumen_conectividad():
-    hogares = pd.DataFrame({"tipo_abonado": [1.0, 1.0, 2.0, 2.0, 2.0]})
+    # pesos no uniformes a propósito: prueba que pct_con_cable pondera de
+    # verdad, no que solo cuenta filas (eso ya lo cubren total_hogares/
+    # hogares_con_cable, que siguen siendo conteos de muestra sin ponderar).
+    hogares = pd.DataFrame(
+        {
+            "tipo_abonado": [1.0, 1.0, 2.0, 2.0, 2.0],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0, 60.0],
+        }
+    )
     resumen = resumen_conectividad(hogares)
     assert resumen.total_hogares == 5
     assert resumen.hogares_con_cable == 2
     assert resumen.hogares_sin_cable == 3
-    assert resumen.pct_con_cable == 40.0
-    assert resumen.pct_sin_cable == 60.0
+    # ponderado: 20 de 100 -> 20%, no el 40% que daría sin ponderar
+    assert resumen.pct_con_cable == 20.0
+    assert resumen.pct_sin_cable == 80.0
+
+
+def test_pct_ponderado():
+    df = pd.DataFrame({"positivo": [True, True, False, False], "ponderador_hogar": [10.0, 10.0, 10.0, 70.0]})
+    assert pct_ponderado(df, "positivo") == 20.0
+
+
+def test_media_ponderada_por():
+    df = pd.DataFrame(
+        {"grupo": ["A", "A", "B"], "valor": [3.0, 5.0, 1.0], "ponderador_hogar": [30.0, 10.0, 10.0]}
+    )
+    resumen = media_ponderada_por(df, "grupo", "valor").set_index("grupo")
+    # A ponderado: (3*30 + 5*10)/40 = 3.5, no 4.0 (promedio simple)
+    assert resumen.loc["A", "media"] == 3.5
+    assert resumen.loc["B", "media"] == 1.0
+
+
+def test_proporcion_ponderada():
+    df = pd.DataFrame({"categoria": ["X", "X", "Y"], "ponderador_hogar": [10.0, 30.0, 20.0]})
+    resumen = proporcion_ponderada(df, "categoria").set_index("categoria")
+    assert resumen.loc["X", "pct"] == round(40 / 60 * 100, 2)
+    assert resumen.loc["Y", "pct"] == round(20 / 60 * 100, 2)
+
+
+def test_mediana_ponderada():
+    valores = pd.Series([10000.0, 20000.0, 30000.0])
+    # con pesos uniformes, coincide con la mediana simple
+    assert mediana_ponderada(valores, pd.Series([1.0, 1.0, 1.0])) == 20000.0
+    # con casi todo el peso en el valor más alto, la mediana ponderada se corre hacia ahí
+    assert mediana_ponderada(valores, pd.Series([1.0, 1.0, 100.0])) == 30000.0
+
+
+def test_grupos_con_muestra_chica_detecta_por_debajo_del_umbral():
+    df = pd.DataFrame({"tipo_delito": ["Hurto"] * 40 + ["Abigeato"] * 5})
+    resultado = grupos_con_muestra_chica(df, "tipo_delito", n_minimo=30)
+    assert list(resultado.index) == ["Abigeato"]
+    assert resultado["Abigeato"] == 5
+    assert "Hurto" not in resultado.index
+
+
+def test_grupos_con_muestra_chica_vacio_si_todos_superan_el_umbral():
+    df = pd.DataFrame({"grupo": ["A"] * 40 + ["B"] * 35})
+    resultado = grupos_con_muestra_chica(df, "grupo", n_minimo=30)
+    assert resultado.empty
+
+
+def test_promedio_edad_por_grupo():
+    segmento = pd.DataFrame(
+        {"edad_grupo": ["A", "A", "B"], "edad": [20.0, 40.0, 60.0], "ponderador_hogar": [30.0, 10.0, 10.0]}
+    )
+    resumen = promedio_edad_por_grupo(segmento)
+    # A ponderado: (20*30 + 40*10)/40 = 25, no 30 (promedio simple)
+    assert resumen.loc["A"] == 25.0
+    assert resumen.loc["B"] == 60.0
+
+
+def test_porcentaje_por_sexo():
+    segmento = pd.DataFrame({"sexo_grupo": ["1-Hombre", "2-Mujer"], "ponderador_hogar": [30.0, 10.0]})
+    resumen = porcentaje_por_sexo(segmento, total_personas_ponderado=200.0)
+    assert resumen.loc["1-Hombre"] == 15.0
+    assert resumen.loc["2-Mujer"] == 5.0
 
 
 def test_clasificacion_barrios_resumen_cuenta_por_nivel_y_ordena_ordinal():
@@ -90,10 +167,12 @@ def test_precariedad_estructural_cuenta_con_al_menos_una_carencia():
         {
             "goteras": [True, False, False, False],
             "se_inunda": [False, False, True, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 70.0],
         }
     )
     resultado = precariedad_estructural(df)
-    assert resultado["pct_con_carencia"] == 50.0
+    # con carencia: filas 0 y 2 (peso 10+10=20) sobre 100 -> 20%, no 50%
+    assert resultado["pct_con_carencia"] == 20.0
     assert resultado["total_hogares"] == 4
     assert resultado["hogares_con_carencia"] == 2
 
@@ -102,7 +181,7 @@ def test_precariedad_estructural_tolera_columnas_faltantes():
     # A partir de 2024 solo hay 4 de las 12 columnas de vivienda (ver
     # config.CONDICIONES_VIVIENDA_COLUMNS_CSV) - la función solo debe usar
     # las que están presentes en el dataframe, sin fallar por las demás.
-    df = pd.DataFrame({"goteras": [True, False]})
+    df = pd.DataFrame({"goteras": [True, False], "ponderador_hogar": [10.0, 10.0]})
     resultado = precariedad_estructural(df)
     assert resultado["pct_con_carencia"] == 50.0
 
@@ -112,6 +191,7 @@ def test_precariedad_estructural_por_agrupa_correctamente():
         {
             "departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO", "SALTO"],
             "goteras": [True, False, True, True],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0],
         }
     )
     resumen = precariedad_estructural_por(df, "departamento").set_index("departamento")
@@ -124,6 +204,7 @@ def test_carencias_estructurales_mas_frecuentes_ordena_de_mayor_a_menor():
         {
             "goteras": [True, True, True, False],
             "se_inunda": [True, False, False, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0],
         }
     )
     resumen = carencias_estructurales_mas_frecuentes(df)
@@ -134,16 +215,29 @@ def test_carencias_estructurales_mas_frecuentes_ordena_de_mayor_a_menor():
 
 
 def test_pct_pobres_por():
-    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"], "pobre": [True, False, True]})
+    df = pd.DataFrame(
+        {
+            "departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"],
+            "pobre": [True, False, True],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
+        }
+    )
     resumen = pct_pobres_por(df, "departamento").set_index("departamento")
     assert resumen.loc["MONTEVIDEO", "pct_pobres"] == 50.0
     assert resumen.loc["SALTO", "pct_pobres"] == 100.0
 
 
 def test_estrato_promedio_por():
-    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"], "estrato_tipo": [3, 5, 1]})
+    df = pd.DataFrame(
+        {
+            "departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"],
+            "estrato_tipo": [3, 5, 1],
+            "ponderador_hogar": [30.0, 10.0, 10.0],
+        }
+    )
     resumen = estrato_promedio_por(df, "departamento").set_index("departamento")
-    assert resumen.loc["MONTEVIDEO", "estrato_promedio"] == 4.0
+    # MONTEVIDEO ponderado: (3*30 + 5*10)/40 = 3.5, no 4.0 (promedio simple)
+    assert resumen.loc["MONTEVIDEO", "estrato_promedio"] == 3.5
     assert resumen.loc["SALTO", "estrato_promedio"] == 1.0
 
 
@@ -163,10 +257,14 @@ def test_indice_desarrollo_territorial_invierte_y_normaliza():
 
 
 def test_ingreso_hogar_mediano_por_departamento():
+    # pesos uniformes a propósito: la mediana ponderada coincide con la
+    # mediana simple cuando todos pesan igual (la ponderación no uniforme
+    # de la mediana ya se prueba aparte en test_mediana_ponderada).
     hogares = pd.DataFrame(
         {
             "departamento": ["RIVERA", "RIVERA", "RIVERA", "MONTEVIDEO", "MONTEVIDEO", "SALTO"],
             "ingreso_hogar": [10000.0, 20000.0, 30000.0, 50000.0, 70000.0, 999999.0],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
         }
     )
     resultado = ingreso_hogar_mediano_por_departamento(hogares, ["RIVERA", "MONTEVIDEO"])
@@ -326,35 +424,66 @@ def test_diferencia_entre_tablas_cruza_por_indice():
 # ============================================================================
 
 def test_pct_pobres_indigentes():
-    df = pd.DataFrame({"pobre": [True, True, False, False], "indigente": [True, False, False, False]})
+    df = pd.DataFrame(
+        {
+            "pobre": [True, True, False, False],
+            "indigente": [True, False, False, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 70.0],
+        }
+    )
     resultado = pct_pobres_indigentes(df)
-    assert resultado == {"pct_pobres": 50.0, "pct_indigentes": 25.0}
+    # pobres ponderado: (10+10)/100 = 20%, no 50%; indigentes: 10/100 = 10%, no 25%
+    assert resultado == {"pct_pobres": 20.0, "pct_indigentes": 10.0}
 
 
 def test_tasa_jefatura_femenina():
-    df = pd.DataFrame({"jefe_sexo": ["1-Hombre", "2-Mujer", "2-Mujer", "1-Hombre", None]})
+    df = pd.DataFrame(
+        {
+            "jefe_sexo": ["1-Hombre", "2-Mujer", "2-Mujer", "1-Hombre", None],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 70.0, 10.0],
+        }
+    )
     resultado = tasa_jefatura_femenina(df)
-    assert resultado == {"pct_jefatura_femenina": 50.0, "total_hogares": 4}
+    # de los 4 con jefatura identificada (peso 100): mujeres peso 20 -> 20%, no 50%
+    assert resultado == {"pct_jefatura_femenina": 20.0, "total_hogares": 4}
 
 
 def test_tipos_hogar_resumen_ordena_de_mayor_a_menor():
-    df = pd.DataFrame({"tipo_hogar": ["Nuclear", "Nuclear", "Nuclear", "Unipersonal", "Extendido"]})
+    df = pd.DataFrame(
+        {
+            "tipo_hogar": ["Nuclear", "Nuclear", "Nuclear", "Unipersonal", "Extendido"],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0, 10.0],
+        }
+    )
     resumen = tipos_hogar_resumen(df)
     assert resumen.iloc[0]["tipo_hogar"] == "Nuclear"
     assert resumen.iloc[0]["pct_hogares"] == 60.0
 
 
 def test_pct_hacinamiento_por():
-    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"], "hacinado": [True, False, False]})
+    df = pd.DataFrame(
+        {
+            "nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"],
+            "hacinado": [True, False, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
+        }
+    )
     resumen = pct_hacinamiento_por(df, "nivel_economico").set_index("nivel_economico")
     assert resumen.loc["1-Bajo", "pct_hacinamiento"] == 50.0
     assert resumen.loc["5-Alto", "pct_hacinamiento"] == 0.0
 
 
 def test_razon_dependencia_demografica():
-    # 2 menores de 15, 1 mayor de 65, 3 en edad activa (15-64) -> 3/3*100 = 100.0
-    personas = pd.DataFrame({"edad": [5, 10, 70, 20, 40, 60]})
-    assert razon_dependencia_demografica(personas) == 100.0
+    # 2 menores de 15 (peso 10 c/u = 20), 1 mayor de 65 (peso 60), 3 activos
+    # 15-64 (peso 10 c/u = 30) -> (20+60)/30*100 = 266.67, no el 100.0 que
+    # daría contando personas sin ponderar.
+    personas = pd.DataFrame(
+        {
+            "edad": [5, 10, 70, 20, 40, 60],
+            "ponderador_hogar": [10.0, 10.0, 60.0, 10.0, 10.0, 10.0],
+        }
+    )
+    assert razon_dependencia_demografica(personas) == round((20 + 60) / 30 * 100, 2)
 
 
 def test_razon_dependencia_por():
@@ -362,6 +491,7 @@ def test_razon_dependencia_por():
         {
             "departamento": ["MONTEVIDEO", "MONTEVIDEO", "MONTEVIDEO", "SALTO", "SALTO"],
             "edad": [5, 30, 40, 30, 40],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0, 10.0],
         }
     )
     resumen = razon_dependencia_por(personas, "departamento").set_index("departamento")
@@ -374,6 +504,7 @@ def test_pct_unipersonales_mayores():
         {
             "tipo_hogar": ["Unipersonal", "Unipersonal", "Unipersonal", "Nuclear"],
             "jefe_edad": [70, 30, 68, 40],
+            "ponderador_hogar": [10.0, 10.0, 10.0, 10.0],
         }
     )
     resultado = pct_unipersonales_mayores(df)
@@ -394,6 +525,7 @@ def test_brecha_digital_por_cohorte():
             "tiene_internet": [True, True, False],
             "tiene_pc": [True, True, False],
             "tiene_streaming": [True, False, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
         }
     )
     resumen = brecha_digital_por_cohorte(df)
@@ -409,6 +541,7 @@ def test_brecha_digital_por_jefatura():
             "tiene_internet": [True, True, True],
             "tiene_pc": [True, True, True],
             "tiene_streaming": [False, False, True],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
         }
     )
     resumen = brecha_digital_por_jefatura(df)
@@ -417,14 +550,38 @@ def test_brecha_digital_por_jefatura():
 
 
 def test_indice_acceso_digital_por():
-    df = pd.DataFrame({"nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"], "indice_acceso_digital": [1, 3, 4]})
+    df = pd.DataFrame(
+        {
+            "nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"],
+            "indice_acceso_digital": [1, 3, 4],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
+        }
+    )
     resumen = indice_acceso_digital_por(df, "nivel_economico").set_index("nivel_economico")
     assert resumen.loc["1-Bajo", "indice_promedio"] == 2.0
     assert resumen.loc["5-Alto", "indice_promedio"] == 4.0
 
 
 def test_adopcion_tablet_ibirapita_por():
-    df = pd.DataFrame({"jefe_es_mayor": [True, True, False], "tiene_tablet_ibirapita": [True, False, False]})
+    df = pd.DataFrame(
+        {
+            "jefe_es_mayor": [True, True, False],
+            "tiene_tablet_ibirapita": [True, False, False],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
+        }
+    )
     resumen = adopcion_tablet_ibirapita_por(df, "jefe_es_mayor").set_index("jefe_es_mayor")
     assert resumen.loc[True, "pct_con_tablet"] == 50.0
     assert resumen.loc[False, "pct_con_tablet"] == 0.0
+
+
+def test_adopcion_tablet_ibirapita_por_trata_sin_dato_como_no_tiene():
+    df = pd.DataFrame(
+        {
+            "jefe_es_mayor": [True, True, True],
+            "tiene_tablet_ibirapita": [True, False, None],
+            "ponderador_hogar": [10.0, 10.0, 10.0],
+        }
+    )
+    resumen = adopcion_tablet_ibirapita_por(df, "jefe_es_mayor").set_index("jefe_es_mayor")
+    assert resumen.loc[True, "pct_con_tablet"] == round(1 / 3 * 100, 2)

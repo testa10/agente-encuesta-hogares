@@ -37,21 +37,27 @@ class ResumenConectividad:
     total_hogares: int
     hogares_con_cable: int
     hogares_sin_cable: int
-
-    @property
-    def pct_con_cable(self) -> float:
-        return round(self.hogares_con_cable / self.total_hogares * 100, 2)
-
-    @property
-    def pct_sin_cable(self) -> float:
-        return round(self.hogares_sin_cable / self.total_hogares * 100, 2)
+    pct_con_cable: float
+    pct_sin_cable: float
 
 
 def resumen_conectividad(hogares_mdeo: pd.DataFrame) -> ResumenConectividad:
-    """Totales y porcentajes de hogares con/sin TV cable en Montevideo."""
+    """Totales (tamaño de muestra, sin ponderar — para transparencia sobre
+    cuántos casos hay detrás de cada número) y porcentajes (ponderados por
+    `ponderador_hogar`, representativos de la población) de hogares con/sin
+    TV cable en Montevideo.
+    """
     total = len(hogares_mdeo)
-    con_cable = int((hogares_mdeo["tipo_abonado"] == 1.0).sum())
-    return ResumenConectividad(total_hogares=total, hogares_con_cable=con_cable, hogares_sin_cable=total - con_cable)
+    con_cable_bool = hogares_mdeo["tipo_abonado"] == 1.0
+    con_cable = int(con_cable_bool.sum())
+    pct_con = pct_ponderado(hogares_mdeo.assign(_con_cable=con_cable_bool), "_con_cable")
+    return ResumenConectividad(
+        total_hogares=total,
+        hogares_con_cable=con_cable,
+        hogares_sin_cable=total - con_cable,
+        pct_con_cable=pct_con,
+        pct_sin_cable=round(100 - pct_con, 2),
+    )
 
 
 def filtrar_segmento(df: pd.DataFrame, filtro: dict) -> pd.DataFrame:
@@ -78,13 +84,20 @@ def clasificacion_barrios_resumen(penetracion_por_barrio: pd.DataFrame) -> pd.Da
 
 
 def promedio_edad_por_grupo(segmento: pd.DataFrame) -> pd.Series:
-    """Edad promedio por tramo etario, dentro de un segmento ya filtrado."""
-    return segmento.groupby("edad_grupo", observed=True)["edad"].mean().round(0)
+    """Edad promedio ponderada por tramo etario, dentro de un segmento ya
+    filtrado. `segmento` tiene que traer `ponderador_hogar` (llega solo si
+    viene de `preprocessing.merge_personas`, que lo hereda del lado de
+    Hogares).
+    """
+    return media_ponderada_por(segmento, "edad_grupo", "edad").set_index("edad_grupo")["media"].round(0)
 
 
-def porcentaje_por_sexo(segmento: pd.DataFrame, total_personas: int) -> pd.Series:
-    """% de personas por sexo (sobre el total general), dentro de un segmento ya filtrado."""
-    return (segmento.groupby("sexo_grupo", observed=True)["id_persona"].count() / total_personas * 100).round(2)
+def porcentaje_por_sexo(segmento: pd.DataFrame, total_personas_ponderado: float) -> pd.Series:
+    """% ponderado de personas por sexo (sobre el total general YA
+    ponderado, ej. `personas["ponderador_hogar"].sum()`), dentro de un
+    segmento ya filtrado.
+    """
+    return (segmento.groupby("sexo_grupo", observed=True)["ponderador_hogar"].sum() / total_personas_ponderado * 100).round(2)
 
 
 # ============================================================================
@@ -96,26 +109,31 @@ def proporcion_cruzada(df: pd.DataFrame, fila: str, columna: str) -> pd.DataFram
     return (pd.crosstab(df[fila], df[columna], normalize="index") * 100).round(2)
 
 
-def brecha_digital_por_nivel_economico(df_extendido: pd.DataFrame) -> pd.DataFrame:
-    """% de penetración de cada tecnología (cable, internet, PC, streaming), por nivel económico."""
+def _brecha_digital_por(df_extendido: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% ponderado de penetración de cada tecnología (cable, internet, PC,
+    streaming), por una columna de grupo cualquiera — compartida por
+    `brecha_digital_por_nivel_economico`, `_por_cohorte` y `_por_jefatura`.
+    """
     tecnologias = list(config.TECNOLOGIAS_LABELS.keys())
-    resumen = (
-        df_extendido.groupby("nivel_economico", observed=True)[tecnologias]
-        .mean()
-        .mul(100)
-        .round(2)
-        .reset_index()
-        .melt(id_vars="nivel_economico", var_name="tecnologia", value_name="pct_penetracion")
-    )
-    resumen["tecnologia"] = resumen["tecnologia"].map(config.TECNOLOGIAS_LABELS)
-    return resumen
+    partes = []
+    for tecnologia in tecnologias:
+        parte = pct_ponderado_por(df_extendido, columna_grupo, tecnologia, "ponderador_hogar")
+        parte["tecnologia"] = config.TECNOLOGIAS_LABELS[tecnologia]
+        partes.append(parte.rename(columns={"pct": "pct_penetracion"}))
+    return pd.concat(partes, ignore_index=True)[[columna_grupo, "tecnologia", "pct_penetracion"]]
+
+
+def brecha_digital_por_nivel_economico(df_extendido: pd.DataFrame) -> pd.DataFrame:
+    """% ponderado de penetración de cada tecnología (cable, internet, PC, streaming), por nivel económico."""
+    return _brecha_digital_por(df_extendido, "nivel_economico")
 
 
 def precariedad_estructural(hogares_condiciones: pd.DataFrame) -> dict:
-    """% de hogares con al menos una carencia estructural (de las variables
-    de CONDICIONES_VIVIENDA_COLUMNS disponibles este año — 12 en 2019, 4
-    desde 2024). `hogares_condiciones` tiene que venir de
-    `preprocessing.decode_condiciones_vivienda` (columnas ya booleanas).
+    """% ponderado de hogares con al menos una carencia estructural (de las
+    variables de CONDICIONES_VIVIENDA_COLUMNS disponibles este año — 12 en
+    2019, 4 desde 2024). `hogares_condiciones` tiene que venir de
+    `preprocessing.decode_condiciones_vivienda` (columnas ya booleanas, y
+    con `ponderador_hogar` presente).
 
     Es un índice de conteo de carencias ("≥1 carencia = vivienda
     deficitaria"), la práctica estándar para agregar variables de
@@ -125,66 +143,64 @@ def precariedad_estructural(hogares_condiciones: pd.DataFrame) -> dict:
     9830, 2021), y el criterio operacional de NBI-vivienda del INE Uruguay
     (Atlas Sociodemográfico y de la Desigualdad del Uruguay, Fascículo 1,
     coord. Calvo, 2013): basta una carencia crítica para clasificar la
-    vivienda como deficitaria, sin necesidad de un puntaje ponderado.
+    vivienda como deficitaria, sin necesidad de un puntaje ponderado por
+    dimensión — el % de hogares en esa situación sí se pondera por
+    muestreo, como cualquier otra estadística de Hogares.
     """
     condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
-    tiene_carencia = hogares_condiciones[condiciones_cols].any(axis=1)
-    total = len(hogares_condiciones)
-    con_carencia = int(tiene_carencia.sum())
+    df = hogares_condiciones.assign(_tiene_carencia=hogares_condiciones[condiciones_cols].any(axis=1))
+    total = len(df)
+    con_carencia = int(df["_tiene_carencia"].sum())
     return {
-        "pct_con_carencia": round(con_carencia / total * 100, 2),
+        "pct_con_carencia": pct_ponderado(df, "_tiene_carencia"),
         "total_hogares": total,
         "hogares_con_carencia": con_carencia,
     }
 
 
 def precariedad_estructural_por(hogares_condiciones: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% de hogares con al menos una carencia estructural (mismo criterio
-    que `precariedad_estructural`), agrupado por una columna cualquiera
-    (nivel económico, departamento).
+    """% ponderado de hogares con al menos una carencia estructural (mismo
+    criterio que `precariedad_estructural`), agrupado por una columna
+    cualquiera (nivel económico, departamento).
     """
     condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
     df = hogares_condiciones.copy()
     df["_tiene_carencia"] = df[condiciones_cols].any(axis=1)
-    resumen = (
-        df.groupby(columna_grupo)["_tiene_carencia"]
-        .mean()
-        .mul(100)
-        .round(2)
-        .rename("pct_precariedad")
-        .reset_index()
-    )
-    return resumen
+    resumen = pct_ponderado_por(df, columna_grupo, "_tiene_carencia", "ponderador_hogar")
+    return resumen.rename(columns={"pct": "pct_precariedad"})
 
 
 def carencias_estructurales_mas_frecuentes(hogares_condiciones: pd.DataFrame) -> pd.DataFrame:
-    """% de hogares con cada carencia estructural puntual (de las
+    """% ponderado de hogares con cada carencia estructural puntual (de las
     disponibles este año), de mayor a menor — para identificar cuáles son
     las más comunes, no solo si hay o no al menos una (eso ya lo responde
     `precariedad_estructural`).
     """
     condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
-    resumen = (
-        hogares_condiciones[condiciones_cols]
-        .mean()
-        .mul(100)
-        .round(2)
-        .rename("pct_hogares")
-        .rename_axis("carencia_codigo")
-        .reset_index()
-    )
+    filas = [
+        {"carencia_codigo": col, "pct_hogares": pct_ponderado(hogares_condiciones, col)}
+        for col in condiciones_cols
+    ]
+    resumen = pd.DataFrame(filas)
     resumen["carencia"] = resumen["carencia_codigo"].map(config.CONDICION_VIVIENDA_LABELS)
     return resumen[["carencia", "pct_hogares"]].sort_values("pct_hogares", ascending=False).reset_index(drop=True)
 
 
 def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos: list) -> pd.Series:
-    """Ingreso típico (mediana, más robusta a valores extremos que el
-    promedio) del hogar, sin valor locativo, para los departamentos
+    """Ingreso típico (mediana ponderada, más robusta a valores extremos
+    que el promedio) del hogar, sin valor locativo, para los departamentos
     indicados. No requiere filtrar a Montevideo — usa la tabla de hogares
     completa.
     """
     subset = hogares[hogares["departamento"].isin(departamentos)]
-    return subset.groupby("departamento")["ingreso_hogar"].median().round(0)
+    # Sin include_groups=False a propósito (requiere pandas>=2.2; el
+    # proyecto declara pandas>=2.0) - en pandas 2.2+ tira un
+    # DeprecationWarning inofensivo, la función solo usa las dos columnas
+    # que necesita explícitamente.
+    resultado = subset.groupby("departamento").apply(
+        lambda g: mediana_ponderada(g["ingreso_hogar"], g["ponderador_hogar"])
+    )
+    return resultado.round(0)
 
 
 def diferencia_entre_categorias(
@@ -359,7 +375,9 @@ def pct_ponderado_por(df: pd.DataFrame, columna_grupo: str, columna_positivo: st
     """% ponderado de `columna_positivo` (booleana), agrupado por
     `columna_grupo` — sin promedio mensual, a diferencia de
     `tasa_mensual_promedio_por`. Sirve para datos que no vienen en panel
-    rotativo mensual (Victimización, un corte del semestre).
+    rotativo mensual: Victimización (un corte del semestre) y, con
+    `columna_ponderador="ponderador_hogar"`, cualquier estadística de
+    Hogares/Personas (pobreza, hacinamiento, brecha digital, etc.).
     """
     df = df.copy()
     df["_positivo_pond"] = df[columna_ponderador].where(df[columna_positivo], 0.0)
@@ -369,6 +387,102 @@ def pct_ponderado_por(df: pd.DataFrame, columna_grupo: str, columna_positivo: st
     )
     resumen["pct"] = (resumen["positivo"] / resumen["total"] * 100).round(2)
     return resumen[["pct"]].reset_index()
+
+
+def pct_ponderado(df: pd.DataFrame, columna_positivo: str, columna_ponderador: str = "ponderador_hogar") -> float:
+    """% ponderado de `columna_positivo` (booleana) a nivel nacional/del
+    universo completo de `df` — versión sin agrupar de `pct_ponderado_por`,
+    para el mismo caso a nivel de un solo número (ej. % de hogares pobres
+    en todo el país).
+    """
+    positivo_pond = df[columna_ponderador].where(df[columna_positivo], 0.0)
+    return round(positivo_pond.sum() / df[columna_ponderador].sum() * 100, 2)
+
+
+def media_ponderada_por(
+    df: pd.DataFrame, columna_grupo: str, columna_valor: str, columna_ponderador: str = "ponderador_hogar"
+) -> pd.DataFrame:
+    """Media ponderada de `columna_valor` (numérica), agrupada por
+    `columna_grupo` — mismo criterio de ponderación que `pct_ponderado_por`,
+    para una variable continua en vez de una proporción (ej. estrato
+    socioeconómico promedio, índice de acceso digital promedio).
+    """
+    df = df.copy()
+    df["_valor_pond"] = df[columna_valor] * df[columna_ponderador]
+    resumen = df.groupby(columna_grupo, observed=True).agg(
+        _total_pond=(columna_ponderador, "sum"),
+        _valor_pond=("_valor_pond", "sum"),
+    )
+    resumen["media"] = (resumen["_valor_pond"] / resumen["_total_pond"]).round(2)
+    return resumen[["media"]].reset_index()
+
+
+def proporcion_ponderada(
+    df: pd.DataFrame, columna_categoria: str, columna_ponderador: str = "ponderador_hogar"
+) -> pd.DataFrame:
+    """% ponderado de cada categoría de `columna_categoria` sobre el total
+    — equivalente ponderado de `serie.value_counts(normalize=True)`, para
+    variables con más de dos categorías (ej. tipo de hogar).
+    """
+    resumen = (
+        df.groupby(columna_categoria, observed=True)[columna_ponderador]
+        .sum()
+        .div(df[columna_ponderador].sum())
+        .mul(100)
+        .round(2)
+        .rename("pct")
+        .reset_index()
+    )
+    return resumen.sort_values("pct", ascending=False).reset_index(drop=True)
+
+
+def mediana_ponderada(valores: pd.Series, pesos: pd.Series) -> float:
+    """Mediana ponderada: el valor donde el peso acumulado (ordenando de
+    menor a mayor) cruza el 50% del peso total — a diferencia de una
+    media ponderada, no hay una fórmula cerrada simple, hay que ordenar y
+    acumular. Más robusta a valores extremos que una media, igual que la
+    mediana simple ya lo es (ver `ingreso_hogar_mediano_por_departamento`).
+
+    Si el peso acumulado pasa por EXACTAMENTE la mitad del total (empate),
+    la mediana es el promedio de ese valor y el siguiente — mismo criterio
+    que la mediana simple para una cantidad par de valores con igual peso
+    (si no se hiciera este ajuste, pesos uniformes no coincidirían con
+    `pd.Series.median()`).
+    """
+    orden = valores.sort_values().index
+    valores_ordenados = valores.loc[orden].reset_index(drop=True)
+    pesos_ordenados = pesos.loc[orden].reset_index(drop=True)
+    peso_acumulado = pesos_ordenados.cumsum()
+    punto_medio = pesos_ordenados.sum() / 2
+
+    empate = peso_acumulado[peso_acumulado == punto_medio].index
+    if len(empate) > 0 and empate[0] + 1 < len(valores_ordenados):
+        i = empate[0]
+        return float((valores_ordenados.iloc[i] + valores_ordenados.iloc[i + 1]) / 2)
+
+    idx = peso_acumulado[peso_acumulado >= punto_medio].index[0]
+    return float(valores_ordenados.iloc[idx])
+
+
+def grupos_con_muestra_chica(df: pd.DataFrame, columna_grupo: str, n_minimo: int = 30) -> pd.Series:
+    """Cuenta cuántas filas hay por cada valor de `columna_grupo` en `df`
+    (conteo de la MUESTRA, sin ponderar — la ponderación corrige la
+    representatividad, no el tamaño real de muestra detrás de cada
+    estimación) y devuelve solo los grupos con menos de `n_minimo`
+    observaciones. Serie vacía si ningún grupo está por debajo del umbral.
+
+    Operacionaliza la regla de "celdas chicas" de docs/METODOLOGIA.md,
+    sección 2: antes de reportar cualquier métrica "por" algo (nivel
+    económico, departamento, tipo de delito, etc.), correr esto sobre el
+    dataframe ANTES de agrupar. n=30 es el umbral clásico usado por
+    institutos de estadística (INE incluido) para desconfiar de una
+    estimación — no hay una regla universal más precisa sin conocer el
+    diseño muestral completo. Si algún grupo aparece acá, aclarar en el
+    texto que esa estimación puntual tiene poca base muestral, no
+    ocultarlo ni tratarlo como un número más.
+    """
+    conteo = df[columna_grupo].value_counts()
+    return conteo[conteo < n_minimo].sort_values()
 
 
 def diferencia_entre_tablas(
@@ -396,103 +510,79 @@ def diferencia_entre_tablas(
 # ============================================================================
 
 def pct_pobres_indigentes(hogares_extendido: pd.DataFrame) -> dict:
-    """% de hogares pobres y % en indigencia (el grado más severo, un
-    subconjunto de los pobres)."""
+    """% ponderado de hogares pobres y % en indigencia (el grado más
+    severo, un subconjunto de los pobres)."""
     return {
-        "pct_pobres": round(hogares_extendido["pobre"].mean() * 100, 2),
-        "pct_indigentes": round(hogares_extendido["indigente"].mean() * 100, 2),
+        "pct_pobres": pct_ponderado(hogares_extendido, "pobre"),
+        "pct_indigentes": pct_ponderado(hogares_extendido, "indigente"),
     }
 
 
 def tasa_jefatura_femenina(tipo_hogar: pd.DataFrame) -> dict:
-    """% de hogares cuyo jefe/a es mujer, sobre el total de hogares con
-    jefatura identificada. Indicador estándar CEPAL/CELADE."""
-    total = int(tipo_hogar["jefe_sexo"].notna().sum())
-    mujeres = int((tipo_hogar["jefe_sexo"] == "2-Mujer").sum())
-    return {"pct_jefatura_femenina": round(mujeres / total * 100, 2), "total_hogares": total}
+    """% ponderado de hogares cuyo jefe/a es mujer, sobre el total de
+    hogares con jefatura identificada. Indicador estándar CEPAL/CELADE."""
+    con_jefatura = tipo_hogar[tipo_hogar["jefe_sexo"].notna()].copy()
+    con_jefatura["_es_mujer"] = con_jefatura["jefe_sexo"] == "2-Mujer"
+    total = int(len(con_jefatura))
+    return {"pct_jefatura_femenina": pct_ponderado(con_jefatura, "_es_mujer"), "total_hogares": total}
 
 
 def tipos_hogar_resumen(tipo_hogar: pd.DataFrame) -> pd.DataFrame:
-    """% de hogares de cada tipo (Unipersonal/Nuclear/Extendido/Compuesto/
-    Sin núcleo — ver preprocessing.clasificar_tipo_hogar), de mayor a menor."""
-    resumen = (
-        tipo_hogar["tipo_hogar"]
-        .value_counts(normalize=True)
-        .mul(100)
-        .round(2)
-        .rename("pct_hogares")
-        .rename_axis("tipo_hogar")
-        .reset_index()
-    )
-    return resumen.sort_values("pct_hogares", ascending=False).reset_index(drop=True)
+    """% ponderado de hogares de cada tipo (Unipersonal/Nuclear/Extendido/
+    Compuesto/Sin núcleo — ver preprocessing.clasificar_tipo_hogar), de
+    mayor a menor."""
+    resumen = proporcion_ponderada(tipo_hogar, "tipo_hogar")
+    return resumen.rename(columns={"pct": "pct_hogares"})
 
 
 def pct_hacinamiento_por(hogares_hacinamiento: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% de hogares en situación de hacinamiento (ver
+    """% ponderado de hogares en situación de hacinamiento (ver
     preprocessing.compute_hacinamiento), agrupado por una columna cualquiera."""
-    resumen = (
-        hogares_hacinamiento.groupby(columna_grupo, observed=True)["hacinado"]
-        .mean()
-        .mul(100)
-        .round(2)
-        .reset_index()
-        .rename(columns={"hacinado": "pct_hacinamiento"})
-    )
-    return resumen
+    resumen = pct_ponderado_por(hogares_hacinamiento, columna_grupo, "hacinado", "ponderador_hogar")
+    return resumen.rename(columns={"pct": "pct_hacinamiento"})
 
 
 def razon_dependencia_demografica(personas: pd.DataFrame) -> float:
-    """(menores de 15 + mayores de 65) / población en edad activa (15-64) x 100.
-    Indicador demográfico estándar CEPAL/CELADE — es una relación
-    *potencial* (por edad), no mide actividad económica real."""
-    menores = (personas["edad"] < 15).sum()
-    mayores = (personas["edad"] >= 65).sum()
-    activos = personas["edad"].between(15, 64).sum()
+    """(menores de 15 + mayores de 65) / población en edad activa (15-64) x 100,
+    ponderado por `ponderador_hogar` (llega a Personas vía
+    `preprocessing.merge_personas`). Indicador demográfico estándar
+    CEPAL/CELADE — es una relación *potencial* (por edad), no mide
+    actividad económica real."""
+    pond = personas["ponderador_hogar"]
+    menores = pond.where(personas["edad"] < 15, 0.0).sum()
+    mayores = pond.where(personas["edad"] >= 65, 0.0).sum()
+    activos = pond.where(personas["edad"].between(15, 64), 0.0).sum()
     return round((menores + mayores) / activos * 100, 2)
 
 
 def razon_dependencia_por(personas_con_grupo: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """Razón de dependencia demográfica (ver `razon_dependencia_demografica`),
-    agrupada por una columna cualquiera (ej. departamento)."""
+    """Razón de dependencia demográfica ponderada (ver
+    `razon_dependencia_demografica`), agrupada por una columna cualquiera
+    (ej. departamento)."""
     filas = []
     for grupo, sub in personas_con_grupo.groupby(columna_grupo):
-        menores = (sub["edad"] < 15).sum()
-        mayores = (sub["edad"] >= 65).sum()
-        activos = sub["edad"].between(15, 64).sum()
-        razon = round((menores + mayores) / activos * 100, 2) if activos else None
+        razon = razon_dependencia_demografica(sub) if sub["ponderador_hogar"].sum() > 0 else None
         filas.append({columna_grupo: grupo, "razon_dependencia": razon})
     return pd.DataFrame(filas)
 
 
 def pct_pobres_por(hogares_nacional: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% de hogares pobres, por una columna cualquiera (ej. departamento) —
-    mismo criterio no ponderado que `pct_pobres_indigentes`. Componente del
-    índice de desarrollo territorial (ver `indice_desarrollo_territorial`).
+    """% ponderado de hogares pobres, por una columna cualquiera (ej.
+    departamento) — mismo criterio que `pct_pobres_indigentes`. Componente
+    del índice de desarrollo territorial (ver `indice_desarrollo_territorial`).
     """
-    resumen = (
-        hogares_nacional.groupby(columna_grupo)["pobre"]
-        .mean()
-        .mul(100)
-        .round(2)
-        .rename("pct_pobres")
-        .reset_index()
-    )
-    return resumen
+    resumen = pct_ponderado_por(hogares_nacional, columna_grupo, "pobre", "ponderador_hogar")
+    return resumen.rename(columns={"pct": "pct_pobres"})
 
 
 def estrato_promedio_por(hogares: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """Estrato socioeconómico promedio (1 a 5, más alto = mejor posición
-    relativa), por una columna cualquiera (ej. departamento). Componente
-    del índice de desarrollo territorial (ver `indice_desarrollo_territorial`).
+    """Estrato socioeconómico promedio ponderado (1 a 5, más alto = mejor
+    posición relativa), por una columna cualquiera (ej. departamento).
+    Componente del índice de desarrollo territorial (ver
+    `indice_desarrollo_territorial`).
     """
-    resumen = (
-        hogares.groupby(columna_grupo)["estrato_tipo"]
-        .mean()
-        .round(2)
-        .rename("estrato_promedio")
-        .reset_index()
-    )
-    return resumen
+    resumen = media_ponderada_por(hogares, columna_grupo, "estrato_tipo")
+    return resumen.rename(columns={"media": "estrato_promedio"})
 
 
 def indice_desarrollo_territorial(componentes: pd.DataFrame, invertir: list) -> pd.DataFrame:
@@ -534,86 +624,59 @@ def indice_desarrollo_territorial(componentes: pd.DataFrame, invertir: list) -> 
 
 
 def pct_unipersonales_mayores(tipo_hogar: pd.DataFrame) -> dict:
-    """De los hogares unipersonales, qué % tiene 65 años o más (su único
-    integrante es, por definición, el jefe/a). CEPAL: en América Latina esto
-    puede señalar vulnerabilidad, a diferencia de países desarrollados donde
-    suele leerse como autonomía — ver nota en
+    """De los hogares unipersonales, qué % ponderado tiene 65 años o más
+    (su único integrante es, por definición, el jefe/a). CEPAL: en América
+    Latina esto puede señalar vulnerabilidad, a diferencia de países
+    desarrollados donde suele leerse como autonomía — ver nota en
     .claude/agents/encuesta-hogares.md."""
-    unipersonales = tipo_hogar[tipo_hogar["tipo_hogar"] == "Unipersonal"]
+    unipersonales = tipo_hogar[tipo_hogar["tipo_hogar"] == "Unipersonal"].copy()
     total = len(unipersonales)
-    mayores = int((unipersonales["jefe_edad"] >= 65).sum())
+    if not total:
+        return {"pct_unipersonales_mayores": 0.0, "total_unipersonales": 0}
+    unipersonales["_es_mayor"] = unipersonales["jefe_edad"] >= 65
     return {
-        "pct_unipersonales_mayores": round(mayores / total * 100, 2) if total else 0.0,
+        "pct_unipersonales_mayores": pct_ponderado(unipersonales, "_es_mayor"),
         "total_unipersonales": total,
     }
 
 
 def brecha_digital_por_cohorte(df_extendido_con_cohorte: pd.DataFrame) -> pd.DataFrame:
-    """% de penetración de cada tecnología, por cohorte generacional del
-    jefe/a de hogar (ver preprocessing.compute_cohorte_generacional). Mismo
-    cálculo que `brecha_digital_por_nivel_economico`, agrupado por cohorte."""
-    tecnologias = list(config.TECNOLOGIAS_LABELS.keys())
-    resumen = (
-        df_extendido_con_cohorte.groupby("cohorte", observed=True)[tecnologias]
-        .mean()
-        .mul(100)
-        .round(2)
-        .reset_index()
-        .melt(id_vars="cohorte", var_name="tecnologia", value_name="pct_penetracion")
-    )
-    resumen["tecnologia"] = resumen["tecnologia"].map(config.TECNOLOGIAS_LABELS)
-    return resumen
+    """% ponderado de penetración de cada tecnología, por cohorte
+    generacional del jefe/a de hogar (ver
+    preprocessing.compute_cohorte_generacional). Mismo cálculo que
+    `brecha_digital_por_nivel_economico`, agrupado por cohorte."""
+    return _brecha_digital_por(df_extendido_con_cohorte, "cohorte")
 
 
 def brecha_digital_por_jefatura(df_extendido_con_jefatura: pd.DataFrame) -> pd.DataFrame:
-    """% de penetración de cada tecnología, según si el hogar tiene jefe o
-    jefa mujer. CEPAL documenta que en la región la brecha de género ya casi
-    no está en la tenencia del hogar sino en el uso individual — no
-    encontrar diferencia acá es un resultado consistente con esa literatura,
-    no un resultado vacío (ver .claude/agents/encuesta-hogares.md)."""
-    tecnologias = list(config.TECNOLOGIAS_LABELS.keys())
-    resumen = (
-        df_extendido_con_jefatura.groupby("jefe_sexo", observed=True)[tecnologias]
-        .mean()
-        .mul(100)
-        .round(2)
-        .reset_index()
-        .melt(id_vars="jefe_sexo", var_name="tecnologia", value_name="pct_penetracion")
-    )
-    resumen["tecnologia"] = resumen["tecnologia"].map(config.TECNOLOGIAS_LABELS)
-    return resumen
+    """% ponderado de penetración de cada tecnología, según si el hogar
+    tiene jefe o jefa mujer. CEPAL documenta que en la región la brecha de
+    género ya casi no está en la tenencia del hogar sino en el uso
+    individual — no encontrar diferencia acá es un resultado consistente
+    con esa literatura, no un resultado vacío (ver
+    .claude/agents/encuesta-hogares.md)."""
+    return _brecha_digital_por(df_extendido_con_jefatura, "jefe_sexo")
 
 
 def indice_acceso_digital_por(df_con_indice: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """Promedio del índice de acceso digital (0-4, ver
+    """Promedio ponderado del índice de acceso digital (0-4, ver
     preprocessing.compute_indice_acceso_digital), agrupado por una columna
     cualquiera."""
-    return (
-        df_con_indice.groupby(columna_grupo, observed=True)["indice_acceso_digital"]
-        .mean()
-        .round(2)
-        .reset_index()
-        .rename(columns={"indice_acceso_digital": "indice_promedio"})
-    )
+    resumen = media_ponderada_por(df_con_indice, columna_grupo, "indice_acceso_digital")
+    return resumen.rename(columns={"media": "indice_promedio"})
 
 
 def adopcion_tablet_ibirapita_por(hogares_extendido: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% de hogares con tablet del Plan Ibirapitá (programa estatal de
-    inclusión digital para personas mayores), agrupado por una columna
-    cualquiera (ej. si el jefe/a de hogar es adulto mayor).
+    """% ponderado de hogares con tablet del Plan Ibirapitá (programa
+    estatal de inclusión digital para personas mayores), agrupado por una
+    columna cualquiera (ej. si el jefe/a de hogar es adulto mayor).
 
     `tiene_tablet_ibirapita` sale de `decode_si_no` en dtype `object`
-    (True/False/NaN) — `.astype("boolean")` la pasa al tipo nullable de
-    pandas antes de promediar, si no `.mean()`/`.round()` pueden fallar o
-    dar un resultado no numérico cuando hay algún "sin dato" (ver
-    preprocessing.compute_indice_acceso_digital, mismo motivo)."""
-    return (
-        hogares_extendido.assign(tiene_tablet_ibirapita=hogares_extendido["tiene_tablet_ibirapita"].astype("boolean"))
-        .groupby(columna_grupo, observed=True)["tiene_tablet_ibirapita"]
-        .mean()
-        .astype("float64")
-        .mul(100)
-        .round(2)
-        .reset_index()
-        .rename(columns={"tiene_tablet_ibirapita": "pct_con_tablet"})
-    )
+    (True/False/NaN) — se pasa el "sin dato" a `False` antes de ponderar
+    (mismo criterio que ya usa `compute_indice_acceso_digital`: un "sin
+    dato" cuenta como que no tiene la tablet, no se descarta el hogar
+    entero).
+    """
+    df = hogares_extendido.assign(tiene_tablet_ibirapita=hogares_extendido["tiene_tablet_ibirapita"].eq(True))
+    resumen = pct_ponderado_por(df, columna_grupo, "tiene_tablet_ibirapita", "ponderador_hogar")
+    return resumen.rename(columns={"pct": "pct_con_tablet"})
