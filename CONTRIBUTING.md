@@ -61,6 +61,16 @@ catálogo (`_CATEGORIAS_METRICAS` en `formularios.py`), que tiene que
 quedar sin huecos ni duplicados (hay un test que lo verifica:
 `test_catalogo_esta_numerado_del_1_a_N_sin_huecos_ni_duplicados`).
 
+**Agregá también la entrada correspondiente en
+`encuesta_hogares.verificacion_catalogo.MANIFEST`**, con la(s)
+función(es) de `analysis.py`/`preprocessing.py` y la de
+`visualization.py` que la implementan — un test
+(`test_verificacion_catalogo.py`) falla si una métrica del catálogo no
+tiene entrada, o si la entrada apunta a una función que no existe de
+verdad. Nace de un caso real: tres métricas del catálogo activo (3, 9 y
+11) no tenían ninguna función propia y quedaban libradas a que se
+improvisara el cálculo en cada corrida, sin test.
+
 ## Antes de cerrar una sesión de trabajo
 
 El agente `encuesta-hogares` no tiene permiso de usar git (ver

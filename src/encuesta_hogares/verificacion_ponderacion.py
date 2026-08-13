@@ -15,14 +15,23 @@ tiempo. Ese tipo de revisión no escala: cada función nueva agregada en
 una corrida real puede repetir el mismo descuido sin que nadie la vuelva
 a mirar entera.
 
+Un tercer caso, encontrado en la misma revisión, ni siquiera vivía en una
+función de cálculo: `plot_heatmap_suscripcion_vs_economico`, en
+`visualization.py`, calculaba un `.value_counts(normalize=True)` sin
+ponderar directamente dentro de la función de gráfica — nada en
+`analysis.py`/`preprocessing.py` lo hacía, así que ninguna revisión que
+se limitara a esos dos módulos lo iba a encontrar nunca. Por eso esta
+verificación también escanea `visualization.py`.
+
 Esta verificación automatiza la señal más barata de un descuido de
 ponderación: un cálculo estadístico "crudo" (`.mean()`, `.median()`,
 `.value_counts()` sobre una columna de datos, no sobre una tabla ya
-agregada) en `analysis.py` o `preprocessing.py`, fuera de los helpers ya
-ponderados (`pct_ponderado`, `media_ponderada_por`, etc.). No reemplaza
-el criterio humano — hay usos legítimos de estos métodos (ver
-ALLOWLIST) — pero convierte "nadie lo notó" en "el test falla y alguien
-tiene que decidir conscientemente si es un caso legítimo o un descuido".
+agregada) en `analysis.py`, `preprocessing.py` o `visualization.py`,
+fuera de los helpers ya ponderados (`pct_ponderado`, `media_ponderada_por`,
+etc.). No reemplaza el criterio humano — hay usos legítimos de estos
+métodos (ver ALLOWLIST) — pero convierte "nadie lo notó" en "el test
+falla y alguien tiene que decidir conscientemente si es un caso legítimo
+o un descuido".
 """
 
 from __future__ import annotations
@@ -67,6 +76,17 @@ ALLOWLIST: dict[str, str] = {
     "indice_desarrollo_territorial": (
         "mean() promedia columnas de un índice YA normalizado (0-1), no datos "
         "crudos de hogares/personas."
+    ),
+    "plot_penetracion_por_barrio": (
+        "mean() promedia `pct_abonados`, una columna YA ponderada por barrio "
+        "(ver preprocessing.compute_penetracion_por_barrio) — es el promedio "
+        "de referencia entre barrios que se dibuja como línea punteada, no "
+        "una estadística nueva sobre datos crudos."
+    ),
+    "plot_penetracion_nacional": (
+        "mismo caso que plot_penetracion_por_barrio: mean() promedia "
+        "`pct_cable`, ya ponderada por departamento, para la línea de "
+        "referencia nacional del gráfico."
     ),
 }
 

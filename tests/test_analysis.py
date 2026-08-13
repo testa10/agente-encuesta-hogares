@@ -5,9 +5,11 @@ from encuesta_hogares.analysis import (
     brecha_digital_por_cohorte,
     brecha_digital_por_jefatura,
     brecha_por_grupo,
+    calidad_conexion_por,
     carencias_estructurales_mas_frecuentes,
     clasificacion_barrios_resumen,
     composicion_categorica_por_mes_promedio,
+    composicion_categorica_ponderada_por,
     diferencia_entre_categorias,
     diferencia_entre_tablas,
     estrato_promedio_por,
@@ -30,11 +32,12 @@ from encuesta_hogares.analysis import (
     precariedad_estructural_por,
     prevalencia_inseguridad_alimentaria,
     promedio_edad_por_grupo,
-    proporcion_cruzada,
     proporcion_ponderada,
     razon_dependencia_demografica,
     razon_dependencia_por,
     resumen_conectividad,
+    streaming_vs_cable,
+    suscripcion_vs_nivel_economico,
     tasa_mensual_promedio_por,
     tasas_actividad_empleo_desempleo,
     tasas_actividad_empleo_desempleo_por,
@@ -149,17 +152,63 @@ def test_filtrar_segmento():
     assert resultado.iloc[0]["nivel_suscripcion"] == "4-Alta"
 
 
-def test_proporcion_cruzada_suma_100_por_fila():
+def test_composicion_categorica_ponderada_por_pondera_y_suma_100_por_grupo():
     df = pd.DataFrame(
         {
-            "pobreza": ["Pobre", "Pobre", "No pobre", "No pobre", "No pobre"],
-            "cable": ["Con cable", "Sin cable", "Con cable", "Con cable", "Sin cable"],
+            "grupo": ["A", "A", "B", "B"],
+            "categoria": ["X", "Y", "X", "Y"],
+            "ponderador_hogar": [10.0, 30.0, 20.0, 20.0],
         }
     )
-    tabla = proporcion_cruzada(df, "pobreza", "cable")
-    assert tabla.loc["Pobre", "Con cable"] == 50.0
-    assert tabla.loc["Pobre", "Sin cable"] == 50.0
-    assert round(tabla.loc["No pobre", "Con cable"], 2) == 66.67
+    tabla = composicion_categorica_ponderada_por(df, "grupo", "categoria")
+    # Sin ponderar, A daría 50/50 (1 fila de cada categoría) - ponderado,
+    # Y pesa el triple, queda 25/75.
+    assert tabla.loc["A", "X"] == 25.0
+    assert tabla.loc["A", "Y"] == 75.0
+    assert tabla.loc["B", "X"] == 50.0
+    for grupo in tabla.index:
+        assert round(tabla.loc[grupo].sum(), 2) == 100.0
+
+
+def test_calidad_conexion_por_usa_la_columna_calidad_conexion():
+    df = pd.DataFrame(
+        {
+            "nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"],
+            "calidad_conexion": ["Sin conexión", "Solo móvil", "Banda ancha fija"],
+            "ponderador_hogar": [10.0, 10.0, 50.0],
+        }
+    )
+    tabla = calidad_conexion_por(df, "nivel_economico")
+    assert tabla.loc["1-Bajo", "Sin conexión"] == 50.0
+    assert tabla.loc["5-Alto", "Banda ancha fija"] == 100.0
+
+
+def test_suscripcion_vs_nivel_economico_queda_transpuesta():
+    df = pd.DataFrame(
+        {
+            "nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"],
+            "nivel_suscripcion": ["1-Baja", "2-Media-Baja", "4-Alta"],
+            "ponderador_hogar": [10.0, 30.0, 50.0],
+        }
+    )
+    tabla = suscripcion_vs_nivel_economico(df)
+    # Transpuesta: índice=nivel_suscripcion, columnas=nivel_economico.
+    assert tabla.loc["1-Baja", "1-Bajo"] == 25.0
+    assert tabla.loc["2-Media-Baja", "1-Bajo"] == 75.0
+    assert tabla.loc["4-Alta", "5-Alto"] == 100.0
+
+
+def test_streaming_vs_cable_cruza_tenencia_de_ambos_servicios():
+    df = pd.DataFrame(
+        {
+            "tiene_cable": [True, True, False, False],
+            "tiene_streaming": [True, False, True, True],
+            "ponderador_hogar": [10.0, 30.0, 20.0, 20.0],
+        }
+    )
+    tabla = streaming_vs_cable(df)
+    assert tabla.loc[True, True] == 25.0
+    assert tabla.loc[False, True] == 100.0
 
 
 def test_precariedad_estructural_cuenta_con_al_menos_una_carencia():

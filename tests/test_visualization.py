@@ -108,6 +108,33 @@ def test_plot_calidad_conexion_por_no_falla():
     assert fig is not None
 
 
+def test_plot_composicion_categorica_no_falla():
+    df = pd.DataFrame(
+        {"Empleado": [70.0, 50.0], "Cuentapropista": [30.0, 50.0]},
+        index=pd.Index(["Formal", "Informal"], name="sector"),
+    )
+    fig = viz.plot_composicion_categorica(df, "Situación ocupacional por sector", "Sector")
+    assert fig is not None
+
+
+def test_plot_heatmap_suscripcion_vs_economico_no_falla():
+    df = pd.DataFrame(
+        {"1-Bajo": [40.0, 60.0], "5-Alto": [10.0, 90.0]},
+        index=pd.Index(["1-Baja", "4-Alta"], name="nivel_suscripcion"),
+    )
+    fig = viz.plot_heatmap_suscripcion_vs_economico(df)
+    assert fig is not None
+
+
+def test_plot_streaming_vs_cable_no_falla():
+    df = pd.DataFrame(
+        {True: [60.0, 90.0], False: [40.0, 10.0]},
+        index=pd.Index([True, False], name="tiene_cable"),
+    )
+    fig = viz.plot_streaming_vs_cable(df)
+    assert fig is not None
+
+
 def test_plot_indice_acceso_digital_por_no_falla():
     df = pd.DataFrame({"nivel_economico": ["1-Bajo", "5-Alto"], "indice_promedio": [1.5, 3.5]})
     fig = viz.plot_indice_acceso_digital_por(df, "nivel económico")

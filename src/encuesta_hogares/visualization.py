@@ -145,16 +145,14 @@ def plot_clasificacion_barrios(resumen: pd.DataFrame):
     return fig
 
 
-def plot_heatmap_suscripcion_vs_economico(hogares_abonados: pd.DataFrame):
-    df_2dhist = pd.DataFrame(
-        {
-            nivel: (grupo["nivel_suscripcion"].value_counts(normalize=True) * 100).round(2)
-            for nivel, grupo in hogares_abonados.groupby("nivel_economico", observed=True)
-        }
-    )
-
+def plot_heatmap_suscripcion_vs_economico(tabla_pct: pd.DataFrame):
+    """Heatmap: % PONDERADO de hogares en cada nivel de suscripción del
+    barrio, dentro de cada nivel económico (ver
+    `analysis.suscripcion_vs_nivel_economico`, que arma `tabla_pct` con
+    índice=nivel_suscripcion, columnas=nivel_economico).
+    """
     fig, ax = plt.subplots(figsize=(9, 7.5))
-    sns.heatmap(df_2dhist, cmap="viridis", annot=True, fmt="g", cbar=True, ax=ax)
+    sns.heatmap(tabla_pct, cmap="viridis", annot=True, fmt=".1f", cbar=True, ax=ax)
     ax.set_xlabel("Nivel económico")
     ax.set_ylabel("Nivel de suscripción")
     ax.set_title(
@@ -545,6 +543,15 @@ def plot_calidad_conexion_por(tabla_pct: pd.DataFrame, criterio: str):
         titulo=f"Calidad de la conexión a internet según {criterio}",
         xlabel=criterio.capitalize(),
     )
+
+
+def plot_composicion_categorica(tabla_pct: pd.DataFrame, titulo: str, xlabel: str):
+    """Barras 100% apiladas, genérica: para cualquier composición categórica
+    ponderada (ver `analysis.composicion_categorica_ponderada_por`) que no
+    tenga ya un wrapper específico como `plot_calidad_conexion_por` (ej.
+    situación ocupacional por sector formal/informal).
+    """
+    return _plot_barras_100_apiladas(tabla_pct, titulo=titulo, xlabel=xlabel)
 
 
 def plot_indice_acceso_digital_por(resumen: pd.DataFrame, criterio: str):

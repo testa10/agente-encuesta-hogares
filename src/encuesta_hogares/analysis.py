@@ -104,11 +104,6 @@ def porcentaje_por_sexo(segmento: pd.DataFrame, total_personas_ponderado: float)
 # Ampliación de métricas
 # ============================================================================
 
-def proporcion_cruzada(df: pd.DataFrame, fila: str, columna: str) -> pd.DataFrame:
-    """% de `columna` dentro de cada categoría de `fila` (cada fila suma 100%)."""
-    return (pd.crosstab(df[fila], df[columna], normalize="index") * 100).round(2)
-
-
 def _brecha_digital_por(df_extendido: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
     """% ponderado de penetración de cada tecnología (cable, internet, PC,
     streaming), por una columna de grupo cualquiera — compartida por
@@ -434,6 +429,54 @@ def proporcion_ponderada(
         .reset_index()
     )
     return resumen.sort_values("pct", ascending=False).reset_index(drop=True)
+
+
+def composicion_categorica_ponderada_por(
+    df: pd.DataFrame, columna_grupo: str, columna_categoria: str, columna_ponderador: str = "ponderador_hogar"
+) -> pd.DataFrame:
+    """% ponderado de cada categoría de `columna_categoria` (más de dos
+    valores posibles), dentro de cada `columna_grupo` — versión sin panel
+    mensual de `composicion_categorica_por_mes_promedio`, para datos de
+    Hogares que no vienen en panel rotativo. Cada fila (grupo) del
+    resultado suma ~100%, apta para graficar con barras 100% apiladas o
+    heatmap (ej. calidad de conexión por nivel económico — ver
+    `calidad_conexion_por` — o nivel de suscripción del barrio por nivel
+    económico — ver `suscripcion_vs_nivel_economico`).
+    """
+    total_pond_grupo = df.groupby(columna_grupo, observed=True)[columna_ponderador].transform("sum")
+    df = df.assign(_pct_pond=df[columna_ponderador] / total_pond_grupo * 100)
+    resumen = df.groupby([columna_grupo, columna_categoria], observed=True)["_pct_pond"].sum().round(2)
+    return resumen.unstack(columna_categoria).fillna(0.0)
+
+
+def calidad_conexion_por(df_con_calidad: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% ponderado de cada nivel de calidad de conexión (Sin conexión /
+    Solo móvil / Banda ancha fija — ver
+    `preprocessing.clasificar_calidad_conexion`), dentro de cada categoría
+    de `columna_grupo` (en la práctica, siempre nivel económico). Apta
+    para `visualization.plot_calidad_conexion_por` (barras 100% apiladas).
+    """
+    return composicion_categorica_ponderada_por(df_con_calidad, columna_grupo, "calidad_conexion")
+
+
+def suscripcion_vs_nivel_economico(hogares_abonados: pd.DataFrame) -> pd.DataFrame:
+    """% ponderado de hogares en cada nivel de suscripción del barrio (ver
+    `preprocessing.merge_penetracion`), dentro de cada nivel económico del
+    hogar — para ver si los barrios de mayor suscripción coinciden con
+    los de mayor nivel económico. Transpuesta (índice=nivel_suscripcion,
+    columnas=nivel_economico) para `visualization.plot_heatmap_suscripcion_vs_economico`.
+    """
+    tabla = composicion_categorica_ponderada_por(hogares_abonados, "nivel_economico", "nivel_suscripcion")
+    return tabla.T
+
+
+def streaming_vs_cable(df_extendido: pd.DataFrame) -> pd.DataFrame:
+    """% ponderado de hogares con/sin streaming, dentro de cada categoría
+    de tenencia de TV cable — para ver si un servicio reemplaza al otro o
+    si conviven. Apta para `visualization.plot_streaming_vs_cable`
+    (heatmap, índice=tiene_cable, columnas=tiene_streaming).
+    """
+    return composicion_categorica_ponderada_por(df_extendido, "tiene_cable", "tiene_streaming")
 
 
 def mediana_ponderada(valores: pd.Series, pesos: pd.Series) -> float:

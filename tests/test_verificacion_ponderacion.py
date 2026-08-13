@@ -1,8 +1,8 @@
 import ast
 
-from encuesta_hogares import analysis, preprocessing, verificacion_ponderacion as vp
+from encuesta_hogares import analysis, preprocessing, verificacion_ponderacion as vp, visualization
 
-MODULOS = (analysis, preprocessing)
+MODULOS = (analysis, preprocessing, visualization)
 
 
 def test_toda_funcion_con_metodo_crudo_esta_en_la_allowlist():

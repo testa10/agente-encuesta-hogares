@@ -10,6 +10,51 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.3.2] — 2026-08-13
+
+### Corregido (métricas 3, 9 y 11 — Brecha Digital: no tenían función de análisis propia)
+
+- **Calidad de conexión por nivel económico (3), relación entre barrio y
+  nivel económico (9), y streaming vs. TV cable (11) no tenían ninguna
+  función en `analysis.py` que las calculara** — quedaban libradas a que
+  el agente improvisara el cálculo dentro del notebook en cada corrida,
+  sin test que lo cubriera. En la métrica 9 ese cálculo improvisado
+  (`plot_heatmap_suscripcion_vs_economico`) además vivía sin ponderar,
+  directamente adentro de la función de gráfica — un tercer lugar donde
+  se había colado el mismo problema de la 0.3.0/0.3.1, esta vez en
+  `visualization.py`, un módulo que ninguna revisión anterior había
+  mirado para esto.
+- Se construyó, a partir de esto, un manifiesto explícito
+  métrica→función (`verificacion_catalogo.py`) que se revisa en cada
+  `pytest`: cada una de las 47 métricas del catálogo tiene que tener al
+  menos una función real y llamable que la implemente, o el test falla.
+
+### Agregado
+
+- `analysis.composicion_categorica_ponderada_por`: % ponderado de una
+  variable categórica de más de dos valores, agrupado por otra columna
+  — la versión sin panel mensual de `composicion_categorica_por_mes_promedio`,
+  para datos de Hogares. Tres usos concretos nuevos:
+  `calidad_conexion_por` (métrica 3), `suscripcion_vs_nivel_economico`
+  (métrica 9), `streaming_vs_cable` (métrica 11).
+- `visualization.plot_composicion_categorica`: wrapper público y
+  parametrizado de barras 100% apiladas, para reutilizar en cualquier
+  métrica categórica ponderada sin necesidad de un wrapper con título
+  hardcodeado (usado ahora en la métrica 40, situación ocupacional).
+- `encuesta_hogares.verificacion_catalogo`: el manifiesto y su chequeo
+  automático — ver "Corregido" arriba.
+- `verificacion_ponderacion` ahora también escanea `visualization.py`
+  (antes solo `analysis.py`/`preprocessing.py`), con dos excepciones
+  documentadas en `ALLOWLIST` para promedios de referencia sobre
+  columnas ya ponderadas.
+
+### Eliminado
+
+- `analysis.proporcion_cruzada`: crosstab sin ponderar, no usada por
+  ninguna métrica real del catálogo (código muerto que además invitaba
+  a reintroducir el mismo descuido) — reemplazada por
+  `composicion_categorica_ponderada_por`.
+
 ## [0.3.1] — 2026-08-13
 
 ### Corregido (cambia los números de las métricas 7, 8, 9 y 10 — Brecha Digital)
