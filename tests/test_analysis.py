@@ -41,6 +41,7 @@ from encuesta_hogares.analysis import (
     tasa_mensual_promedio_por,
     tasas_actividad_empleo_desempleo,
     tasas_actividad_empleo_desempleo_por,
+    tasas_actividad_empleo_desempleo_por_anio,
     tasa_jefatura_femenina,
     tipos_hogar_resumen,
 )
@@ -405,6 +406,22 @@ def test_tasas_actividad_empleo_desempleo_por_desagrega_por_grupo():
     resumen = tasas_actividad_empleo_desempleo_por(df, "sexo_grupo").set_index("sexo_grupo")
     assert resumen.loc["1-Hombre", "tasa_desempleo"] == 30.0
     assert resumen.loc["2-Mujer", "tasa_desempleo"] == 50.0
+
+
+def test_tasas_actividad_empleo_desempleo_por_anio_ordena_y_deja_anio_numerico():
+    # Deliberadamente fuera de orden y con años no consecutivos (2019, 2024,
+    # 2025) - la funcion tiene que ordenar por año Y dejar la columna
+    # numerica (no string/categorica), para que el grafico despues pueda
+    # usar la escala real del eje x.
+    tasas_por_anio = {
+        2024: {"tasa_actividad": 64.28, "tasa_empleo": 59.02, "tasa_desempleo": 8.18},
+        2019: {"tasa_actividad": 62.0, "tasa_empleo": 58.0, "tasa_desempleo": 6.5},
+        2025: {"tasa_actividad": 65.0, "tasa_empleo": 60.0, "tasa_desempleo": 7.5},
+    }
+    tabla = tasas_actividad_empleo_desempleo_por_anio(tasas_por_anio)
+    assert tabla["anio"].tolist() == [2019, 2024, 2025]
+    assert pd.api.types.is_integer_dtype(tabla["anio"])
+    assert tabla.set_index("anio").loc[2024, "tasa_desempleo"] == 8.18
 
 
 def test_brecha_por_grupo_calcula_diferencia_en_puntos():

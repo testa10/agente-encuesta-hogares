@@ -668,6 +668,43 @@ def plot_tasas_por_grupo(resumen: pd.DataFrame, columna_grupo: str, titulo: str)
     return fig
 
 
+def plot_tasas_por_anio(tabla: pd.DataFrame):
+    """Líneas con marcadores: evolución de las tasas de actividad, empleo y
+    desempleo entre años no necesariamente consecutivos (ver
+    `analysis.tasas_actividad_empleo_desempleo_por_anio`).
+
+    El eje x usa los años en su escala numérica real, no una categoría
+    pareja — Plotly ya hace esto solo si `tabla["anio"]` llega como `int`
+    (que es como lo entrega esa función): la distancia visual entre 2019 y
+    2024 queda 5 veces más ancha que entre 2024 y 2025, en vez de verse
+    igual de "cerca" como pasaría con un eje categórico. Fundamento: mismo
+    principio de precisión perceptiva de posición en una escala común de
+    Cleveland & McGill (1984) que respalda el resto de los gráficos de
+    este proyecto — acá aplicado al eje temporal, no solo al de categorías.
+    Los marcadores explícitos en cada punto son a propósito: la línea entre
+    ellos no representa datos interpolados, solo conecta visualmente años
+    con encuesta propia.
+    """
+    df_plot = tabla.melt(
+        id_vars="anio", value_vars=["tasa_actividad", "tasa_empleo", "tasa_desempleo"],
+        var_name="tasa", value_name="valor",
+    )
+    etiquetas = {"tasa_actividad": "Actividad", "tasa_empleo": "Empleo", "tasa_desempleo": "Desempleo"}
+    df_plot["tasa"] = df_plot["tasa"].map(etiquetas)
+    fig = px.line(
+        df_plot, x="anio", y="valor", color="tasa", markers=True,
+        title="Tasas de actividad, empleo y desempleo por año",
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig.update_traces(marker=dict(size=10))
+    fig.update_xaxes(type="linear", tickmode="array", tickvals=sorted(tabla["anio"].unique()))
+    fig.update_layout(
+        xaxis_title="Año", yaxis_title="% (ponderado, promedio mensual)",
+        legend_title="", width=800, height=500, title_x=0.5,
+    )
+    return fig
+
+
 def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str):
     """Barras horizontales: % ponderado (promedio mensual) por grupo —
     informalidad, subempleo, desempleo, lo que corresponda según el

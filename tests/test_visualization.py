@@ -158,6 +158,25 @@ def test_plot_clasificacion_barrios_no_falla():
     assert fig is not None
 
 
+def test_plot_tasas_por_anio_usa_eje_x_numerico_con_los_anios_reales():
+    tabla = pd.DataFrame(
+        {
+            "anio": [2019, 2024, 2025],
+            "tasa_actividad": [62.0, 64.28, 65.0],
+            "tasa_empleo": [58.0, 59.02, 60.0],
+            "tasa_desempleo": [6.5, 8.18, 7.5],
+        }
+    )
+    fig = viz.plot_tasas_por_anio(tabla)
+    # Eje numerico real (no categorico) - 2019->2024 tiene que quedar mas
+    # separado visualmente que 2024->2025, no parejo espaciado.
+    assert fig.layout.xaxis.type == "linear"
+    assert list(fig.layout.xaxis.tickvals) == [2019, 2024, 2025]
+    # 3 series (actividad, empleo, desempleo), cada una con marcadores.
+    assert len(fig.data) == 3
+    assert all(trace.mode == "lines+markers" for trace in fig.data)
+
+
 def test_plot_tasa_mensual_promedio_por_no_falla_y_es_horizontal():
     df = pd.DataFrame({"departamento": ["MONTEVIDEO", "TREINTA Y TRES"], "pct_promedio": [7.5, 9.2]})
     fig = viz.plot_tasa_mensual_promedio_por(df, "departamento", "Desempleo por departamento")

@@ -45,6 +45,20 @@ igual que cualquier otra.
 - **Barras agrupadas** (en vez de una sola barra con todo mezclado): para
   comparar el mismo dato entre 2 o más grupos lado a lado. Fundamento:
   principio de comparación directa (Few, *Show Me the Numbers*).
+- **Líneas con marcadores, eje x numérico real (no categórico)**: para
+  comparar la misma métrica entre corridas de distintos años que no son
+  necesariamente consecutivos (ej. 2019, 2024, 2025 — ver
+  `analysis.tasas_actividad_empleo_desempleo_por_anio` /
+  `visualization.plot_tasas_por_anio`). El año tiene que quedar en su
+  escala real, no parejo espaciado como una categoría — si no, un salto de
+  5 años (2019→2024) se ve visualmente igual de "cerca" que uno de 1 año
+  (2024→2025), y la línea sugiere una tendencia continua e interpolada
+  entre años sin encuesta propia, que no se midió. Fundamento: mismo
+  principio de precisión perceptiva de posición en una escala común de
+  Cleveland & McGill (1984), aplicado al eje temporal en vez de solo al de
+  categorías. Los marcadores explícitos en cada punto son parte de la
+  misma idea: distinguen "acá hay una medición real" de "esto es una
+  interpolación visual".
 - **Nunca gráfico de torta con más de 3-4 categorías**: el ojo humano
   compara longitudes y posiciones con mayor precisión que ángulos
   (Cleveland & McGill, 1984) — con muchas porciones, un gráfico de torta

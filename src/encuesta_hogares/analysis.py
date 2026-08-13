@@ -314,6 +314,26 @@ def tasas_actividad_empleo_desempleo_por(empleo: pd.DataFrame, columna_grupo: st
     return resumen.reset_index()
 
 
+def tasas_actividad_empleo_desempleo_por_anio(tasas_por_anio: dict[int, dict]) -> pd.DataFrame:
+    """Combina resultados ya calculados de `tasas_actividad_empleo_desempleo`
+    (uno por año, ej. `{2019: {...}, 2024: {...}, 2025: {...}}`, cada dict
+    con `tasa_actividad`/`tasa_empleo`/`tasa_desempleo`) en una sola tabla
+    con el año como columna, para comparar la evolución entre corridas de
+    años que no necesariamente son consecutivos.
+
+    A propósito NO trata a "año" como una categoría más: la columna queda
+    numérica (`int`), para que `visualization.plot_tasas_por_anio` la
+    grafique en su escala real — 2019 a 2024 son 5 años de salto, 2024 a
+    2025 es apenas 1, y esa diferencia tiene que verse en el gráfico. Un
+    eje categórico (o una línea que trata cada año como "el siguiente
+    punto", parejo espaciado) sugeriría visualmente una tendencia continua
+    que no se midió en los años sin encuesta — la misma falacia, en
+    espíritu, que ya evita `docs/METODOLOGIA.md` para otros casos.
+    """
+    filas = [{"anio": anio, **valores} for anio, valores in sorted(tasas_por_anio.items())]
+    return pd.DataFrame(filas)
+
+
 def brecha_por_grupo(resumen_por_grupo: pd.DataFrame, columna_grupo: str, grupo_a: str, grupo_b: str) -> pd.Series:
     """Diferencia en puntos porcentuales (grupo_a menos grupo_b) de cada
     tasa, a partir de una tabla ya calculada con
