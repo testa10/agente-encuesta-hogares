@@ -1,0 +1,80 @@
+# Guía para contribuir
+
+Este proyecto se distribuye bajo [PolyForm Noncommercial 1.0.0](LICENSE) —
+uso, copia y modificación libres para fines no comerciales (ver la
+licencia para el alcance exacto). Esta guía es para quien vaya a tocar el
+código, ya sea una persona o una sesión de Claude Code.
+
+## Antes de nada
+
+1. Instalación y estructura del proyecto: ver [`README.md`](README.md).
+2. **Leé [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md) entero antes de tocar
+   cualquier archivo permanente.** No es opcional — reúne las reglas de
+   rigor estadístico y claridad que existen porque en algún momento se
+   encontró un problema real. Las más importantes, resumidas:
+   - **Toda estadística de Hogares/Personas se pondera** por el factor de
+     expansión muestral del INE — nunca `.mean()`/`.median()` simple. Usá
+     los helpers ya armados (`analysis.pct_ponderado`,
+     `media_ponderada_por`, `proporcion_ponderada`, `mediana_ponderada`).
+   - **Toda métrica lleva su gráfica**, sin excepción — ni un número
+     suelto ni una tabla haciendo de gráfica.
+   - **Toda justificación de gráfica cita la fuente** (principio de
+     percepción visual o metodología estadística) — el público de este
+     informe es académico/profesional, la cita refuerza, no estorba. Las
+     fuentes ya usadas están en [`docs/BIBLIOGRAFIA.md`](docs/BIBLIOGRAFIA.md).
+   - **Nunca uses tenencia de tecnología como eje fijo** de un bloque que
+     no es sobre tecnología — ya pasó dos veces en este proyecto y generó
+     un rediseño grande cada vez. La tecnología vive en "Brecha Digital".
+
+## Correr los tests y el linter
+
+```bash
+python -m pytest -q          # tests (dataframes sintéticos, no requieren datos reales)
+python -m pytest --cov       # con reporte de cobertura
+python -m ruff check src/ tests/ tools/
+```
+
+Antes de publicar un cambio que toque cómo se leen o combinan los datos
+(`analysis.py`, `preprocessing.py`), corré también, si tenés datos reales
+en `data/`:
+
+```bash
+python tools/validar_con_datos_reales.py
+```
+
+Ejercita el pipeline completo contra datos reales — atajó bugs que los
+tests sintéticos no detectaban (columnas que cambian entre 2019 y 2024,
+formato `.sav` vs. CSV combinado, base nacional vs. filtrada a Montevideo).
+
+## Agregar una métrica al catálogo
+
+Seguí el checklist de "Curación del catálogo" en
+[`.claude/agents/encuesta-hogares.md`](.claude/agents/encuesta-hogares.md)
+— cubre desde qué pregunta responde la métrica hasta la numeración del
+catálogo (`_CATEGORIAS_METRICAS` en `formularios.py`), que tiene que
+quedar sin huecos ni duplicados (hay un test que lo verifica:
+`test_catalogo_esta_numerado_del_1_a_N_sin_huecos_ni_duplicados`).
+
+## Sincronización de las dos copias del proyecto
+
+Si estás trabajando con Claude Code en este repo, probablemente exista
+también una copia en `Documents\agente-encuesta-hogares` (o similar) donde
+corre de verdad el agente `encuesta-hogares` — ese agente no tiene permiso
+de usar git, así que cualquier código que escriba ahí puede quedar sin
+publicar si nadie lo nota. Antes de dar por cerrada una sesión de trabajo,
+corré desde esa copia:
+
+```bash
+python tools/verificar_sincronizacion.py
+```
+
+## Commits
+
+- Mensajes en español, describiendo el *por qué* del cambio, no solo el
+  *qué* — el código ya dice qué cambió.
+- Un commit por cambio lógico, no una mezcla de varios sin relación.
+- Si el cambio afecta los números que produce una métrica ya existente
+  (ej. un fix de ponderación), documentalo en
+  [`CHANGELOG.md`](CHANGELOG.md) — alguien puede estar comparando un
+  informe viejo con uno nuevo.
+- Nunca `git push --force` a `main`, nunca `--no-verify`.

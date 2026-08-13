@@ -1,5 +1,9 @@
 # Agente de Análisis: Encuesta Continua de Hogares (ECH, INE Uruguay)
 
+[![Tests](https://github.com/testa10/agente-encuesta-hogares/actions/workflows/tests.yml/badge.svg)](https://github.com/testa10/agente-encuesta-hogares/actions/workflows/tests.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
+[![Licencia: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licencia-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
+
 Este proyecto permite generar un informe de la Encuesta Continua de
 Hogares del INE Uruguay, tanto a usuarios técnicos (con conocimientos
 estadísticos) como a usuarios sin experiencia en programación, y
@@ -205,6 +209,46 @@ hacerlo.
 
 ---
 
+## Limitaciones metodológicas
+
+Para leer el informe con criterio, conviene saber esto de antemano — cada
+punto está desarrollado con más detalle en
+[`docs/METODOLOGIA.md`](docs/METODOLOGIA.md):
+
+- **Sin margen de error ni test de significancia.** Los microdatos
+  públicos del INE no incluyen las variables de diseño muestral
+  (conglomerado/estrato) necesarias para calcular un error estándar
+  correcto. Calcularlo igual, asumiendo muestreo aleatorio simple,
+  daría una precisión falsa — por eso el informe no lo hace. Los
+  porcentajes son estimaciones puntuales ponderadas, no inferencia con
+  incertidumbre cuantificada.
+- **Hacinamiento** usa el umbral clásico (más de 2 personas por cuarto),
+  no el método más nuevo de umbral ajustado por composición del hogar
+  que usan algunos países de la UE/OCDE.
+- **Seguridad alimentaria (FIES)** se releva sobre una submuestra de
+  hogares, no sobre el total de la encuesta — los resultados de ese
+  bloque representan a esa submuestra, no a la población completa con
+  la misma precisión que el resto del informe.
+- **Razón de dependencia demográfica** es una relación *potencial*, calculada
+  a partir de tramos de edad — no mide si esas personas efectivamente
+  trabajan o no.
+- **Cohorte generacional** (cuando el informe incluye esa métrica) es una
+  aproximación de corte transversal a partir de la edad del jefe/a de
+  hogar en esta única corrida, no un panel que siga a las mismas
+  personas a través de los años.
+- **Celdas con pocos casos.** Cuando un cruce (ej. un tipo de delito
+  específico en un departamento chico) tiene pocas observaciones detrás,
+  el agente lo aclara en el texto — esa estimación puntual es menos
+  confiable que el resto, aunque el cálculo esté bien hecho.
+- **Los porcentajes están ponderados** por el factor de expansión
+  muestral del INE (para que representen a la población, no solo a
+  quienes fueron encuestados) desde la versión 0.3.0 del proyecto — un
+  informe generado con una versión anterior puede diferir levemente en
+  sus números respecto a uno generado ahora para el mismo año. Ver
+  [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
 ## Preguntas frecuentes
 
 **¿Es necesario saber programar?**
@@ -279,3 +323,9 @@ Este proyecto se distribuye bajo [PolyForm Noncommercial 1.0.0](LICENSE):
 permite usar, copiar, modificar y compartir el código libremente para
 fines académicos, educativos, de investigación, y cualquier otro uso no
 comercial. Ver el archivo [`LICENSE`](LICENSE) para el texto completo.
+
+## Contribuir
+
+Ver [`CONTRIBUTING.md`](CONTRIBUTING.md): cómo correr los tests, las
+reglas no negociables del proyecto (ponderación, gráficas, citas), y cómo
+agregar una métrica nueva al catálogo.
