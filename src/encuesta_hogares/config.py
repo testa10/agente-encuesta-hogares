@@ -397,6 +397,19 @@ def empleo_files(anio: int | str) -> list[Path]:
     return [carpeta / f"ECH_{mes:02d}_{sufijo_anio}.csv" for mes in range(1, 13)]
 
 
+# Para mostrarle el mes (columna `mes`, 1-12) a un lector en vez del número
+# crudo — ej. en el chequeo de "meses cubiertos" de la preparación de datos
+# de Empleo. Es una conversión de calendario universal, no depende de
+# ninguna fuente del INE ni de la configuración regional/locale del sistema
+# (que es frágil entre Windows/Mac y entre computadoras) — encontrado en una
+# corrida real donde ese chequeo se imprimió como
+# `[np.int64(1), np.int64(2), ...]` en vez de nombres de mes legibles.
+MESES_LABELS = {
+    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
+    7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
+}
+
+
 # Solo las columnas cuyo significado se verificó contra el diccionario de
 # datos oficial del INE (archivo ECH_seguimiento_2024) y/o contra los datos
 # reales. POBPCOAC usa los mismos códigos que HOGARES/PERSONAS de 2019 (ver

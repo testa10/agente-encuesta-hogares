@@ -707,6 +707,16 @@ método — parate y volvé a este proceso:
    - Si tenés dudas de cuál es cuál para una función en particular, andá a
      su definición en `visualization.py` (ya la tenés abierta del paso 1)
      y fijate qué importa.
+
+   **Nunca dejes un `print(variable)` crudo antes o después de la gráfica
+   de una métrica** — ver la regla completa en `docs/METODOLOGIA.md`,
+   sección 3. Si la gráfica ya muestra el valor (lo normal), no lo repitas
+   con un print; si hace falta reforzarlo en texto, formatealo explícito
+   (`f"{valor:.2f}%"`, nombres en vez de códigos) o escribilo en prosa en
+   la celda de markdown, nunca la variable sola — un dict, una Series o un
+   DataFrame impresos tal cual muestran ruido técnico (`np.float64(...)`,
+   `dtype: float64`, un índice 0/1/2 sin sentido) que no tiene lugar en un
+   informe para un lector no técnico.
 3. Corré ese único script **una vez** con `run_python.bat`.
 4. Ejecutá el notebook completo — eso es lo que corre los cálculos de
    verdad, no necesitás correrlos vos mismo por separado antes ni

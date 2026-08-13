@@ -147,6 +147,26 @@ contra esta lista:
 - **No dejar huecos de numeración ni referencias a secciones eliminadas.**
   Cuando se borra o renombra una sección, revisar todo el notebook (y el
   README) buscando menciones cruzadas que hayan quedado colgando.
+- **Nunca `print()` una estructura cruda de Python/pandas/numpy en una celda
+  cuyo output sobrevive al informe** (el notebook oculta el *código* en la
+  versión sin código, no el *output* de lo que ya se ejecutó). Un dict, una
+  Series o un DataFrame impresos tal cual muestran ruido técnico que un
+  lector no técnico no tiene por qué ver — `{'tasa_actividad':
+  np.float64(64.28), ...}`, una columna `dtype: float64` al pie, un índice
+  numérico 0/1/2 sin sentido, un valor `np.int64(1)` en vez de `1` (desde
+  que numpy cambió el `repr()` de sus escalares). Encontrado en una corrida
+  real: `sorted(serie.unique())` de una columna de meses (1-12) se imprimió
+  como `[np.int64(1), np.int64(2), ...]` en vez de nombres de mes legibles
+  (ver `config.MESES_LABELS`).
+  - Si el dato **ya está en la gráfica que sigue** (lo normal — la gráfica
+    ya trae las etiquetas con el valor exacto), no lo repitas con un
+    `print()`: sacalo directamente, no hace falta reformatearlo, alcanza
+    con la gráfica.
+  - Si de verdad hace falta reforzar un número en texto (porque la gráfica
+    no lo deja lo bastante claro, o porque es la base de un cálculo
+    posterior), escribilo en prosa dentro de la celda de markdown de la
+    métrica, o con un `print(f"...")` explícitamente formateado (`:.2f`,
+    `:,`, nombres en vez de códigos) — nunca la variable sola.
 
 ## 4. Ejemplo real de ambigüedad ya resuelta: "nivel de suscripción"
 

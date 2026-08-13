@@ -70,6 +70,12 @@ def test_empleo_files_devuelve_los_12_meses_en_orden(tmp_path, monkeypatch):
     assert archivos[11].name == "ECH_12_24.csv"
 
 
+def test_meses_labels_cubre_los_12_meses_sin_huecos():
+    assert set(config.MESES_LABELS) == set(range(1, 13))
+    assert config.MESES_LABELS[1] == "Enero"
+    assert config.MESES_LABELS[12] == "Diciembre"
+
+
 def test_hogares_csv_file_resuelve_por_anio(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     carpeta = tmp_path / "2024"
