@@ -273,10 +273,16 @@ directo al paso 3 (validación).
    — solo lectura, ver la nota de permisos más abajo). Si no lo
    encontrás, no pasa nada: dejá `ficha_url` vacío, la plantilla ya tiene
    un texto de respaldo.
-4. Mostrale `formularios.plantilla_datos(anio, carpeta, ficha_url)`. Ese
+4. Mostrale `formularios.plantilla_datos(anio, ficha_url)`. Ese
    formulario ya combina las instrucciones de descarga con el botón de
    confirmación ("ya guardé los archivos ahí") — no hace falta un paso
-   aparte para confirmar.
+   aparte para confirmar. **La función calcula sola la carpeta real con
+   `config.DATA_DIR`** (ya no la recibe como parámetro) — pasó de verdad
+   en una corrida que se mostró `data/2025` en vez de la ruta real de
+   Windows porque quien armó el notebook la escribió a mano y la calculó
+   mal; no vuelvas a pasarla vos, ni la inventes para el `explorer.exe`
+   del punto 2 — calculala ahí también a partir de la ruta real del
+   proyecto, nunca escribas `data/{año}` literal.
 
 **Nota de permisos:** si todavía no sabés si el año está disponible,
 podés usar `WebFetch` para consultar el catálogo del INE (solo lectura) y

@@ -1,3 +1,4 @@
+from encuesta_hogares import config
 from encuesta_hogares.formularios import (
     _CATEGORIA_EMPLEO,
     _CATEGORIA_FIES,
@@ -46,11 +47,27 @@ def test_plantilla_bienvenida_pide_el_anio():
     assert 'id="anio"' in html
 
 
-def test_plantilla_datos_muestra_la_carpeta_y_el_anio():
-    html = plantilla_datos("2024", r"C:\ruta\data\2024", "https://ejemplo.ine/ficha")
-    assert r"C:\ruta\data\2024" in html
+def test_plantilla_datos_calcula_la_carpeta_real_con_config_data_dir(monkeypatch, tmp_path):
+    # Antes recibia la carpeta como texto libre del llamador - en una
+    # corrida real terminó mostrando "data/2025" (relativa, sin la ruta
+    # real de Windows) porque quien arma el notebook no la calculó bien.
+    # Ahora la funcion la calcula sola con config.DATA_DIR, no depende de
+    # que nadie se la pase correctamente.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    html = plantilla_datos("2024", "https://ejemplo.ine/ficha")
+    assert str(tmp_path / "2024") in html
     assert "2024" in html
     assert "https://ejemplo.ine/ficha" in html
+
+
+def test_plantilla_datos_no_promete_un_formato_de_archivo_fijo():
+    # El formato que ofrece el INE cambió de año a año (.sav, .csv, o una
+    # combinación con .xlsx) - la instruccion no puede volver a prometer
+    # "los dos archivos .sav" como antes, eso ya fue un bug real con
+    # datos de 2025 (paquete con varios .csv y .xlsx, no dos .sav).
+    html = plantilla_datos("2025")
+    assert "dos archivos" not in html.lower()
+    assert "SAV" in html and "CSV" in html  # menciona que el formato varía, no uno solo
 
 
 def test_plantilla_catalogo_no_incluye_nada_por_defecto():
@@ -144,7 +161,7 @@ def test_pantallas_de_procesamiento_no_prometen_que_se_puede_cerrar():
     # de despedida (ese es un cierre real del flujo).
     pantallas = [
         plantilla_bienvenida(),
-        plantilla_datos("2024", r"C:\ruta\data\2024"),
+        plantilla_datos("2024"),
         plantilla_areas(True, True, True),
         plantilla_catalogo(),
         plantilla_revision("propuesta", "problema", "alternativa"),
@@ -162,7 +179,7 @@ def test_todas_las_pantallas_del_flujo_guiado_ofrecen_salir():
     # el timeout de 30 minutos (ver bug real reportado por el usuario).
     pantallas = [
         plantilla_bienvenida(),
-        plantilla_datos("2024", r"C:\ruta\data\2024"),
+        plantilla_datos("2024"),
         plantilla_areas(True, True, True),
         plantilla_catalogo(),
         plantilla_revision("propuesta", "problema", "alternativa"),

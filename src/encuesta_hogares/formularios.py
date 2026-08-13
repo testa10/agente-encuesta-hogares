@@ -22,7 +22,7 @@ import threading
 import traceback
 from pathlib import Path
 
-from . import bitacora
+from . import bitacora, config
 
 
 def _nombre_desde_html(html: str) -> str:
@@ -520,8 +520,27 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 </script></body></html>"""
 
 
-def plantilla_datos(anio: str, carpeta: str, ficha_url: str = "") -> str:
-    """Pasos 2+3: instrucciones de descarga + confirmación, en una sola pantalla."""
+def plantilla_datos(anio: str, ficha_url: str = "") -> str:
+    """Pasos 2+3: instrucciones de descarga + confirmación, en una sola pantalla.
+
+    La carpeta de destino se calcula acá adentro con `config.DATA_DIR`
+    — nunca la recibe como parámetro de texto libre. Nace de un caso
+    real: la instrucción le pedía a quien arma el notebook que "use la
+    ruta real y absoluta, no un placeholder" al llamar a esta función,
+    pero en una corrida real igual terminó mostrándose `data/2025`
+    (relativa, con barras de Unix) en vez de la ruta real de Windows —
+    un error de que alguien se olvide de calcularla bien no puede pasar
+    si la función ya no le da esa responsabilidad a quien la llama.
+
+    El formato de los archivos que ofrece el INE cambió más de una vez
+    (`.sav` hasta 2023, un `.csv` combinado desde 2024, y en 2025 un
+    paquete bastante más grande con varios `.csv`/`.xlsx`) — las
+    instrucciones ya no prometen "dos archivos .sav": piden bajar y
+    copiar todo lo que el catálogo ofrezca para Hogares, sin adivinar el
+    formato exacto de antemano. El paso 3 (validación de estructura) es
+    el que de verdad confirma después qué llegó y qué falta.
+    """
+    carpeta = str(config.DATA_DIR / str(anio))
     link_ficha = (
         f'<li>Entrá a <a href="{ficha_url}" target="_blank">la ficha de la ECH {anio} en el sitio del INE</a>.</li>'
         if ficha_url else
@@ -536,13 +555,13 @@ def plantilla_datos(anio: str, carpeta: str, ficha_url: str = "") -> str:
   <ol>
     {link_ficha}
     <li>Aceptá los términos y condiciones (eso lo hacés vos personalmente).</li>
-    <li>Descargá la base en formato <b>SPSS (.SAV)</b> — viene en un .RAR.</li>
-    <li>Extraelo con 7-Zip o WinRAR.</li>
-    <li>Copiá los dos archivos <b>.sav</b> (Hogares y Personas) a esta carpeta:</li>
+    <li>Descargá los archivos de microdatos de <b>Hogares</b> que te ofrezca el catálogo — el formato y la cantidad de archivos varían según el año (puede ser un <b>.RAR</b> con archivos <b>.SAV</b>, uno o más <b>.CSV</b>, o una combinación). Si tenés dudas de cuáles bajar, descargá todo lo que aparezca en la sección de microdatos.</li>
+    <li>Si algo vino comprimido (.RAR/.ZIP), extraelo con 7-Zip o WinRAR.</li>
+    <li>Copiá <b>todos</b> los archivos que bajaste a esta carpeta — no hace falta que filtres cuáles sirven, eso se revisa automáticamente en el paso siguiente:</li>
   </ol>
   <div class="carpeta">{carpeta}</div>
   <form id="form">
-    <button type="submit">Ya guardé los dos archivos ahí →</button>
+    <button type="submit">Ya guardé los archivos ahí →</button>
   </form>
   {_BOTON_SALIR}
 </div>
