@@ -844,11 +844,34 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
    una lista distinta, sin cambiar una sola línea de código. Si es así, no
    escribas nada: andá directo a sumar la celda al notebook.
 
-   Si de verdad hace falta código nuevo, escribilo **una sola vez, bien**,
-   basándote en el patrón de una función parecida que ya exista (ej.
-   `precariedad_estructural_por`, `tasas_actividad_empleo_desempleo_por`) — no lo escribas
-   a los tumbos, corrigiendo y volviendo a correr `pytest` en un ciclo de
-   prueba y error. Si te encontrás editando el mismo archivo de test tres
+   **Caso ya resuelto, no lo reinventes: "comparar cualquier métrica del
+   catálogo entre dos años" (ej. 2024 vs. 2025) no necesita código
+   nuevo.** Calculá la métrica una vez por año con la función que ya usa
+   el informe de un solo año, cruzá las dos tablas con
+   `analysis.diferencia_entre_tablas` y graficá con
+   `visualization.plot_dumbbell` — ver `docs/CONVENCIONES_DE_GRAFICAS.md`
+   para el detalle, confirmado dos veces en corridas reales (Empleo y
+   Seguridad). Para 3 años o más, o cuando importa la evolución en el
+   tiempo más que un antes/después puntual, ver
+   `analysis.tasas_actividad_empleo_desempleo_por_anio` como patrón ya
+   resuelto.
+
+   Si de verdad hace falta código nuevo — ni una función existente ni un
+   patrón ya documentado en `docs/CONVENCIONES_DE_GRAFICAS.md` resuelve
+   la pregunta —, primero decidí dónde va: **si es genuinamente puntual
+   para esta consulta (no del tipo que probablemente se repita), escribí
+   la lógica directo en la celda del notebook, sin agregar una función
+   nueva a `analysis.py`/`visualization.py`.** Nace de una pregunta real
+   del dueño del proyecto: cada función que se agrega ahí y no se termina
+   usando de nuevo queda como código sin publicar que alguien tiene que
+   revisar y decidir si conservar o descartar — mejor que eso no pase si
+   no hace falta. Recién si de verdad parece reusable (mismo criterio del
+   paso 6.5, "¿es del tipo que probablemente vuelva a pedirse?"), escribila
+   **una sola vez, bien**, basándote en el patrón de una función parecida
+   que ya exista (ej. `precariedad_estructural_por`,
+   `tasas_actividad_empleo_desempleo_por`) — no lo escribas a los tumbos,
+   corrigiendo y volviendo a correr `pytest` en un ciclo de prueba y
+   error. Si te encontrás editando el mismo archivo de test tres
    o cuatro veces seguidas, pará: significa que no leíste bien el patrón
    existente antes de empezar. Agregale su test, y sumá la celda al
    notebook con su pregunta guía en markdown antes de la gráfica.
