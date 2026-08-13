@@ -343,6 +343,41 @@ def test_prepare_empleo_tolera_es_informal_ausente():
     assert resultado["condicion_actividad"].tolist() == ["Ocupados", "Desocupados"]
 
 
+def test_prepare_empleo_deriva_es_informal_de_aporta_seguridad_social_si_no_hay_informal():
+    # Desde 2025 INFORMAL ya no viene, pero si aporta_seguridad_social
+    # (columna original f82, "aporte a fondo de pension") - se deriva
+    # es_informal de ahi con el mismo criterio que el paquete oficial de R
+    # del INE (employment_restrictions() en github.com/calcita/ech): no
+    # aportar (valor 2) es informal. 0 = no aplica (fuera de Ocupados).
+    df = pd.DataFrame(
+        {
+            "condicion_actividad_cod": [2.0, 2.0, 3.0],
+            "aporta_seguridad_social": [1, 2, 0],
+            "sexo": [1, 2, 1],
+            "edad": [30, 35, 40],
+        }
+    )
+    resultado = prepare_empleo(df)
+    assert resultado["es_informal"].tolist() == [False, True, False]
+
+
+def test_prepare_empleo_prefiere_es_informal_por_encima_de_aporta_seguridad_social():
+    # Si por algun motivo llegaran ambas columnas (no deberia pasar hoy,
+    # pero si algun año futuro las trae juntas), gana la precalculada del
+    # INE (es_informal / INFORMAL), no la derivada.
+    df = pd.DataFrame(
+        {
+            "condicion_actividad_cod": [2.0],
+            "es_informal": [0],
+            "aporta_seguridad_social": [2],  # diria informal si se usara esta
+            "sexo": [1],
+            "edad": [30],
+        }
+    )
+    resultado = prepare_empleo(df)
+    assert resultado["es_informal"].tolist() == [False]
+
+
 def test_prepare_victimizacion_marca_victimizado_algun_delito():
     df = pd.DataFrame(
         {

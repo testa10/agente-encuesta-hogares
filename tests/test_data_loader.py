@@ -67,6 +67,7 @@ def test_load_empleo_tolera_columnas_faltantes(tmp_path, monkeypatch):
         "ID": "1", "nper": "1", "mes": "1", "nom_dpto": "MONTEVIDEO", "e26": "1", "e27": "30",
         "POBPCOAC": "2", "SIT_OCUP": "Empleado", "SECTOR_F": "Formal",
         "NIV_EDU": "1. CB incompleto o menos", "INFORMAL": "0", "SUBEMPLEO": "0", "W": "150.5",
+        "f82": "1",
     }
     columnas_2025 = [c for c in config.EMPLEO_COLUMNS if c not in ("INFORMAL", "SECTOR_F", "SIT_OCUP")]
     encabezado = ",".join(columnas_2025)
@@ -81,6 +82,7 @@ def test_load_empleo_tolera_columnas_faltantes(tmp_path, monkeypatch):
     assert "es_informal" not in df.columns
     assert "situacion_ocupacional" not in df.columns
     assert "sector_formalidad" not in df.columns
+    assert "aporta_seguridad_social" in df.columns
     assert "es_subempleo" in df.columns
 
 

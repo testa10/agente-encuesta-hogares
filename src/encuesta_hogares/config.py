@@ -440,6 +440,19 @@ EMPLEO_COLUMNS = {
     "INFORMAL": "es_informal",               # 0/1 — solo válido si condicion_actividad == "Ocupados"
     "SUBEMPLEO": "es_subempleo",             # 0/1 — solo válido si condicion_actividad == "Ocupados"
     "W": "ponderador_empleo",                # ponderador MENSUAL, no anual
+    # INFORMAL, SECTOR_F y SIT_OCUP desaparecieron de los archivos mensuales
+    # desde 2025 (verificado contra los datos reales que bajó el usuario, no
+    # una suposición). f82 ("aporte a fondo de pensión") sigue estando, y es
+    # la variable que usa `employment_restrictions()` del paquete oficial de
+    # R para la ECH (autoría conjunta INE, github.com/calcita/ech, archivo
+    # R/employment.R) para calcular informalidad — el criterio estándar en
+    # la región: no aportar a la seguridad social = informal. Verificado con
+    # los datos reales de enero 2025: f82==2 (no aporta) da 21.8% de
+    # informalidad entre ocupados, muy cerca del 22.8% que el propio INE
+    # publicó para todo 2025 (ver `preprocessing.prepare_empleo`, que hace
+    # el cálculo real). SECTOR_F y SIT_OCUP siguen sin variable de
+    # reemplazo identificada — no se les asume ninguna.
+    "f82": "aporta_seguridad_social",        # 0/1/2 — 1=Sí aporta, 2=No aporta, 0=no aplica (fuera de Ocupados)
 }
 
 # Definición estándar de "población joven" para indicadores de empleo (14 a

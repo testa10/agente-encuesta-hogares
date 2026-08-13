@@ -167,23 +167,40 @@ def prepare_fies(fies: pd.DataFrame) -> pd.DataFrame:
 def prepare_empleo(empleo: pd.DataFrame) -> pd.DataFrame:
     """Mapea la condición de actividad (POBPCOAC) a las mismas categorías
     que ya usa Hogares/Personas de 2019 (Ocupados/Desocupados/Inactivos), y
-    decodifica INFORMAL/SUBEMPLEO a booleano, si esas columnas llegaron
-    (`INFORMAL` desapareció de los archivos desde 2025 — verificado contra
-    los datos reales — así que `es_informal` directamente no está en el
-    resultado para esos años; cualquier métrica de informalidad va a fallar
-    ahí con un error claro, en vez de antes con un dato inventado).
+    decodifica INFORMAL/SUBEMPLEO a booleano.
 
-    Ojo: esas dos columnas solo tienen sentido para quien está en
-    condicion_actividad == "Ocupados" — para cualquier otro caso el 0 no
-    significa "formal" ni "sin subempleo", significa "no aplica" (verificado
-    contra los datos reales: INFORMAL=1 y SUBEMPLEO=1 nunca aparecen fuera
-    de Ocupados). Cualquier métrica que las use tiene que filtrar a
-    Ocupados primero.
+    **Informalidad desde 2025**: la columna `INFORMAL` (pre-calculada por
+    el INE) desapareció de los archivos mensuales desde 2025 en adelante
+    — verificado contra los datos reales, no una suposición. En su lugar,
+    si llega `aporta_seguridad_social` (columna original `f82`, "aporte a
+    fondo de pensión", que sí sigue estando), `es_informal` se deriva de
+    ahí: **no aportar a la seguridad social (f82 == 2) = informal**. No es
+    un criterio inventado para esta ocasión — es el mismo que usa
+    `employment_restrictions()` del paquete oficial de R para la ECH, de
+    autoría conjunta del INE (github.com/calcita/ech, archivo
+    `R/employment.R`). Verificado además contra los datos reales de enero
+    2025: con este criterio da 21.8% de informalidad entre ocupados, muy
+    cerca del 22.8% que el propio INE publicó para 2025 completo (la
+    diferencia es esperable — acá es un solo mes sin ponderar contra el
+    año entero ponderado del INE, no un desvío del criterio).
+
+    Si ninguna de las dos columnas llegó, `es_informal` no está en el
+    resultado — cualquier métrica que la use falla ahí con un error claro,
+    no con un dato inventado.
+
+    Ojo: `es_informal`/`es_subempleo` solo tienen sentido para quien está
+    en condicion_actividad == "Ocupados" — para cualquier otro caso el 0
+    no significa "formal" ni "sin subempleo", significa "no aplica"
+    (verificado contra los datos reales: INFORMAL=1, SUBEMPLEO=1 y
+    aporta_seguridad_social=2 nunca aparecen fuera de Ocupados). Cualquier
+    métrica que las use tiene que filtrar a Ocupados primero.
     """
     df = empleo.copy()
     df["condicion_actividad"] = df["condicion_actividad_cod"].map(config.POBPCOAC_GRUPOS)
     if "es_informal" in df.columns:
         df["es_informal"] = df["es_informal"] == 1
+    elif "aporta_seguridad_social" in df.columns:
+        df["es_informal"] = df["aporta_seguridad_social"] == 2
     if "es_subempleo" in df.columns:
         df["es_subempleo"] = df["es_subempleo"] == 1
     df["sexo_grupo"] = classify_sexo(df["sexo"])
