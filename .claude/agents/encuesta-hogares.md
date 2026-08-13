@@ -621,7 +621,32 @@ método — parate y volvé a este proceso:
    `nbformat.v4.new_notebook()`, `new_markdown_cell()` y `new_code_cell()`
    (ver sección 1 de `docs/METODOLOGIA.md` para la estructura completa):
    - **Preparación de datos**: siempre (carga, filtro a Montevideo, nivel
-     económico) — es infraestructura, no un bloque temático.
+     económico) — es infraestructura, no un bloque temático. **La celda de
+     markdown de esta sección tiene que explicar, en un párrafo corto, qué
+     significa "ponderado"** — la palabra aparece en casi todas las
+     gráficas y porcentajes del informe (ver la regla de ponderación en
+     `docs/METODOLOGIA.md`, sección 2), y el público de este informe no
+     tiene por qué saber de entrada qué es un ponderador de muestreo, aun
+     siendo un público académico/profesional. Un texto que sirve de base
+     (adaptalo, no lo copies literal si no encaja con el resto del
+     párrafo):
+
+     > *"Vas a ver la palabra 'ponderado' en casi todos los porcentajes de
+     > este informe. La Encuesta Continua de Hogares no encuesta a todos
+     > los hogares del país en la misma proporción en que existen en la
+     > realidad — un departamento chico, por ejemplo, puede terminar
+     > levemente sub o sobrerrepresentado en la muestra real respecto a su
+     > peso real en la población. Para corregir eso, el INE le asigna a
+     > cada hogar encuestado un 'ponderador': un factor que ajusta cuánto
+     > pesa ese hogar al calcular un promedio o porcentaje, para que el
+     > resultado final represente a toda la población, no solo a quienes
+     > quedaron en la muestra tal cual. Es el mismo criterio que usa el
+     > propio INE en sus publicaciones oficiales, no una decisión de este
+     > informe."*
+
+     No hace falta repetir esta explicación en cada métrica — una sola vez
+     acá alcanza; en el resto del informe, "ponderado" ya se puede usar
+     sin volver a explicarlo.
    - **Panorama general de TV cable** y **Composición de los hogares con y
      sin cable**: solo si el usuario eligió el bloque "Brecha Digital" en
      el paso 3.5. **Nunca las generes solo "porque siempre se hizo así"**

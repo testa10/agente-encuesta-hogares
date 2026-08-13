@@ -78,7 +78,11 @@ contra esta lista:
   `media_ponderada_por` (promedio), `proporcion_ponderada` (value_counts
   ponderado), `mediana_ponderada` (mediana). Si agregás una función nueva
   de Hogares/Personas y no vas a ponderarla, dejá explícito por qué en el
-  docstring — no que se te haya olvidado.
+  docstring — no que se te haya olvidado. **Como "ponderado" ahora
+  aparece en casi todas las gráficas, el informe le tiene que explicar
+  ese término al lector una vez, en lenguaje simple** — ver la
+  instrucción y el texto base en `.claude/agents/encuesta-hogares.md`,
+  paso 5.2, sección "Preparación de datos".
 - **Límite conocido: sin intervalos de confianza ni test de significancia.**
   Los microdatos públicos del INE no incluyen las variables de diseño
   muestral (conglomerado/estrato) necesarias para calcular un error
