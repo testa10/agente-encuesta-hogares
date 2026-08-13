@@ -21,25 +21,27 @@ sus propios formularios visuales.
 
 ## Mantenimiento del proyecto (para vos, sesión principal — no para el agente)
 
-El proyecto vive en dos copias separadas a propósito: esta (con git, donde
-se desarrolla) y una copia en Documents que tiene que poder funcionar sola
-aunque esta no exista — es donde corre siempre el agente `encuesta-hogares`,
-que no tiene permiso de usar git. Eso significa que si el agente escribe
-código nuevo y reutilizable durante una corrida real (pasó de verdad: una
-función nueva en `analysis.py` quedó casi dos días sin publicar), ese
-código puede quedar atrapado ahí sin que nadie lo note.
+**Una sola copia** (esta, en Documents) — hasta la versión 0.3.0 existía
+también una copia aparte para desarrollo, se eliminó porque generaba
+riesgo real de perder trabajo sin publicar (pasó de verdad: una función
+nueva en `analysis.py` quedó casi dos días sin subir a GitHub). Ahora se
+desarrolla, se prueba y corre el agente todo en el mismo lugar — commiteá
+y publicá directo desde acá.
 
-**Antes de dar por cerrada una sesión de trabajo en este proyecto** (sobre
-todo si el usuario mencionó haber corrido el agente), corré desde la copia
-de Documents:
+El agente `encuesta-hogares` sigue sin permiso de usar git (ver
+`.claude/settings.json`). Si escribe código nuevo y reutilizable durante
+una corrida real (ej. una función para una métrica propuesta por el
+usuario), ese código queda en el disco pero sin commitear — **antes de
+dar por cerrada una sesión de trabajo** (sobre todo si el usuario
+mencionó haber corrido el agente), corré:
 
 ```bash
 python tools/verificar_sincronizacion.py
 ```
 
 Si encuentra diferencias contra `origin/main`, revisalas — puede ser
-trabajo real del agente sin publicar (llevalo a esta copia y publicalo) o
-simplemente que Documents está atrasada.
+trabajo real del agente sin publicar (commiteálo y hacé `git push`) o
+simplemente que esta copia está atrasada respecto a lo último subido.
 
 **Antes de publicar un cambio en `analysis.py`/`preprocessing.py` que
 toque cómo se leen o combinan los datos**, corré también:

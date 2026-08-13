@@ -55,18 +55,20 @@ catálogo (`_CATEGORIAS_METRICAS` en `formularios.py`), que tiene que
 quedar sin huecos ni duplicados (hay un test que lo verifica:
 `test_catalogo_esta_numerado_del_1_a_N_sin_huecos_ni_duplicados`).
 
-## Sincronización de las dos copias del proyecto
+## Antes de cerrar una sesión de trabajo
 
-Si estás trabajando con Claude Code en este repo, probablemente exista
-también una copia en `Documents\agente-encuesta-hogares` (o similar) donde
-corre de verdad el agente `encuesta-hogares` — ese agente no tiene permiso
-de usar git, así que cualquier código que escriba ahí puede quedar sin
-publicar si nadie lo nota. Antes de dar por cerrada una sesión de trabajo,
-corré desde esa copia:
+El agente `encuesta-hogares` no tiene permiso de usar git (ver
+`.claude/settings.json`) — si escribe código nuevo y reutilizable durante
+una corrida real (ej. una función para una métrica propuesta por el
+usuario), queda en el disco pero sin commitear, y puede pasar
+desapercibido. Antes de dar por cerrada una sesión, corré:
 
 ```bash
 python tools/verificar_sincronizacion.py
 ```
+
+Si encuentra diferencias contra `origin/main`, revisalas antes de
+publicar — puede ser trabajo real sin commitear.
 
 ## Commits
 

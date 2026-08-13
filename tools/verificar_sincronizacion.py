@@ -1,31 +1,23 @@
 """Uso: python tools/verificar_sincronizacion.py
 
-Herramienta para quien mantiene el proyecto (Claude Code corriendo desde
-la copia de git de desarrollo) — no es parte del flujo del agente
-encuesta-hogares ni de nada que corra un usuario final.
+Herramienta para quien mantiene el proyecto — no es parte del flujo del
+agente encuesta-hogares ni de nada que corra un usuario final.
 
-El proyecto vive en dos copias separadas a propósito: una donde se
-desarrolla (con git), y la copia de Documents, que tiene que poder
-funcionar sola aunque la primera no exista. El agente encuesta-hogares
-corre siempre sobre la copia de Documents — nunca sobre la de
-desarrollo — y no tiene permiso de usar git (ver .claude/settings.json).
-
-Eso significa que si el agente escribe código nuevo y reutilizable
-durante una corrida real (ej. una función nueva en analysis.py para una
-métrica propuesta por el usuario), ese código queda solamente en el
-disco de Documents, sin commitear ni subir a GitHub, hasta que alguien
-lo note. Pasó de verdad en una sesión real: una función completa con su
+El agente encuesta-hogares no tiene permiso de usar git (ver
+.claude/settings.json). Eso significa que si escribe código nuevo y
+reutilizable durante una corrida real (ej. una función nueva en
+analysis.py para una métrica propuesta por el usuario), ese código queda
+en el disco pero sin commitear ni subir a GitHub, hasta que alguien lo
+note. Pasó de verdad en una sesión real: una función completa con su
 test quedó así casi dos días antes de que una auditoría manual la
-encontrara.
+encontrara (en ese momento el proyecto todavía vivía en dos copias
+separadas — ya no; esta herramienta sigue siendo útil igual, porque el
+problema de fondo, el agente sin permiso de git, no cambió).
 
 Este script automatiza esa auditoría en vez de depender de que alguien
 se acuerde de hacerla a mano: compara el árbol de trabajo actual (tal
 cual está en disco, incluyendo archivos sin trackear) contra
 `origin/main`, sin modificar ni commitear nada.
-
-Correrlo desde la raíz de CUALQUIERA de las dos copias — sirve en las
-dos direcciones: encuentra tanto trabajo real sin publicar (como el caso
-de arriba) como una copia que simplemente quedó atrasada.
 """
 
 import subprocess
@@ -64,8 +56,8 @@ def main() -> int:
     print(salida)
     print(
         "\nSi son cambios reales que nunca se publicaron (ej. una función "
-        "que el agente agregó en una corrida), llevalos a la otra copia "
-        "del proyecto y publicalos con git commit + git push desde ahí.\n"
+        "que el agente agregó en una corrida), revisalos y publicalos con "
+        "git commit + git push.\n"
         "Si en cambio es solo atraso (esta copia no tiene los últimos "
         "cambios ya publicados), poné esta copia al día sin tocar ningún "
         "archivo con:\n"
