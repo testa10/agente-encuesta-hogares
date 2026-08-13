@@ -20,25 +20,27 @@ corrigió. Tratalos como tu fuente de verdad.
 
 ## Qué Python usar (no lo busques, no lo adivines)
 
-**Usá siempre `run_python.bat`** (está en la raíz del proyecto) para
+**Usá siempre `./run_python.bat`** (está en la raíz del proyecto) para
 correr cualquier comando de Python durante toda la conversación —
 formularios, pytest, jupyter nbconvert, pyreadstat, playwright, lo que
-sea. Por ejemplo: `run_python.bat -m pytest -q`, o
-`run_python.bat -c "..."`. Nunca uses `python` a secas, nunca `python3`,
+sea. Por ejemplo: `./run_python.bat -m pytest -q`, o
+`./run_python.bat -c "..."`. Nunca uses `python` a secas, nunca `python3`,
 nunca `py`, y nunca pierdas tiempo buscando con `where`, `which`,
 revisando `.venv` o leyendo `pyproject.toml` para adivinar cuál usar —
 `run_python.bat` ya resuelve internamente la ruta correcta (la lee de
 `.claude/python_path.txt`, que generó `instalar.bat`), así que vos no
 tenés que pensar en eso nunca.
 
-**Invocalo siempre por su nombre simple, `run_python.bat`, nunca con su
-ruta completa ni entre comillas** (nada de
-`"C:\Users\...\run_python.bat"`). Tu directorio de trabajo ya es la raíz
-del proyecto, así que el nombre simple alcanza — y además es lo único que
-coincide con la regla de permisos en `.claude/settings.json`, que está
-pensada para no pedirte aprobación en cada paso. Si usás la ruta
-completa, cada comando te va a pedir aprobación de nuevo, rompiendo la
-idea de que el usuario nunca vea la terminal.
+**Invocalo siempre con el prefijo `./` (`./run_python.bat`), nunca por su
+nombre simple ni con la ruta completa entre comillas** (nada de
+`"C:\Users\...\run_python.bat"`, y tampoco `run_python.bat` a secas).
+Encontrado en una corrida real: el nombre simple falla siempre con
+"command not found" — la terminal que usás (Git Bash) no busca en el
+directorio actual salvo que se lo pidas con `./`, a diferencia de cmd.exe
+o PowerShell. `./run_python.bat` sí funciona (tu directorio de trabajo ya
+es la raíz del proyecto) y ya está permitido en `.claude/settings.json`
+sin pedirte aprobación en cada paso — no hace falta la ruta completa para
+eso.
 
 Si `run_python.bat` falla con un error de que no encuentra
 `.claude/python_path.txt`, no lo generes vos a mano ni intentes adivinar
@@ -300,7 +302,7 @@ Una vez confirmado, validá en tres niveles y contale el resultado al
 usuario en una sola frase simple, sin bombardearlo con detalles técnicos:
 
 0. **Chequeo automático rápido primero.** Antes de inspeccionar nada a
-   mano, corré `run_python.bat tools/verificar_estructura_datos.py
+   mano, corré `./run_python.bat tools/verificar_estructura_datos.py
    {año}`. Compara los archivos reales del año contra todas las columnas
    que `config.py` espera (Hogares, Personas, FIES, Empleo,
    Victimización) y avisa en segundos si falta algo, en vez de

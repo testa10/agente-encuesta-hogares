@@ -1,4 +1,4 @@
-"""Uso: run_python.bat tools/verificar_estructura_datos.py <anio>
+"""Uso: ./run_python.bat tools/verificar_estructura_datos.py <anio>
 
 Compara los archivos de datos de un año (data/{año}/...) contra las
 columnas que config.py espera para Hogares, Personas, FIES, Empleo y
@@ -28,7 +28,7 @@ from encuesta_hogares import verificacion_estructura as ve  # noqa: E402
 
 def main() -> None:
     if len(sys.argv) != 2:
-        print("Uso: run_python.bat tools/verificar_estructura_datos.py <anio>")
+        print("Uso: ./run_python.bat tools/verificar_estructura_datos.py <anio>")
         sys.exit(1)
 
     anio = sys.argv[1]

@@ -1,4 +1,4 @@
-"""Uso: run_python.bat tools/resumen_sesiones.py
+"""Uso: ./run_python.bat tools/resumen_sesiones.py
 
 Lee logs/bitacora.jsonl (si existe) y muestra un resumen legible de cada
 sesión detectada: cuándo empezó y terminó, cuántos formularios se

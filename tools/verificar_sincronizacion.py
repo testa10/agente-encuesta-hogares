@@ -1,4 +1,4 @@
-"""Uso: python tools/verificar_sincronizacion.py
+"""Uso: ./run_python.bat tools/verificar_sincronizacion.py
 
 Herramienta para quien mantiene el proyecto — no es parte del flujo del
 agente encuesta-hogares ni de nada que corra un usuario final.

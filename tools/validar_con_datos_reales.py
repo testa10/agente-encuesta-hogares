@@ -1,4 +1,4 @@
-"""Uso: run_python.bat tools/validar_con_datos_reales.py
+"""Uso: ./run_python.bat tools/validar_con_datos_reales.py
 
 Corre un chequeo de humo (smoke test) contra los datos reales que haya en
 data/{año}/ — uno por cada año disponible. No reemplaza a la suite de

@@ -36,7 +36,7 @@ dar por cerrada una sesión de trabajo** (sobre todo si el usuario
 mencionó haber corrido el agente), corré:
 
 ```bash
-python tools/verificar_sincronizacion.py
+./run_python.bat tools/verificar_sincronizacion.py
 ```
 
 Si encuentra diferencias contra `origin/main`, revisalas — puede ser
@@ -47,7 +47,7 @@ simplemente que esta copia está atrasada respecto a lo último subido.
 toque cómo se leen o combinan los datos**, corré también:
 
 ```bash
-run_python.bat tools/validar_con_datos_reales.py
+./run_python.bat tools/validar_con_datos_reales.py
 ```
 
 Ejercita el pipeline completo contra los datos reales que haya en `data/`
