@@ -80,6 +80,21 @@ def decode_si_no(series: pd.Series) -> pd.Series:
     return series.map(config.SI_NO_MAP)
 
 
+def decode_condiciones_vivienda(hogares: pd.DataFrame) -> pd.DataFrame:
+    """Decodifica a booleano las columnas de condiciones estructurales de la
+    vivienda que estén presentes en `hogares` (12 en 2019, 4 desde 2024 en
+    adelante — ver CONDICIONES_VIVIENDA_COLUMNS_CSV). A diferencia de
+    `prepare_hogares_extendido`, no filtra a Montevideo ni decodifica nada
+    más — las métricas de precariedad estructural necesitan la base
+    nacional completa, para poder compararse por departamento.
+    """
+    df = hogares.copy()
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in df.columns]
+    for col in condiciones_cols:
+        df[col] = decode_si_no(df[col])
+    return df
+
+
 def prepare_hogares_extendido(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     """A partir de hogares ya filtrados (ej. Montevideo), decodifica las variables
     de tecnología, pobreza y condiciones de vivienda.

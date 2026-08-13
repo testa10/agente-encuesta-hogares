@@ -10,6 +10,7 @@ from encuesta_hogares.preprocessing import (
     compute_hacinamiento,
     compute_indice_acceso_digital,
     compute_penetracion_nacional,
+    decode_condiciones_vivienda,
     decode_si_no,
     melt_delitos,
     prepare_empleo,
@@ -82,6 +83,27 @@ def test_prepare_hogares_extendido_decodes_booleanos():
     assert df["pobre"].tolist() == [False, True, False, True]
     assert df["tiene_internet"].tolist() == [True, False, True, False]
     assert df["goteras"].tolist() == [True, False, True, False]
+
+
+def test_decode_condiciones_vivienda_no_filtra_a_montevideo():
+    df = pd.DataFrame(
+        {
+            "departamento": ["MONTEVIDEO", "SALTO"],
+            "goteras": [1.0, 2.0],
+            "se_inunda": [2.0, 1.0],
+        }
+    )
+    resultado = decode_condiciones_vivienda(df)
+    assert resultado["goteras"].tolist() == [True, False]
+    assert resultado["se_inunda"].tolist() == [False, True]
+    # a diferencia de prepare_hogares_extendido, no descarta ni filtra filas
+    assert resultado["departamento"].tolist() == ["MONTEVIDEO", "SALTO"]
+
+
+def test_decode_condiciones_vivienda_tolera_columnas_faltantes():
+    df = pd.DataFrame({"goteras": [1.0, 2.0]})
+    resultado = decode_condiciones_vivienda(df)
+    assert resultado["goteras"].tolist() == [True, False]
 
 
 def test_prepare_hogares_extendido_tolera_columnas_de_vivienda_faltantes():

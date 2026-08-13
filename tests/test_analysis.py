@@ -5,20 +5,24 @@ from encuesta_hogares.analysis import (
     brecha_digital_por_cohorte,
     brecha_digital_por_jefatura,
     brecha_por_grupo,
+    carencias_estructurales_mas_frecuentes,
     clasificacion_barrios_resumen,
     composicion_categorica_por_mes_promedio,
-    condiciones_vivienda_diferencia,
-    condiciones_vivienda_por,
     diferencia_entre_categorias,
     diferencia_entre_tablas,
+    estrato_promedio_por,
     filtrar_segmento,
     indice_acceso_digital_por,
+    indice_desarrollo_territorial,
     ingreso_hogar_mediano_por_departamento,
     inseguridad_alimentaria_por,
     pct_hacinamiento_por,
     pct_pobres_indigentes,
+    pct_pobres_por,
     pct_ponderado_por,
     pct_unipersonales_mayores,
+    precariedad_estructural,
+    precariedad_estructural_por,
     prevalencia_inseguridad_alimentaria,
     proporcion_cruzada,
     razon_dependencia_demografica,
@@ -81,55 +85,81 @@ def test_proporcion_cruzada_suma_100_por_fila():
     assert round(tabla.loc["No pobre", "Con cable"], 2) == 66.67
 
 
-def test_condiciones_vivienda_por():
+def test_precariedad_estructural_cuenta_con_al_menos_una_carencia():
     df = pd.DataFrame(
         {
-            "tiene_celular": [True, True, False, False],
-            "goteras": [True, False, True, True],
+            "goteras": [True, False, False, False],
+            "se_inunda": [False, False, True, False],
         }
     )
-    # Solo usamos una condicion para simplificar el test - la funcion espera
-    # todas las columnas de config.CONDICIONES_VIVIENDA_COLUMNS, asi que
-    # completamos el resto con valores fijos.
-    from encuesta_hogares import config
-    for col in config.CONDICIONES_VIVIENDA_COLUMNS.values():
-        if col not in df.columns:
-            df[col] = False
-
-    resumen = condiciones_vivienda_por(df, "tiene_celular", {False: "Sin celular", True: "Con celular"})
-    fila_goteras = resumen[resumen["condicion"] == "Goteras en techos"].iloc[0]
-    assert fila_goteras["Con celular"] == 50.0
-    assert fila_goteras["Sin celular"] == 100.0
+    resultado = precariedad_estructural(df)
+    assert resultado["pct_con_carencia"] == 50.0
+    assert resultado["total_hogares"] == 4
+    assert resultado["hogares_con_carencia"] == 2
 
 
-def test_condiciones_vivienda_por_tolera_columnas_faltantes():
+def test_precariedad_estructural_tolera_columnas_faltantes():
     # A partir de 2024 solo hay 4 de las 12 columnas de vivienda (ver
     # config.CONDICIONES_VIVIENDA_COLUMNS_CSV) - la función solo debe usar
     # las que están presentes en el dataframe, sin fallar por las demás.
+    df = pd.DataFrame({"goteras": [True, False]})
+    resultado = precariedad_estructural(df)
+    assert resultado["pct_con_carencia"] == 50.0
+
+
+def test_precariedad_estructural_por_agrupa_correctamente():
     df = pd.DataFrame(
         {
-            "tiene_celular": [True, True, False, False],
+            "departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO", "SALTO"],
             "goteras": [True, False, True, True],
         }
     )
-    resumen = condiciones_vivienda_por(df, "tiene_celular", {False: "Sin celular", True: "Con celular"})
-    assert resumen["condicion"].tolist() == ["Goteras en techos"]
-    fila_goteras = resumen[resumen["condicion"] == "Goteras en techos"].iloc[0]
-    assert fila_goteras["Con celular"] == 50.0
-    assert fila_goteras["Sin celular"] == 100.0
+    resumen = precariedad_estructural_por(df, "departamento").set_index("departamento")
+    assert resumen.loc["MONTEVIDEO", "pct_precariedad"] == 50.0
+    assert resumen.loc["SALTO", "pct_precariedad"] == 100.0
 
 
-def test_condiciones_vivienda_diferencia():
-    resumen = pd.DataFrame(
+def test_carencias_estructurales_mas_frecuentes_ordena_de_mayor_a_menor():
+    df = pd.DataFrame(
         {
-            "condicion": ["Goteras en techos", "Humedad en cimientos"],
-            "Sin celular": [100.0, 40.0],
-            "Con celular": [50.0, 30.0],
+            "goteras": [True, True, True, False],
+            "se_inunda": [True, False, False, False],
         }
     )
-    diferencia = condiciones_vivienda_diferencia(resumen, "Sin celular", "Con celular")
-    assert diferencia["Goteras en techos"] == -50.0
-    assert diferencia["Humedad en cimientos"] == -10.0
+    resumen = carencias_estructurales_mas_frecuentes(df)
+    assert resumen.iloc[0]["carencia"] == "Goteras en techos"
+    assert resumen.iloc[0]["pct_hogares"] == 75.0
+    assert resumen.iloc[1]["carencia"] == "Se inunda cuando llueve"
+    assert resumen.iloc[1]["pct_hogares"] == 25.0
+
+
+def test_pct_pobres_por():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"], "pobre": [True, False, True]})
+    resumen = pct_pobres_por(df, "departamento").set_index("departamento")
+    assert resumen.loc["MONTEVIDEO", "pct_pobres"] == 50.0
+    assert resumen.loc["SALTO", "pct_pobres"] == 100.0
+
+
+def test_estrato_promedio_por():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO"], "estrato_tipo": [3, 5, 1]})
+    resumen = estrato_promedio_por(df, "departamento").set_index("departamento")
+    assert resumen.loc["MONTEVIDEO", "estrato_promedio"] == 4.0
+    assert resumen.loc["SALTO", "estrato_promedio"] == 1.0
+
+
+def test_indice_desarrollo_territorial_invierte_y_normaliza():
+    componentes = pd.DataFrame(
+        {"pct_pobreza": [40.0, 0.0], "tasa_empleo": [30.0, 60.0]},
+        index=pd.Index(["Peor", "Mejor"], name="departamento"),
+    )
+    resultado = indice_desarrollo_territorial(componentes, invertir=["pct_pobreza"])
+    # "Mejor" tiene menos pobreza (invertida: mejor puntaje) y mas empleo -> indice mas alto
+    assert resultado.loc["Mejor", "indice"] > resultado.loc["Peor", "indice"]
+    assert resultado.loc["Mejor", "pct_pobreza"] == 1.0  # 0% pobreza, invertido -> el mejor valor posible
+    assert resultado.loc["Mejor", "indice"] == 1.0
+    assert resultado.loc["Peor", "indice"] == 0.0
+    # queda ordenado de mejor a peor
+    assert resultado.index.tolist() == ["Mejor", "Peor"]
 
 
 def test_ingreso_hogar_mediano_por_departamento():

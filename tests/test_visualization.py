@@ -162,3 +162,38 @@ def test_plot_dumbbell_ancla_el_eje_x_en_cero_con_varias_categorias():
     assert fig.layout.xaxis.range[0] == 0
     # una línea + dos series de marcadores
     assert len(fig.data) == 3
+
+
+def test_plot_precariedad_estructural_no_falla():
+    fig = viz.plot_precariedad_estructural({"pct_con_carencia": 35.0, "total_hogares": 100, "hogares_con_carencia": 35})
+    assert fig is not None
+
+
+def test_plot_precariedad_estructural_por_es_horizontal():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "SALTO"], "pct_precariedad": [20.0, 45.0]})
+    fig = viz.plot_precariedad_estructural_por(df, "departamento")
+    assert fig.data[0].orientation == "h"
+
+
+def test_plot_carencias_estructurales_mas_frecuentes_no_falla():
+    df = pd.DataFrame({"carencia": ["Goteras en techos", "Se inunda cuando llueve"], "pct_hogares": [40.0, 15.0]})
+    fig = viz.plot_carencias_estructurales_mas_frecuentes(df)
+    assert fig is not None
+
+
+def test_plot_indice_desarrollo_territorial_ancla_el_eje_x_en_0_1():
+    resultado = pd.DataFrame(
+        {"pct_pobreza": [1.0, 0.0], "tasa_empleo": [0.0, 1.0], "indice": [0.5, 0.5]},
+        index=pd.Index(["MONTEVIDEO", "SALTO"], name="departamento"),
+    )
+    fig = viz.plot_indice_desarrollo_territorial(resultado)
+    assert fig.layout.xaxis.range[0] == 0
+
+
+def test_plot_perfil_territorial_no_falla():
+    resultado = pd.DataFrame(
+        {"pct_pobreza": [1.0, 0.0], "tasa_empleo": [0.0, 1.0], "indice": [0.5, 0.5]},
+        index=pd.Index(["MONTEVIDEO", "SALTO"], name="departamento"),
+    )
+    fig = viz.plot_perfil_territorial(resultado)
+    assert fig is not None

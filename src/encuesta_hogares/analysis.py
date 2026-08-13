@@ -111,40 +111,70 @@ def brecha_digital_por_nivel_economico(df_extendido: pd.DataFrame) -> pd.DataFra
     return resumen
 
 
-def condiciones_vivienda_por(df_extendido: pd.DataFrame, columna_grupo: str, etiquetas: dict) -> pd.DataFrame:
-    """% de hogares con cada problema estructural de vivienda, agrupado por
-    una columna booleana cualquiera (ej. `tiene_cable`, `tiene_celular`,
-    `tiene_streaming`).
+def precariedad_estructural(hogares_condiciones: pd.DataFrame) -> dict:
+    """% de hogares con al menos una carencia estructural (de las variables
+    de CONDICIONES_VIVIENDA_COLUMNS disponibles este año — 12 en 2019, 4
+    desde 2024). `hogares_condiciones` tiene que venir de
+    `preprocessing.decode_condiciones_vivienda` (columnas ya booleanas).
 
-    `etiquetas` mapea {False: "...", True: "..."} a los nombres de columna
-    que va a tener el resultado.
+    Es un índice de conteo de carencias ("≥1 carencia = vivienda
+    deficitaria"), la práctica estándar para agregar variables de
+    deficiencia booleanas de este tipo: metadatos del indicador SDG 11.1.1
+    de UN-Habitat (2020, "durability of housing"), el Adequate Housing
+    Index del Banco Mundial (Bramati et al., Policy Research Working Paper
+    9830, 2021), y el criterio operacional de NBI-vivienda del INE Uruguay
+    (Atlas Sociodemográfico y de la Desigualdad del Uruguay, Fascículo 1,
+    coord. Calvo, 2013): basta una carencia crítica para clasificar la
+    vivienda como deficitaria, sin necesidad de un puntaje ponderado.
     """
-    # Igual que en preprocessing.prepare_hogares_extendido: no todos los años
-    # tienen las 12 columnas (ver config.CONDICIONES_VIVIENDA_COLUMNS_CSV),
-    # así que solo se usan las que están presentes en este dataframe.
-    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in df_extendido.columns]
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    tiene_carencia = hogares_condiciones[condiciones_cols].any(axis=1)
+    total = len(hogares_condiciones)
+    con_carencia = int(tiene_carencia.sum())
+    return {
+        "pct_con_carencia": round(con_carencia / total * 100, 2),
+        "total_hogares": total,
+        "hogares_con_carencia": con_carencia,
+    }
+
+
+def precariedad_estructural_por(hogares_condiciones: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% de hogares con al menos una carencia estructural (mismo criterio
+    que `precariedad_estructural`), agrupado por una columna cualquiera
+    (nivel económico, departamento).
+    """
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    df = hogares_condiciones.copy()
+    df["_tiene_carencia"] = df[condiciones_cols].any(axis=1)
     resumen = (
-        df_extendido.groupby(columna_grupo)[condiciones_cols]
+        df.groupby(columna_grupo)["_tiene_carencia"]
         .mean()
         .mul(100)
         .round(2)
-        .T.rename(columns=etiquetas)
-        .rename(index=config.CONDICION_VIVIENDA_LABELS)
+        .rename("pct_precariedad")
         .reset_index()
-        .rename(columns={"index": "condicion"})
-        .sort_values(etiquetas[True])
     )
     return resumen
 
 
-def condiciones_vivienda_diferencia(resumen: pd.DataFrame, col_sin: str, col_con: str) -> pd.Series:
-    """Diferencia en puntos porcentuales (grupo "con" menos grupo "sin") de
-    cada condición estructural de la vivienda, a partir de una tabla ya
-    calculada con `condiciones_vivienda_por`. Sirve para comparar varias
-    tecnologías en una misma vista de síntesis.
+def carencias_estructurales_mas_frecuentes(hogares_condiciones: pd.DataFrame) -> pd.DataFrame:
+    """% de hogares con cada carencia estructural puntual (de las
+    disponibles este año), de mayor a menor — para identificar cuáles son
+    las más comunes, no solo si hay o no al menos una (eso ya lo responde
+    `precariedad_estructural`).
     """
-    tabla = resumen.set_index("condicion")
-    return (tabla[col_con] - tabla[col_sin]).round(2)
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    resumen = (
+        hogares_condiciones[condiciones_cols]
+        .mean()
+        .mul(100)
+        .round(2)
+        .rename("pct_hogares")
+        .rename_axis("carencia_codigo")
+        .reset_index()
+    )
+    resumen["carencia"] = resumen["carencia_codigo"].map(config.CONDICION_VIVIENDA_LABELS)
+    return resumen[["carencia", "pct_hogares"]].sort_values("pct_hogares", ascending=False).reset_index(drop=True)
 
 
 def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos: list) -> pd.Series:
@@ -432,6 +462,75 @@ def razon_dependencia_por(personas_con_grupo: pd.DataFrame, columna_grupo: str) 
         razon = round((menores + mayores) / activos * 100, 2) if activos else None
         filas.append({columna_grupo: grupo, "razon_dependencia": razon})
     return pd.DataFrame(filas)
+
+
+def pct_pobres_por(hogares_nacional: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """% de hogares pobres, por una columna cualquiera (ej. departamento) —
+    mismo criterio no ponderado que `pct_pobres_indigentes`. Componente del
+    índice de desarrollo territorial (ver `indice_desarrollo_territorial`).
+    """
+    resumen = (
+        hogares_nacional.groupby(columna_grupo)["pobre"]
+        .mean()
+        .mul(100)
+        .round(2)
+        .rename("pct_pobres")
+        .reset_index()
+    )
+    return resumen
+
+
+def estrato_promedio_por(hogares: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
+    """Estrato socioeconómico promedio (1 a 5, más alto = mejor posición
+    relativa), por una columna cualquiera (ej. departamento). Componente
+    del índice de desarrollo territorial (ver `indice_desarrollo_territorial`).
+    """
+    resumen = (
+        hogares.groupby(columna_grupo)["estrato_tipo"]
+        .mean()
+        .round(2)
+        .rename("estrato_promedio")
+        .reset_index()
+    )
+    return resumen
+
+
+def indice_desarrollo_territorial(componentes: pd.DataFrame, invertir: list) -> pd.DataFrame:
+    """Índice sintético 0-1 por unidad territorial, combinando varias
+    dimensiones ya calculadas (ej. pobreza, empleo, precariedad de
+    vivienda, estrato) en un único indicador comparable. Una métrica
+    territorial "de verdad" sintetiza varias dimensiones a la vez, en vez
+    de ser la misma tasa de siempre solo cortada por departamento — mismo
+    método (normalización min-max con polaridad ajustada: los indicadores
+    "negativos" se invierten antes de promediar) que el Índice de
+    Desarrollo Regional de CEPAL/ILPES ("Panorama del desarrollo
+    territorial de América Latina y el Caribe", 2010-2024, siguiendo la
+    "Guía metodológica para el diseño de indicadores compuestos de
+    desarrollo sostenible", CEPAL, 2009) y el IDERE-UY (Rodríguez Miranda,
+    Vial Cossani, Centurión y Pérez Fernández, IECON-FCEA/UdelaR,
+    financiado por ANII Fondo María Viñas, 2024) — el antecedente directo
+    para Uruguay, construido también a nivel de los 19 departamentos.
+
+    `componentes`: indexado por la unidad territorial (ej. departamento),
+    una columna por dimensión ya calculada (sin la columna de
+    agrupación). `invertir`: nombres de columna donde un valor más alto
+    es peor (ej. pobreza, precariedad) — se invierten antes de
+    normalizar, para que en el resultado "más alto" siempre signifique
+    "mejor" en todas las dimensiones.
+
+    Devuelve las dimensiones normalizadas 0-1 (0 = peor unidad territorial
+    en esa dimensión, 1 = mejor) más una columna "indice" con su
+    promedio, ordenado de mejor a peor.
+    """
+    normalizado = pd.DataFrame(index=componentes.index)
+    for columna in componentes.columns:
+        valores = componentes[columna]
+        if columna in invertir:
+            valores = valores.max() - valores
+        rango = valores.max() - valores.min()
+        normalizado[columna] = ((valores - valores.min()) / rango).round(3) if rango > 0 else 0.5
+    normalizado["indice"] = normalizado[list(componentes.columns)].mean(axis=1).round(3)
+    return normalizado.sort_values("indice", ascending=False)
 
 
 def pct_unipersonales_mayores(tipo_hogar: pd.DataFrame) -> dict:

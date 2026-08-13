@@ -321,50 +321,62 @@ def plot_ingreso_hogar_departamento(serie: pd.Series):
     return fig
 
 
-def plot_condiciones_vivienda(resumen_condiciones: pd.DataFrame, columnas: list, titulo: str, color_map: dict):
-    """Barras horizontales agrupadas y ordenadas: condiciones estructurales de la vivienda según un grupo cualquiera."""
-    df_plot = resumen_condiciones.melt(
-        id_vars="condicion", value_vars=columnas,
-        var_name="grupo", value_name="pct_hogares",
-    )
+def plot_precariedad_estructural(resultado: dict):
+    """Barras horizontales: % de hogares con y sin al menos una carencia
+    estructural (índice de conteo de carencias — ver
+    docs/METODOLOGIA.md, sección 9, o analysis.precariedad_estructural).
+    """
+    data = {
+        "Condición": ["Con carencia estructural", "Sin carencia estructural"],
+        "Porcentaje": [resultado["pct_con_carencia"], round(100 - resultado["pct_con_carencia"], 2)],
+    }
     fig = px.bar(
-        df_plot, y="condicion", x="pct_hogares", color="grupo",
-        orientation="h", barmode="group",
-        title=titulo,
-        color_discrete_map=color_map,
+        data, y="Condición", x="Porcentaje", orientation="h",
+        title="Precariedad estructural de la vivienda",
+        width=800, height=350, color_discrete_sequence=["#d1495b"],
     )
+    fig.update_traces(width=0.5, text=data["Porcentaje"], textposition="auto")
+    fig.update_layout(xaxis_title="% de hogares", yaxis_title="", title_x=0.5)
+    return fig
+
+
+def plot_precariedad_estructural_por(resumen: pd.DataFrame, criterio: str):
+    """Barras horizontales: % de hogares con al menos una carencia
+    estructural, según un criterio cualquiera (nivel económico,
+    departamento). Horizontales para que se lean sin inclinar la cabeza
+    cuando el criterio es departamento (19 categorías, algunas con
+    nombres largos — Cleveland & McGill, 1984).
+    """
+    columna_y = resumen.columns[0]
+    fig = px.bar(
+        resumen, y=columna_y, x="pct_precariedad", orientation="h",
+        title=f"Precariedad estructural de la vivienda según {criterio}", text="pct_precariedad",
+        color_discrete_sequence=["#d1495b"],
+    )
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
     fig.update_layout(
-        yaxis_title="", xaxis_title="% de hogares con el problema",
-        legend_title="", width=900, height=500, title_x=0.5,
+        yaxis_title="", xaxis_title="% de hogares con carencia",
         yaxis={"categoryorder": "total ascending"},
+        width=850, height=550, title_x=0.5, showlegend=False,
     )
     return fig
 
 
-def plot_condiciones_vivienda_diferencia(diferencias: pd.DataFrame):
-    """Barras horizontales agrupadas: diferencia en puntos porcentuales (con
-    tecnología menos sin tecnología) de cada condición estructural de la
-    vivienda, para varias tecnologías a la vez. Vista de síntesis de las
-    gráficas de condiciones de vivienda por tecnología.
+def plot_carencias_estructurales_mas_frecuentes(resumen: pd.DataFrame):
+    """Barras horizontales ordenadas: % de hogares con cada carencia
+    estructural puntual, de mayor a menor prevalencia.
     """
-    columnas = [c for c in diferencias.columns if c != "condicion"]
-    df_plot = diferencias.melt(
-        id_vars="condicion", value_vars=columnas, var_name="tecnologia", value_name="diferencia_pp"
-    )
-    orden = diferencias.set_index("condicion")[columnas].mean(axis=1).sort_values(ascending=False).index.tolist()
-
     fig = px.bar(
-        df_plot, y="condicion", x="diferencia_pp", color="tecnologia",
-        orientation="h", barmode="group",
-        title="Diferencia en condiciones de vivienda según acceso a cada tecnología",
-        category_orders={"condicion": orden},
-        color_discrete_sequence=px.colors.qualitative.Safe,
+        resumen, y="carencia", x="pct_hogares", orientation="h",
+        title="Carencias estructurales más frecuentes", text="pct_hogares",
+        color_discrete_sequence=["#8d6ab8"],
     )
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
     fig.update_layout(
-        yaxis_title="", xaxis_title="Diferencia en puntos porcentuales (con - sin)",
-        legend_title="", width=900, height=550, title_x=0.5,
+        yaxis_title="", xaxis_title="% de hogares",
+        yaxis={"categoryorder": "total ascending"},
+        width=850, height=500, title_x=0.5, showlegend=False,
     )
-    fig.add_vline(x=0, line_color="gray")
     return fig
 
 
@@ -452,6 +464,44 @@ def plot_razon_dependencia_por(resumen: pd.DataFrame, criterio: str):
         yaxis={"categoryorder": "total ascending"},
         width=850, height=550, title_x=0.5, showlegend=False,
     )
+    return fig
+
+
+def plot_indice_desarrollo_territorial(resultado: pd.DataFrame):
+    """Barras horizontales ordenadas: ranking del índice sintético de
+    desarrollo territorial por departamento (ver
+    analysis.indice_desarrollo_territorial).
+    """
+    df_plot = resultado.reset_index().rename(columns={resultado.index.name or "index": "departamento"})
+    fig = px.bar(
+        df_plot, y="departamento", x="indice", orientation="h",
+        title="Índice de desarrollo territorial por departamento", text="indice",
+        color_discrete_sequence=["#5a7fa6"],
+    )
+    fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+    fig.update_layout(
+        yaxis_title="", xaxis_title="Índice (0 a 1, más alto = mejor)",
+        yaxis={"categoryorder": "total ascending"},
+        xaxis_range=[0, 1.1],
+        width=850, height=550, title_x=0.5, showlegend=False,
+    )
+    return fig
+
+
+def plot_perfil_territorial(resultado: pd.DataFrame):
+    """Heatmap: perfil normalizado (0-1) de cada dimensión del índice de
+    desarrollo territorial, por departamento — el detalle que explica por
+    qué un departamento queda arriba o abajo en el ranking (ver
+    plot_indice_desarrollo_territorial), no solo el promedio final.
+    """
+    columnas_dimensiones = [c for c in resultado.columns if c != "indice"]
+    tabla = resultado[columnas_dimensiones].sort_values(columnas_dimensiones[0])
+    fig, ax = plt.subplots(figsize=(7, 8))
+    sns.heatmap(tabla, annot=True, fmt=".2f", cmap="viridis", cbar_kws={"label": "0 a 1 (más alto = mejor)"}, ax=ax)
+    ax.set_title("Perfil territorial por departamento", fontsize=13)
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    fig.tight_layout()
     return fig
 
 

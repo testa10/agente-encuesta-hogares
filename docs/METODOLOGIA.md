@@ -18,12 +18,13 @@ se mantiene):
 2. **Panorama general de TV cable**, **Distribución por barrio** y
    **Composición de los hogares con y sin cable** — a diferencia del punto
    1, **estas tres NO se generan siempre**: son contenido del bloque
-   "Brecha Digital" (y, para Distribución por barrio, también del bloque
-   "Territorio" — ver `.claude/agents/encuesta-hogares.md`, paso 5.2), así
-   que solo se arman si el usuario eligió alguno de esos bloques en el
-   paso 3.5. No asumir que a todos les interesa la tecnología es la misma
-   razón por la que el catálogo dejó de incluir esos bloques por defecto —
-   aplicarla acá y no en el catálogo hubiera sido inconsistente.
+   "Brecha Digital" (ver `.claude/agents/encuesta-hogares.md`, paso 5.2), así
+   que solo se arman si el usuario eligió ese bloque en el paso 3.5.
+   "Territorio" ya no depende de esto — su índice de desarrollo
+   territorial es infraestructura propia. No asumir que a todos les
+   interesa la tecnología es la misma razón por la que el catálogo dejó de
+   incluir esos bloques por defecto — aplicarla acá y no en el catálogo
+   hubiera sido inconsistente.
 3. **Bloques elegidos**, cada uno organizado como "Entorno" temático propio
    (Brecha Digital, Hogares, Territorio, Vivienda, y — si corresponde —
    Seguridad Alimentaria, Empleo, Seguridad y Victimización): el usuario
@@ -62,13 +63,15 @@ contra esta lista:
   provoca Y"), salvo que el diseño del estudio lo permita (no es el caso
   acá: es una encuesta transversal).
 - **Proporciones que no suman 100% entre sí no se apilan.** Si dos barras
-  representan porcentajes calculados sobre bases distintas (ej. "% con
-  problema estructural dentro de 'con cable'" y "dentro de 'sin cable'"),
-  no se pueden combinar en un gráfico de barras apiladas — eso implica una
-  relación parte-todo que no existe. Para comparar varias categorías de este
-  tipo a la vez, usar una gráfica de **diferencia** (puntos porcentuales
-  entre grupos), no un apilado. Ver `condiciones_vivienda_diferencia()` /
-  `plot_condiciones_vivienda_diferencia()` como ejemplo ya resuelto.
+  representan porcentajes calculados sobre bases distintas (ej. "% de
+  ocupados" dentro de "hombres" y dentro de "mujeres"), no se pueden
+  combinar en un gráfico de barras apiladas — eso implica una relación
+  parte-todo que no existe. Para comparar varias categorías de este tipo a
+  la vez, preferí barras agrupadas (cada valor real, lado a lado) — ver
+  `tasas_por_grupo()` / `plot_tasas_por_grupo()` como ejemplo ya
+  resuelto — y, para comparar solo dos grupos puntuales, el dumbbell chart
+  de la sección 9. En ambos casos se muestran los valores reales, nunca
+  solo la resta ya calculada.
 
 ## 3. Reglas de terminología y claridad
 

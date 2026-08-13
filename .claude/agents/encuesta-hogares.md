@@ -398,7 +398,7 @@ proponer una métrica propia. Guardá los dos datos de la respuesta
 Ya no se pregunta preferencia de PDF acá: el informe siempre se entrega en
 los dos formatos (ver paso 8).
 
-**Nota sobre Brecha Digital y Hogares (métricas 1-12):** estas dos
+**Nota sobre Brecha Digital y Hogares (métricas 1-18):** estas dos
 categorías se rediseñaron para no depender de tecnología como eje fijo
 (antes, "Pobreza", "Territorio" y "Hogar y demografía" eran en realidad
 variaciones de "tema X según tenencia de streaming/celular" — un sesgo
@@ -458,7 +458,74 @@ alguna métrica de estos dos bloques):
   hacinamiento, razón de dependencia demográfica:
   https://statistics.cepal.org/portal/cepalstat/
 
-**Nota sobre FIES (métricas 23-29), si el usuario las elige:** el archivo
+**Nota sobre Territorio (métricas 19-21), si el usuario las elige:** el
+índice de desarrollo territorial (`analysis.indice_desarrollo_territorial`)
+combina pobreza, empleo, precariedad de vivienda y estrato socioeconómico
+por departamento en un único indicador — el criterio que distingue una
+métrica "territorial de verdad" de simplemente cortar otra tasa por
+departamento (eso ya se hace, disperso, en Hogares/Empleo/Seguridad).
+
+- Los cuatro componentes se calculan sobre la base **nacional** de hogares
+  (`analysis.pct_pobres_por`, la tasa de empleo por departamento de
+  `tasas_actividad_empleo_desempleo_por`, `analysis.precariedad_estructural_por`
+  con `preprocessing.decode_condiciones_vivienda`, y
+  `analysis.estrato_promedio_por`), nunca sobre `hogares_extendido`
+  (que está filtrada a Montevideo). Esto aplica **aunque el usuario no haya
+  elegido el bloque "Vivienda"** — la base de hogares nacional ya está
+  cargada de todas formas, así que el componente de precariedad estructural
+  del índice territorial no depende de esa elección.
+- Normalizá con `indice_desarrollo_territorial(componentes, invertir=[...])`
+  — pasale la lista de columnas donde "más alto es peor" (pobreza,
+  precariedad) para que se inviertan antes de promediar.
+- Fuentes consultadas para diseñar esta categoría (agregalas también a
+  "Fuentes de consulta para alineación de métricas" si el informe incluye
+  alguna de estas 3 métricas):
+  - Rodríguez Miranda, A.; Vial Cossani, C.; Centurión, I.; Pérez
+    Fernández, M. — "Índice de Desarrollo Regional Uruguay 2006-2022
+    (IDERE-UY)", IECON-FCEA/UdelaR, financiado por ANII (Fondo María
+    Viñas), 2024: https://ideas.repec.org/p/ulr/wpaper/dt-01-24.html
+  - CEPAL/ILPES — "Panorama del desarrollo territorial de América Latina y
+    el Caribe" (índice de desarrollo regional):
+    https://www.cepal.org/es/publicaciones/tipos/panorama-desarrollo-territorial-america-latina-caribe
+  - CEPAL — "Guía metodológica para el diseño de indicadores compuestos de
+    desarrollo sostenible", 2009:
+    https://repositorio.cepal.org/handle/11362/3663
+
+**Nota sobre Vivienda (métricas 22-26), si el usuario las elige:** las
+métricas de esta categoría se rediseñaron para no depender de la tenencia
+de tecnología (antes comparaban condiciones estructurales "según acceso a
+celular/streaming/internet" — el mismo sesgo que motivó el rediseño de
+Brecha Digital y Hogares). Ahora usan un índice de conteo de carencias
+("≥1 carencia estructural = vivienda deficitaria"), calculado con
+`analysis.precariedad_estructural`/`precariedad_estructural_por` sobre
+`preprocessing.decode_condiciones_vivienda` (base nacional, no
+`hogares_extendido`).
+
+- **La cantidad de carencias disponibles cambia según el año** (12 en
+  2019, solo 4 desde 2024 — ver `config.CONDICIONES_VIVIENDA_COLUMNS_CSV`).
+  Las funciones ya manejan esto solas (usan las columnas presentes), pero
+  **si el informe compara 2019 con otro año**, aclará en el texto que la
+  tasa de precariedad no es directamente comparable entre años con
+  distinta cantidad de carencias evaluadas — un hogar de 2019 tiene más
+  "oportunidades" de sumar al menos una carencia que uno de 2024, aunque
+  su vivienda esté igual de bien. No hace falta esa aclaración si el
+  informe es de un solo año.
+- Fuentes consultadas para diseñar esta categoría (agregalas también a
+  "Fuentes de consulta para alineación de métricas" si el informe incluye
+  alguna de estas 5 métricas):
+  - UN-Habitat/UNSD — Metadatos del indicador SDG 11.1.1 ("durability of
+    housing"), 2020: https://unhabitat.org/sites/default/files/2020/06/metadata_on_sdg_indicator_11.1.1.pdf
+  - Bramati, M. et al. — "Introducing the Adequate Housing Index (AHI)",
+    World Bank Policy Research Working Paper 9830, 2021:
+    https://documents.worldbank.org/en/publication/documents-reports/documentdetail/936291631846076967
+  - INE Uruguay, FCS-UdelaR, IECON, MIDES (coord. Calvo, J.J.) — "Atlas
+    Sociodemográfico y de la Desigualdad del Uruguay", Fascículo 1 (NBI),
+    2013: https://www.ine.gub.uy/atlas-sociodemografico-y-de-la-desigualdad-del-uruguay
+  - CELADE/CEPAL — déficit habitacional cualitativo vs. cuantitativo;
+    Arriagada, C. — "Perfil de déficit y políticas de vivienda de interés
+    social", CEPAL, 2003: https://repositorio.cepal.org/handle/11362/5711
+
+**Nota sobre FIES (métricas 27-33), si el usuario las elige:** el archivo
 `base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
 año (para 2024, ~32% de los hogares) — cualquier texto que describa estos
 resultados tiene que aclarar eso en una frase simple ("esto se calculó
@@ -470,7 +537,7 @@ e `inseguridad_alimentaria_por` en `analysis.py`) — nunca por conteo simple
 de filas, y nunca por el ponderador general de la encuesta (`w` de FIES es
 distinto del ponderador de Hogares/Personas).
 
-**Nota sobre Empleo (métricas 30-37), si el usuario las elige** (solo se
+**Nota sobre Empleo (métricas 34-41), si el usuario las elige** (solo se
 ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
 
 - Los cálculos ya vienen ponderados mes a mes y promediados entre los 12
@@ -501,7 +568,7 @@ ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
     Uruguay" — La Mañana:
     https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
 
-**Nota sobre Seguridad y Victimización (métricas 38-44), si el usuario las
+**Nota sobre Seguridad y Victimización (métricas 42-48), si el usuario las
 elige:**
 
 - **El período de referencia es "el mes anterior a la entrevista", no el
@@ -518,8 +585,8 @@ elige:**
   de ESE delito (`victimizado == True`) — filtrá antes de usarlas.
 - `violencia` no existe para Estafa ni para Robo o asalto fuera de la
   vivienda (esos dos tipos no tienen esa sub-pregunta en el cuestionario,
-  no es un error de carga) — la métrica 47 solo aplica a los otros tres
-  tipos.
+  no es un error de carga) — la métrica 48 ("Casos con violencia por tipo
+  de delito") solo aplica a los otros tres tipos.
 - La variable `v1` (percepción de seguridad en el barrio) sigue sin
   diccionario de valores publicado por el INE — se confirmó revisando la
   variable directo en el catálogo (categorías vacías) — sigue sin estar en
@@ -556,20 +623,22 @@ método — parate y volvé a este proceso:
      el paso 3.5. **Nunca las generes solo "porque siempre se hizo así"**
      — son contenido de Brecha Digital como cualquier otra métrica del
      catálogo, y por eso mismo dependen de que ese bloque se haya elegido.
-   - **Distribución por barrio**: solo si se eligió "Brecha Digital" o
-     "Territorio" (la usan las dos — la métrica 13 del catálogo, "Suscripción
-     a TV cable por barrio", reutiliza esta sección en vez de repetirla).
+   - **Distribución por barrio**: solo si se eligió "Brecha Digital" (la
+     métrica 7 del catálogo, "Suscripción a TV cable por barrio", reutiliza
+     esta sección en vez de repetirla). "Territorio" ya no tiene ninguna
+     métrica de tecnología — su índice de desarrollo territorial es
+     infraestructura propia, no depende de esta sección.
    - Después de esas secciones (las que correspondan), una celda de
      markdown (pregunta guía + justificación del tipo de gráfica) y una de
      código por cada métrica que el usuario eligió del catálogo del paso 4,
      en ese orden, llamando directo a las funciones que ya identificaste en
      el paso 1.
 
-   Si el usuario no eligió ni "Brecha Digital" ni "Territorio", el
-   notebook arranca directo de Preparación de datos a las métricas
-   elegidas — sin panorama general, sin distribución por barrio, sin
-   composición de hogares. Un informe sobre Empleo y Seguridad, por
-   ejemplo, no tiene por qué mencionar TV cable en ningún lado.
+   Si el usuario no eligió "Brecha Digital", el notebook arranca directo
+   de Preparación de datos a las métricas elegidas — sin panorama
+   general, sin distribución por barrio, sin composición de hogares. Un
+   informe sobre Empleo y Seguridad, por ejemplo, no tiene por qué
+   mencionar TV cable en ningún lado.
 
    **La ruta es siempre exactamente
    `notebooks/Informe_ECH_{año}.ipynb`** (el año elegido en el paso 1, sin
@@ -656,14 +725,14 @@ puntuales. Un notebook que termina con algo como "(se completa después)"
 no está terminado — no lo entregues así.
 
 **Si el informe incluye alguna categoría de métricas cuyo diseño se basó en
-fuentes externas** (Brecha Digital, Hogares, Empleo y Seguridad y
-Victimización — ver la lista de fuentes de cada una más abajo), agregá al
-final del "Resumen analítico final" una sección corta llamada **"Fuentes
-de consulta para alineación de métricas"**, con esas fuentes en una lista
-simple (título + link) — solo las de los bloques que el informe termine
-incluyendo, no todas de memoria. No hace falta para Territorio, Vivienda
-ni FIES, que salen directo de la metodología original del proyecto, no de
-investigación externa nueva.
+fuentes externas** (Brecha Digital, Hogares, Territorio, Vivienda, Empleo y
+Seguridad y Victimización — ver la lista de fuentes de cada una más abajo),
+agregá al final del "Resumen analítico final" una sección corta llamada
+**"Fuentes de consulta para alineación de métricas"**, con esas fuentes en
+una lista simple (título + link, o cita completa si no hay link) — solo
+las de los bloques que el informe termine incluyendo, no todas de memoria.
+No hace falta para FIES, que sale directo de la metodología original del
+proyecto, no de investigación externa nueva.
 
 Seguí el flujo de verificación completo de la sección 5 de
 `docs/METODOLOGIA.md` (tests, ejecución completa, chequeo de errores,
@@ -713,7 +782,7 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
 
    Si de verdad hace falta código nuevo, escribilo **una sola vez, bien**,
    basándote en el patrón de una función parecida que ya exista (ej.
-   `condiciones_vivienda_por`, `tasas_actividad_empleo_desempleo_por`) — no lo escribas
+   `precariedad_estructural_por`, `tasas_actividad_empleo_desempleo_por`) — no lo escribas
    a los tumbos, corrigiendo y volviendo a correr `pytest` en un ciclo de
    prueba y error. Si te encontrás editando el mismo archivo de test tres
    o cuatro veces seguidas, pará: significa que no leíste bien el patrón
@@ -845,7 +914,7 @@ compuerta de calidad antes de tocar ningún archivo permanente:
 1. Revisá que el código en `analysis.py` / `visualization.py` que
    sostiene esa métrica esté generalizado y prolijo — no atado a un caso
    puntual (ej. un departamento específico). Generalizalo si hace falta,
-   siguiendo el mismo criterio que ya usan `condiciones_vivienda_por`,
+   siguiendo el mismo criterio que ya usan `precariedad_estructural_por`,
    `tasas_actividad_empleo_desempleo_por`, `tipos_hogar_resumen`.
 2. Agregá la entrada correspondiente a `_CATEGORIAS_METRICAS` en
    `src/encuesta_hogares/formularios.py`, con el mismo formato que las
