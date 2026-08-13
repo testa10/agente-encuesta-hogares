@@ -10,6 +10,33 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.3.1] — 2026-08-13
+
+### Corregido (cambia los números de las métricas 7, 8, 9 y 10 — Brecha Digital)
+
+- **Suscripción a TV cable por barrio y por departamento (métricas 7-10)
+  se calculaban sin ponderar**, un descuido que el retrofit de la 0.3.0 no
+  había alcanzado a cubrir porque vivía en `preprocessing.py`
+  (`compute_penetracion_por_barrio`, `compute_penetracion_nacional`), no
+  en `analysis.py`. Verificado con datos reales de 2019: a nivel de todo
+  Montevideo el efecto es chico (60.9% sin ponderar → 60.85% ponderado,
+  la muestra grande ya compensaba bastante), pero a nivel de barrio —
+  donde la muestra por barrio es mucho más chica — la diferencia llega
+  hasta 2.87 puntos porcentuales (barrio Manga), suficiente para mover a
+  un barrio de un nivel de suscripción a otro en la clasificación por
+  cuartiles (métrica 8).
+
+### Agregado
+
+- `encuesta_hogares.verificacion_ponderacion`: chequeo automático (corre
+  en cada `pytest`) que recorre `analysis.py` y `preprocessing.py`
+  buscando cálculos estadísticos "crudos" (`.mean()`, `.median()`,
+  `.value_counts()` fuera de los helpers ya ponderados) que no estén
+  documentados como excepción legítima en su `ALLOWLIST`. Encontrar el
+  bug de arriba mientras se armaba esta verificación fue la prueba de que
+  hacía falta: una revisión manual completa ya se había hecho una vez
+  (0.3.0) y aun así no lo detectó.
+
 ## [0.3.0] — 2026-08-13
 
 ### Cambiado (cambia los números de casi todas las métricas de Hogares — impacta la comparación con informes generados antes de esta versión)

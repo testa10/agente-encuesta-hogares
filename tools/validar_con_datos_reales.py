@@ -95,6 +95,14 @@ def validar_anio(anio: str) -> None:
     brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
     assert visualization.plot_brecha_digital(brecha) is not None
 
+    penetracion_barrio = preprocessing.compute_penetracion_por_barrio(hogares_mdeo)
+    assert penetracion_barrio["pct_abonados"].between(0, 100).all()
+    print(f"Penetración por barrio: OK ({len(penetracion_barrio)} barrios, ponderado)")
+
+    penetracion_nacional = preprocessing.compute_penetracion_nacional(hogares)
+    assert penetracion_nacional["pct_cable"].between(0, 100).all()
+    print(f"Penetración nacional por departamento: OK ({len(penetracion_nacional)} departamentos, ponderado)")
+
     # --- Hogares: composición vía Personas, requiere el merge completo ---
     tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
     resumen_tipos = analysis.tipos_hogar_resumen(tipo_hogar)

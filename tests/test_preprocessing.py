@@ -1,5 +1,6 @@
 import pandas as pd
 
+from encuesta_hogares import config
 from encuesta_hogares.preprocessing import (
     classify_edad_grupo,
     classify_nivel_economico,
@@ -10,6 +11,7 @@ from encuesta_hogares.preprocessing import (
     compute_hacinamiento,
     compute_indice_acceso_digital,
     compute_penetracion_nacional,
+    compute_penetracion_por_barrio,
     decode_condiciones_vivienda,
     decode_si_no,
     melt_delitos,
@@ -249,19 +251,41 @@ def test_prepare_hogares_montevideo_ignora_mayusculas():
     assert sorted(resultado["id_hogar"].tolist()) == [1, 2]
 
 
-def test_compute_penetracion_nacional():
+def test_compute_penetracion_nacional_pondera_por_ponderador_hogar():
     hogares = pd.DataFrame(
         {
             "id_hogar": [1, 2, 3, 4],
             "departamento": ["MONTEVIDEO", "MONTEVIDEO", "SALTO", "SALTO"],
             "tipo_abonado": [1.0, 2.0, 1.0, 1.0],
+            "ponderador_hogar": [100.0, 300.0, 50.0, 150.0],
         }
     )
     resumen = compute_penetracion_nacional(hogares)
     salto = resumen[resumen["departamento"] == "SALTO"].iloc[0]
     mdeo = resumen[resumen["departamento"] == "MONTEVIDEO"].iloc[0]
+    # Sin ponderar, Montevideo daría 50% (1 de 2 hogares) - ponderado, el
+    # hogar sin cable pesa el triple, baja a 25%.
+    assert mdeo["pct_cable"] == 25.0
     assert salto["pct_cable"] == 100.0
-    assert mdeo["pct_cable"] == 50.0
+    assert mdeo["total_hogares"] == 2  # tamaño de muestra, sin ponderar a propósito
+
+
+def test_compute_penetracion_por_barrio_pondera_por_ponderador_hogar():
+    hogares_mdeo = pd.DataFrame(
+        {
+            "id_hogar": list(range(1, 11)),
+            "barrio": ["A", "A", "B", "B", "C", "C", "D", "D", "E", "E"],
+            "tipo_abonado": [1.0, 2.0, 1.0, 1.0, 2.0, 2.0, 1.0, 2.0, 1.0, 2.0],
+            "ponderador_hogar": [10.0, 30.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 30.0, 10.0],
+        }
+    )
+    resumen = compute_penetracion_por_barrio(hogares_mdeo)
+    barrio_a = resumen[resumen["barrio"] == "A"].iloc[0]
+    # Sin ponderar, el barrio A daría 50% (1 de 2 hogares) - ponderado, el
+    # hogar sin cable pesa el triple, baja a 25%.
+    assert barrio_a["pct_abonados"] == 25.0
+    assert barrio_a["total_hogares"] == 2  # tamaño de muestra, sin ponderar a propósito
+    assert set(resumen["nivel_suscripcion"].dropna().unique()) <= set(config.NIVEL_SUSCRIPCION_LABELS)
 
 
 def test_prepare_fies_clasifica_por_umbral_y_etiqueta_region():

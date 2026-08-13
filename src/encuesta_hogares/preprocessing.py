@@ -38,14 +38,25 @@ def prepare_hogares_montevideo(hogares: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_penetracion_por_barrio(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
-    """Calcula el % de hogares con cable por barrio y su nivel de suscripción (por cuartiles)."""
+    """% PONDERADO (por `ponderador_hogar`) de hogares con cable por barrio,
+    y su nivel de suscripción (por cuartiles). `total_hogares` sí queda sin
+    ponderar a propósito — es el tamaño de muestra real detrás de cada
+    barrio, no un valor representativo de población (mismo criterio que
+    `analysis.resumen_conectividad`).
+    """
+    df = hogares_mdeo.copy()
+    df["_abonado_pond"] = df["ponderador_hogar"].where(df["tipo_abonado"] == 1.0, 0.0)
     resumen = (
-        hogares_mdeo.groupby("barrio")
-        .agg(total_hogares=("id_hogar", "count"), pct_abonados=("tipo_abonado", lambda s: (s == 1.0).mean() * 100))
-        .round(2)
+        df.groupby("barrio")
+        .agg(
+            total_hogares=("id_hogar", "count"),
+            _total_pond=("ponderador_hogar", "sum"),
+            _abonado_pond=("_abonado_pond", "sum"),
+        )
         .reset_index()
-        .sort_values("pct_abonados", ascending=False)
     )
+    resumen["pct_abonados"] = (resumen["_abonado_pond"] / resumen["_total_pond"] * 100).round(2)
+    resumen = resumen.drop(columns=["_total_pond", "_abonado_pond"]).sort_values("pct_abonados", ascending=False)
 
     resumen["nivel_suscripcion"] = pd.qcut(
         resumen["pct_abonados"], q=4, labels=config.NIVEL_SUSCRIPCION_LABELS
@@ -327,13 +338,21 @@ def compute_indice_acceso_digital(df_extendido: pd.DataFrame) -> pd.Series:
 
 
 def compute_penetracion_nacional(hogares: pd.DataFrame) -> pd.DataFrame:
-    """% de hogares con TV cable por departamento, para todo el país (sin filtrar a Montevideo)."""
+    """% PONDERADO (por `ponderador_hogar`) de hogares con TV cable por
+    departamento, para todo el país (sin filtrar a Montevideo).
+    `total_hogares` sí queda sin ponderar a propósito — ver
+    `compute_penetracion_por_barrio`.
+    """
     df = hogares.copy()
-    df["tiene_cable"] = df["tipo_abonado"] == 1.0
+    df["_abonado_pond"] = df["ponderador_hogar"].where(df["tipo_abonado"] == 1.0, 0.0)
     resumen = (
         df.groupby("departamento")
-        .agg(total_hogares=("id_hogar", "count"), pct_cable=("tiene_cable", "mean"))
+        .agg(
+            total_hogares=("id_hogar", "count"),
+            _total_pond=("ponderador_hogar", "sum"),
+            _abonado_pond=("_abonado_pond", "sum"),
+        )
         .reset_index()
     )
-    resumen["pct_cable"] = (resumen["pct_cable"] * 100).round(2)
-    return resumen.sort_values("pct_cable", ascending=False)
+    resumen["pct_cable"] = (resumen["_abonado_pond"] / resumen["_total_pond"] * 100).round(2)
+    return resumen.drop(columns=["_total_pond", "_abonado_pond"]).sort_values("pct_cable", ascending=False)

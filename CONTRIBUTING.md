@@ -16,6 +16,12 @@ código, ya sea una persona o una sesión de Claude Code.
      expansión muestral del INE — nunca `.mean()`/`.median()` simple. Usá
      los helpers ya armados (`analysis.pct_ponderado`,
      `media_ponderada_por`, `proporcion_ponderada`, `mediana_ponderada`).
+     Un test (`test_verificacion_ponderacion.py`) revisa automáticamente
+     `analysis.py`/`preprocessing.py` buscando este descuido — si agregás
+     una función nueva que usa `.mean()`/`.median()`/`.value_counts()` sin
+     pasar por esos helpers, el test va a fallar hasta que la pondere o
+     documentes por qué no aplica (ver
+     `encuesta_hogares.verificacion_ponderacion.ALLOWLIST`).
    - **Toda métrica lleva su gráfica**, sin excepción — ni un número
      suelto ni una tabla haciendo de gráfica.
    - **Toda justificación de gráfica cita la fuente** (principio de
