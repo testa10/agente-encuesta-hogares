@@ -388,13 +388,25 @@ UMBRAL_FIES = 0.5
 
 
 def empleo_files(anio: int | str) -> list[Path]:
-    """Los 12 archivos mensuales `ECH_{MM}_{AA}.csv` de un año determinado,
-    ordenados de enero a diciembre. `anio` es el año completo (ej. 2024); el
-    archivo usa los últimos dos dígitos en el nombre.
+    """Los 12 archivos mensuales de un año determinado, ordenados de enero a
+    diciembre. `anio` es el año completo (ej. 2024).
+
+    El patrón de nombre cambió entre años: hasta 2024 el INE usa los
+    últimos dos dígitos del año (`ECH_01_24.csv`); desde 2025 usa el año
+    completo (`ECH_01_2025.csv`) — verificado contra los archivos reales
+    que bajó el INE para 2025, no una suposición. Se prueba el patrón
+    largo primero y se usa si existe en disco; si no, se cae al patrón
+    corto (exista o no todavía — así un año recién creado, sin descargar,
+    sigue mostrando un nombre de archivo esperado en vez de romper).
     """
     carpeta = DATA_DIR / str(anio)
     sufijo_anio = str(anio)[-2:]
-    return [carpeta / f"ECH_{mes:02d}_{sufijo_anio}.csv" for mes in range(1, 13)]
+    archivos = []
+    for mes in range(1, 13):
+        patron_largo = carpeta / f"ECH_{mes:02d}_{anio}.csv"
+        patron_corto = carpeta / f"ECH_{mes:02d}_{sufijo_anio}.csv"
+        archivos.append(patron_largo if patron_largo.exists() else patron_corto)
+    return archivos
 
 
 # Para mostrarle el mes (columna `mes`, 1-12) a un lector en vez del número

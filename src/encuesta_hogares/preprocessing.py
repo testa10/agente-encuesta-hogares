@@ -167,9 +167,13 @@ def prepare_fies(fies: pd.DataFrame) -> pd.DataFrame:
 def prepare_empleo(empleo: pd.DataFrame) -> pd.DataFrame:
     """Mapea la condición de actividad (POBPCOAC) a las mismas categorías
     que ya usa Hogares/Personas de 2019 (Ocupados/Desocupados/Inactivos), y
-    decodifica INFORMAL/SUBEMPLEO a booleano.
+    decodifica INFORMAL/SUBEMPLEO a booleano, si esas columnas llegaron
+    (`INFORMAL` desapareció de los archivos desde 2025 — verificado contra
+    los datos reales — así que `es_informal` directamente no está en el
+    resultado para esos años; cualquier métrica de informalidad va a fallar
+    ahí con un error claro, en vez de antes con un dato inventado).
 
-    Ojo: esas dos últimas columnas solo tienen sentido para quien está en
+    Ojo: esas dos columnas solo tienen sentido para quien está en
     condicion_actividad == "Ocupados" — para cualquier otro caso el 0 no
     significa "formal" ni "sin subempleo", significa "no aplica" (verificado
     contra los datos reales: INFORMAL=1 y SUBEMPLEO=1 nunca aparecen fuera
@@ -178,8 +182,10 @@ def prepare_empleo(empleo: pd.DataFrame) -> pd.DataFrame:
     """
     df = empleo.copy()
     df["condicion_actividad"] = df["condicion_actividad_cod"].map(config.POBPCOAC_GRUPOS)
-    df["es_informal"] = df["es_informal"] == 1
-    df["es_subempleo"] = df["es_subempleo"] == 1
+    if "es_informal" in df.columns:
+        df["es_informal"] = df["es_informal"] == 1
+    if "es_subempleo" in df.columns:
+        df["es_subempleo"] = df["es_subempleo"] == 1
     df["sexo_grupo"] = classify_sexo(df["sexo"])
     es_joven = df["edad"].between(config.EDAD_JOVEN_MIN, config.EDAD_JOVEN_MAX)
     df["grupo_edad_laboral"] = es_joven.map({True: "Joven (14-24)", False: "Resto"})

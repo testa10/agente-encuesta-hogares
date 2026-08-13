@@ -324,6 +324,25 @@ def test_prepare_empleo_mapea_actividad_sexo_y_edad():
     assert resultado["grupo_edad_laboral"].tolist() == ["Joven (14-24)", "Resto", "Joven (14-24)"]
 
 
+def test_prepare_empleo_tolera_es_informal_ausente():
+    # INFORMAL desaparecio de los archivos mensuales desde 2025 (verificado
+    # contra datos reales) - prepare_empleo no tiene que romper si esa
+    # columna nunca llego. es_subempleo si esta en este caso, para probar
+    # que cada columna se maneja de forma independiente.
+    df = pd.DataFrame(
+        {
+            "condicion_actividad_cod": [2.0, 3.0],
+            "es_subempleo": [0, 0],
+            "sexo": [1, 2],
+            "edad": [20, 40],
+        }
+    )
+    resultado = prepare_empleo(df)
+    assert "es_informal" not in resultado.columns
+    assert resultado["es_subempleo"].tolist() == [False, False]
+    assert resultado["condicion_actividad"].tolist() == ["Ocupados", "Desocupados"]
+
+
 def test_prepare_victimizacion_marca_victimizado_algun_delito():
     df = pd.DataFrame(
         {

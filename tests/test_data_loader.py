@@ -56,6 +56,34 @@ def test_load_empleo_concatena_los_12_meses_y_renombra(tmp_path, monkeypatch):
     assert "edad" in df.columns
 
 
+def test_load_empleo_tolera_columnas_faltantes(tmp_path, monkeypatch):
+    # INFORMAL/SECTOR_F/SIT_OCUP desaparecieron de los archivos mensuales
+    # desde 2025 (verificado contra los datos reales que bajo el INE) -
+    # load_empleo no tiene que romper por eso, solo no traer esas columnas.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    valores = {
+        "ID": "1", "nper": "1", "mes": "1", "nom_dpto": "MONTEVIDEO", "e26": "1", "e27": "30",
+        "POBPCOAC": "2", "SIT_OCUP": "Empleado", "SECTOR_F": "Formal",
+        "NIV_EDU": "1. CB incompleto o menos", "INFORMAL": "0", "SUBEMPLEO": "0", "W": "150.5",
+    }
+    columnas_2025 = [c for c in config.EMPLEO_COLUMNS if c not in ("INFORMAL", "SECTOR_F", "SIT_OCUP")]
+    encabezado = ",".join(columnas_2025)
+    for mes in range(1, 13):
+        valores["mes"] = str(mes)
+        fila = ",".join(valores[c] for c in columnas_2025)
+        (carpeta / f"ECH_{mes:02d}_2025.csv").write_text(f"{encabezado}\n{fila}\n")
+
+    df = load_empleo(2025)
+
+    assert len(df) == 12
+    assert "es_informal" not in df.columns
+    assert "situacion_ocupacional" not in df.columns
+    assert "sector_formalidad" not in df.columns
+    assert "es_subempleo" in df.columns
+
+
 def test_load_hogares_personas_csv_corrige_departamento_mal_codificado(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     carpeta = tmp_path / "2030"

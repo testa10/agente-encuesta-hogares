@@ -111,14 +111,26 @@ def load_empleo(anio: int | str) -> pd.DataFrame:
     `mes` conservada — necesaria para calcular cada métrica mes a mes y
     recién ahí promediar entre los 12 (ver nota metodológica en config.py).
     Nunca se pierde de qué mes vino cada fila.
+
+    No todos los años tienen las mismas columnas — `INFORMAL`, `SECTOR_F`
+    y `SIT_OCUP` desaparecieron de los archivos desde 2025 (verificado
+    contra los datos reales que bajó el INE, no una suposición). Se pide
+    a cada archivo solo las columnas de `config.EMPLEO_COLUMNS` que de
+    verdad estén presentes en ese archivo puntual — mismo criterio que
+    `preprocessing.decode_condiciones_vivienda` para Hogares — en vez de
+    romper toda la carga por columnas que faltan. Las métricas que
+    dependan de una columna ausente para el año elegido van a fallar
+    recién ahí, con un error claro sobre qué falta — no antes, y no con
+    un dato inventado.
     """
     columnas_originales = list(config.EMPLEO_COLUMNS)
     # encoding="latin1": mismos archivos fuente que el CSV combinado de
     # Hogares/Personas, con el mismo problema de codificación de acentos.
-    meses = [
-        pd.read_csv(archivo, usecols=columnas_originales, encoding="latin1")
-        for archivo in config.empleo_files(anio)
-    ]
+    meses = []
+    for archivo in config.empleo_files(anio):
+        columnas_presentes = set(pd.read_csv(archivo, nrows=0, encoding="latin1").columns)
+        columnas_a_pedir = [c for c in columnas_originales if c in columnas_presentes]
+        meses.append(pd.read_csv(archivo, usecols=columnas_a_pedir, encoding="latin1"))
     df = pd.concat(meses, ignore_index=True).rename(columns=config.EMPLEO_COLUMNS)
     df["departamento"] = df["departamento"].map(fix_doble_codificacion)
     return df

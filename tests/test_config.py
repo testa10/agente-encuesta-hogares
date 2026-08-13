@@ -70,6 +70,25 @@ def test_empleo_files_devuelve_los_12_meses_en_orden(tmp_path, monkeypatch):
     assert archivos[11].name == "ECH_12_24.csv"
 
 
+def test_empleo_files_reconoce_el_patron_de_nombre_2025_en_adelante(tmp_path, monkeypatch):
+    # Desde 2025 el INE nombra los archivos mensuales con el año completo
+    # (ECH_01_2025.csv) en vez de los dos ultimos digitos (ECH_01_25.csv) -
+    # verificado contra los archivos reales que bajo el INE, no una
+    # suposicion. empleo_files() tiene que preferir el patron que
+    # realmente existe en disco.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    for mes in range(1, 13):
+        (carpeta / f"ECH_{mes:02d}_2025.csv").write_text("ID\n1\n")
+
+    archivos = config.empleo_files(2025)
+    assert len(archivos) == 12
+    assert archivos[0].name == "ECH_01_2025.csv"
+    assert archivos[11].name == "ECH_12_2025.csv"
+    assert all(a.exists() for a in archivos)
+
+
 def test_meses_labels_cubre_los_12_meses_sin_huecos():
     assert set(config.MESES_LABELS) == set(range(1, 13))
     assert config.MESES_LABELS[1] == "Enero"
