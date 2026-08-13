@@ -373,6 +373,19 @@ mismo formulario o preguntale por chat si quiere terminar acá — nunca
 generes un informe vacío ni le agregues un bloque "porque total algo hay
 que mostrar".
 
+**Si "empleo" quedó entre las áreas elegidas, corré
+`verificacion_catalogo.aviso_metricas_no_disponibles(anio)` antes de
+mostrar el catálogo del paso 4.** Nace de un caso real: en 2025 el INE
+dejó de publicar las columnas que sostienen la métrica 40 (situación
+ocupacional por sector), y nadie se enteraba hasta que la corrida
+reventaba a mitad de camino, después de que la persona ya la había
+elegido. Si la función devuelve algo, contáselo por chat en un mensaje
+corto ANTES del formulario del catálogo (ej. "Para 2025 no va a estar
+disponible la métrica 40 — situación ocupacional por sector — porque el
+INE no publicó esas columnas este año.") — no hace falta que el
+formulario en sí la oculte, alcanza con que la persona lo sepa antes de
+marcarla y se lleve una sorpresa después.
+
 ### 4. Catálogo de métricas: elegir qué va en el informe
 
 **Nada se genera por defecto — ni siquiera los bloques que la persona ya
@@ -981,6 +994,12 @@ compuerta de calidad antes de tocar ningún archivo permanente:
    `test_verificacion_catalogo.py` lo va a marcar como métrica huérfana
    en la próxima corrida de `pytest`, así que hacela ahora en vez de
    dejar que otra persona la encuentre después.
+   - **Si la métrica depende de una columna que ya viste variar entre
+     años del INE** (pasó de verdad: `INFORMAL`/`SECTOR_F`/`SIT_OCUP`
+     desaparecieron de Empleo desde 2025), sumale también una entrada en
+     `verificacion_catalogo.COLUMNAS_REQUERIDAS` — así el aviso del paso
+     3.5 la cubre para años futuros que tengan el mismo problema. No hace
+     falta para métricas sin ese antecedente.
 4. Agregá o completá los tests que falten — incluí al menos un test que
    ejercite la función con datos que representen el caso real que motivó
    la curación (no solo el caso sintético genérico), para que una

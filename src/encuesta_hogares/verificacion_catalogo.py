@@ -34,7 +34,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import analysis, formularios, preprocessing, visualization
+from . import analysis, config, formularios, preprocessing, visualization
+from .verificacion_estructura import columnas_csv
 
 _MODULOS = {"analysis": analysis, "preprocessing": preprocessing, "visualization": visualization}
 
@@ -155,3 +156,82 @@ def referencias_rotas() -> list[ReferenciaRota]:
             if _resolver(referencia) is None:
                 rotas.append(ReferenciaRota(numero, referencia))
     return rotas
+
+
+# ============================================================================
+# Disponibilidad por año: MANIFEST/referencias_rotas() verifica que el
+# CÓDIGO exista — esto verifica que los DATOS del año elegido tengan las
+# columnas que ese código necesita. Nace de un caso real: en 2025 el INE
+# dejó de publicar INFORMAL/SECTOR_F/SIT_OCUP en los archivos mensuales de
+# Empleo, y nada avisaba de eso hasta que la métrica correspondiente
+# reventaba a mitad de una corrida — después de que el usuario ya la había
+# elegido en el catálogo (paso 4). Este chequeo corre antes, con solo leer
+# el encabezado de un archivo (sin cargar los datos completos), para poder
+# avisar en el catálogo mismo en vez de con un traceback.
+#
+# Solo tiene entradas para métricas con un riesgo real y ya observado de
+# que su columna de origen varíe entre años — no las 47, para no acumular
+# un mapeo enorme que nadie mantiene. Si otro bloque tiene alguna vez el
+# mismo problema, sumale su entrada acá cuando pase, no antes.
+#
+# numero -> lista de "opciones": cada opción es una lista de columnas
+# CRUDAS (nombre tal cual viene en el archivo del INE, antes de
+# config.EMPLEO_COLUMNS) que alcanzan, todas juntas, para calcular esa
+# métrica. Basta con que UNA opción esté completa. Ej. informalidad
+# (36/37) tiene dos caminos posibles (INFORMAL directo, o f82 si no está
+# — ver preprocessing.prepare_empleo); situación ocupacional (40) por
+# ahora solo tiene un camino conocido.
+COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
+    36: [["INFORMAL"], ["f82"]],
+    37: [["INFORMAL"], ["f82"]],
+    40: [["SIT_OCUP", "SECTOR_F"]],
+}
+
+
+def metricas_no_disponibles(columnas_presentes: set[str]) -> dict[int, list[str]]:
+    """De `COLUMNAS_REQUERIDAS`, qué métricas no se pueden calcular con
+    `columnas_presentes` (las columnas crudas que de verdad trae el
+    archivo de un año — ver `metricas_empleo_no_disponibles` para
+    obtenerlas solas con leer el encabezado). Devuelve
+    `{número: columnas que le faltarían a la opción más cercana}` — solo
+    para las métricas donde NINGUNA opción está completa.
+    """
+    resultado = {}
+    for numero, opciones in COLUMNAS_REQUERIDAS.items():
+        if any(all(c in columnas_presentes for c in opcion) for opcion in opciones):
+            continue
+        mejor_opcion = min(opciones, key=lambda op: sum(1 for c in op if c not in columnas_presentes))
+        resultado[numero] = [c for c in mejor_opcion if c not in columnas_presentes]
+    return resultado
+
+
+def metricas_empleo_no_disponibles(anio: int | str) -> dict[int, list[str]]:
+    """Igual que `metricas_no_disponibles`, pero mirando directo los
+    archivos mensuales de Empleo de `anio` — solo lee el encabezado del
+    primer archivo que exista (los 12 deberían compartir estructura;
+    `verificacion_estructura.verificar_empleo` ya audita eso por
+    separado). Diccionario vacío si el año no tiene ningún archivo de
+    Empleo todavía, o si no falta nada.
+    """
+    primero = next((a for a in config.empleo_files(anio) if a.exists()), None)
+    if primero is None:
+        return {}
+    return metricas_no_disponibles(columnas_csv(primero))
+
+
+def aviso_metricas_no_disponibles(anio: int | str) -> list[str]:
+    """Mensajes ya redactados, uno por métrica de Empleo no disponible
+    para `anio` — para mostrarle al usuario ANTES de que elija el
+    catálogo (paso 4 de `.claude/agents/encuesta-hogares.md`), no después
+    de que la corrida falle. Lista vacía si no hay nada para avisar.
+    """
+    catalogo = numeros_del_catalogo()
+    avisos = []
+    for numero, faltantes in sorted(metricas_empleo_no_disponibles(anio).items()):
+        titulo = catalogo.get(numero, "?")
+        plural = "n" if len(faltantes) > 1 else ""
+        avisos.append(
+            f"Métrica {numero} — {titulo}: no disponible para este año, "
+            f"falta{plural} {', '.join(faltantes)} en los datos del INE."
+        )
+    return avisos

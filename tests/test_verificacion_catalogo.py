@@ -1,4 +1,4 @@
-from encuesta_hogares import verificacion_catalogo as vc
+from encuesta_hogares import config, verificacion_catalogo as vc
 
 
 def test_toda_metrica_del_catalogo_tiene_entrada_en_el_manifiesto():
@@ -52,3 +52,53 @@ def test_resolver_devuelve_none_para_una_referencia_inexistente():
             vc.MANIFEST[9999] = original
 
     assert any(r.numero == 9999 and r.referencia == "analysis.esta_funcion_no_existe" for r in rotas)
+
+
+def test_metricas_no_disponibles_acepta_cualquier_opcion_completa():
+    # Caso real 2025: falta INFORMAL pero esta f82 - la 36/37 tienen que
+    # quedar disponibles (segunda opcion completa), no marcadas.
+    columnas = {"ID", "nper", "mes", "POBPCOAC", "f82", "SUBEMPLEO", "W"}
+    no_disponibles = vc.metricas_no_disponibles(columnas)
+    assert 36 not in no_disponibles
+    assert 37 not in no_disponibles
+
+
+def test_metricas_no_disponibles_marca_metrica_sin_ninguna_opcion_completa():
+    # Caso real 2025: SIT_OCUP y SECTOR_F no estan, sin ningun camino
+    # alternativo conocido para la metrica 40.
+    columnas = {"ID", "nper", "mes", "POBPCOAC", "INFORMAL", "SUBEMPLEO", "W"}
+    no_disponibles = vc.metricas_no_disponibles(columnas)
+    assert 36 not in no_disponibles
+    assert set(no_disponibles[40]) == {"SIT_OCUP", "SECTOR_F"}
+
+
+def test_metricas_empleo_no_disponibles_lee_el_primer_archivo_existente(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    columnas_2025 = [c for c in config.EMPLEO_COLUMNS if c not in ("INFORMAL", "SECTOR_F", "SIT_OCUP")]
+    (carpeta / "ECH_01_2025.csv").write_text(",".join(columnas_2025) + "\n")
+
+    no_disponibles = vc.metricas_empleo_no_disponibles("2025")
+
+    assert 36 not in no_disponibles  # f82 esta en columnas_2025
+    assert set(no_disponibles[40]) == {"SIT_OCUP", "SECTOR_F"}
+
+
+def test_metricas_empleo_no_disponibles_vacio_si_no_hay_archivos(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    assert vc.metricas_empleo_no_disponibles("2030") == {}
+
+
+def test_aviso_metricas_no_disponibles_redacta_mensaje_legible(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    columnas_2025 = [c for c in config.EMPLEO_COLUMNS if c not in ("INFORMAL", "SECTOR_F", "SIT_OCUP")]
+    (carpeta / "ECH_01_2025.csv").write_text(",".join(columnas_2025) + "\n")
+
+    avisos = vc.aviso_metricas_no_disponibles("2025")
+
+    assert len(avisos) == 1
+    assert "Métrica 40" in avisos[0]
+    assert "SIT_OCUP" in avisos[0] and "SECTOR_F" in avisos[0]

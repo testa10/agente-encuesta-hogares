@@ -51,7 +51,7 @@ def comparar_columnas(esperadas: dict[str, str], presentes: set[str]) -> tuple[l
     return faltantes, no_mapeadas
 
 
-def _columnas_csv(path: Path) -> set[str]:
+def columnas_csv(path: Path) -> set[str]:
     return set(pd.read_csv(path, nrows=0, encoding="latin1").columns)
 
 
@@ -66,7 +66,7 @@ def verificar_hogares_personas(anio: int | str) -> list[ResultadoComparacion]:
     carpeta = config.DATA_DIR / str(anio)
     csv_path = config.hogares_csv_file(anio)
     if csv_path.exists():
-        presentes = _columnas_csv(csv_path)
+        presentes = columnas_csv(csv_path)
         faltantes, no_mapeadas = comparar_columnas(config.HOGARES_COLUMNS_CSV, presentes)
         resultados = [
             ResultadoComparacion(
@@ -107,7 +107,7 @@ def verificar_fies(anio: int | str) -> ResultadoComparacion | None:
     path = config.fies_file(anio)
     if not path.exists():
         return None
-    presentes = _columnas_csv(path)
+    presentes = columnas_csv(path)
     faltantes, no_mapeadas = comparar_columnas(config.FIES_COLUMNS, presentes)
     return ResultadoComparacion("FIES (seguridad alimentaria)", path, len(config.FIES_COLUMNS), faltantes, no_mapeadas)
 
@@ -118,7 +118,7 @@ def verificar_empleo(anio: int | str) -> list[ResultadoComparacion]:
     for path in config.empleo_files(anio):
         if not path.exists():
             continue
-        presentes = _columnas_csv(path)
+        presentes = columnas_csv(path)
         columnas_por_mes[path.name] = presentes
         faltantes, no_mapeadas = comparar_columnas(config.EMPLEO_COLUMNS, presentes)
         resultados.append(
@@ -150,7 +150,7 @@ def verificar_victimizacion(anio: int | str) -> ResultadoComparacion | None:
     path = config.victimizacion_file(anio)
     if not path.exists():
         return None
-    presentes = _columnas_csv(path)
+    presentes = columnas_csv(path)
     faltantes, no_mapeadas = comparar_columnas(config.VICTIMIZACION_COLUMNS, presentes)
     return ResultadoComparacion(
         "Seguridad y Victimización", path, len(config.VICTIMIZACION_COLUMNS), faltantes, no_mapeadas
