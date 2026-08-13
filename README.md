@@ -164,6 +164,19 @@ la corrida de referencia, el equivalente a unos 95 llamados a
 herramientas); que la terminal permanezca sin novedades visibles durante
 un rato prolongado es esperable, no indica un error.
 
+**Si te preocupa llegar al límite de uso de tu plan a mitad de una
+corrida larga, conviene no elegir los siete bloques de una sola vez.**
+Cada bloque temático (Brecha Digital, Hogares, Territorio, Vivienda,
+Seguridad Alimentaria, Empleo, Seguridad y Victimización) demora, por sí
+solo, entre 2 y 5 minutos. Es preferible generar el informe en varias
+corridas más chicas — uno o dos bloques por vez, encadenándolas con el
+botón "crear un nuevo informe" del Paso 7 — en vez de arriesgarse a que
+una corrida completa de 25 a 30 minutos se corte a mitad de camino por
+falta de uso disponible. Cada corrida produce su propio informe
+(notebook, HTML y PDF); si elegís bloques distintos en cada una, vas a
+terminar con varios informes parciales para el mismo año, no uno solo
+combinado.
+
 ## Paso 7: Revisar los resultados
 
 Se generan tres archivos nuevos en `notebooks/`, todos identificados con
