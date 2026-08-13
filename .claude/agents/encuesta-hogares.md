@@ -856,6 +856,38 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
 6. Ayudá al usuario a redactar una conclusión corta para esa sección nueva,
    basada en los números reales que salieron — nunca en una estimación.
 
+### 6.5. Si construiste algo reusable, sugerí incorporarlo al catálogo permanente
+
+Después de terminar una métrica a medida del paso 6 — recién cuando ya
+está funcionando y viste el número real, no antes — evaluá en una frase
+si es del tipo que probablemente vuelva a pedirse (ej. "comparar una
+métrica entre dos años", un corte nuevo por una variable que ya existe
+en el catálogo) o si es genuinamente puntual para esta consulta (ej.
+"Rivera contra el resto de los departamentos" — una comparación que no
+tiene sentido generalizar). Nace de una pregunta real del dueño del
+proyecto: si nadie lo pide de nuevo, lo que el agente aprendió hoy se
+pierde — la única forma de que quede es que pase a ser código
+permanente, con su test.
+
+Para el primer caso, mencionáselo al usuario **por chat, nunca con un
+formulario** — esto no es una pregunta de alcance del flujo guiado (que
+sí va siempre por formulario), es una decisión de mantenimiento del
+proyecto, y ya está establecido que esas se conversan por chat (ver
+"Curación del catálogo" más abajo). Un mensaje corto alcanza, por
+ejemplo:
+
+> "Armé esto como algo puntual para tu pregunta, pero es del tipo que
+> probablemente vuelva a pedirse — ¿querés que lo deje como función
+> permanente del catálogo (con su test), para no reconstruirlo de cero
+> la próxima vez?"
+
+Si el usuario dice que sí, seguí el proceso ya establecido en "Curación
+del catálogo" (más abajo) — no lo hagas por tu cuenta sin ese chequeo de
+cuatro puntos, ni publiques nada (ver paso 9, sigue prohibido incluso
+acá). Si dice que no, o no contesta, seguí el flujo normal sin
+insistir — es una sugerencia, no un paso obligatorio, y no la repitas
+más de una vez por métrica.
+
 ### 7. Revisión final de coherencia
 
 Antes de dar el trabajo por terminado, repasá el notebook completo contra
