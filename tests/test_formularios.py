@@ -1,4 +1,8 @@
 from encuesta_hogares.formularios import (
+    _CATEGORIA_EMPLEO,
+    _CATEGORIA_FIES,
+    _CATEGORIA_SEGURIDAD,
+    _CATEGORIAS_METRICAS,
     plantilla_areas,
     plantilla_arranque,
     plantilla_bienvenida,
@@ -7,6 +11,33 @@ from encuesta_hogares.formularios import (
     plantilla_finalizacion,
     plantilla_revision,
 )
+
+
+def _todas_las_metricas_del_catalogo():
+    """Todas las tuplas (numero, nombre, explicacion) del catálogo completo,
+    sin importar qué bloques elija el usuario en un informe puntual —
+    incluye los tres opcionales (FIES/Empleo/Seguridad).
+    """
+    metricas = []
+    for _titulo, lista in _CATEGORIAS_METRICAS.values():
+        metricas.extend(lista)
+    for _titulo, lista in (_CATEGORIA_FIES, _CATEGORIA_EMPLEO, _CATEGORIA_SEGURIDAD):
+        metricas.extend(lista)
+    return metricas
+
+
+def test_catalogo_esta_numerado_del_1_a_N_sin_huecos_ni_duplicados():
+    # Verificado a mano con grep+diff varias veces durante los rediseños de
+    # catálogo de esta sesión (huecos o duplicados en la numeración son un
+    # error real y fácil de cometer al renumerar a mano tras agregar/sacar
+    # una métrica) - mejor que sea un test permanente, no un chequeo manual.
+    numeros = sorted(numero for numero, _nombre, _explicacion in _todas_las_metricas_del_catalogo())
+    assert numeros == list(range(1, len(numeros) + 1))
+
+
+def test_catalogo_no_tiene_nombres_de_metrica_duplicados():
+    nombres = [nombre for _numero, nombre, _explicacion in _todas_las_metricas_del_catalogo()]
+    assert len(nombres) == len(set(nombres))
 
 
 def test_plantilla_bienvenida_pide_el_anio():

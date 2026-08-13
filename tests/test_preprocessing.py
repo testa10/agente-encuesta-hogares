@@ -302,11 +302,11 @@ def test_melt_delitos_arma_formato_largo_con_subpreguntas_correctas():
     largo = melt_delitos(df)
 
     fila_v3 = largo[largo["tipo_delito"] == "Robo total de vehículo"].iloc[0]
-    assert fila_v3["victimizado"] == True
-    assert fila_v3["comunicacion_policia"] == True
-    assert fila_v3["denuncia_formal"] == False
-    assert fila_v3["violencia"] == True
+    assert fila_v3["victimizado"]
+    assert fila_v3["comunicacion_policia"]
+    assert not fila_v3["denuncia_formal"]
+    assert fila_v3["violencia"]
 
     fila_v6 = largo[largo["tipo_delito"] == "Estafa"].iloc[0]
     # v6 (estafa) no tiene sub-pregunta de violencia en el cuestionario
-    assert fila_v6["violencia"] == False
+    assert not fila_v6["violencia"]

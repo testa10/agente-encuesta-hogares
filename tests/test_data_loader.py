@@ -1,5 +1,3 @@
-import pandas as pd
-
 from encuesta_hogares import config
 from encuesta_hogares.data_loader import (
     fix_doble_codificacion,

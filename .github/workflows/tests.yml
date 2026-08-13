@@ -3,7 +3,7 @@ name: Tests
 # Corre los tests en cada push y pull request contra main, para que un
 # cambio roto nunca llegue a main sin que alguien lo note primero.
 # No depende de datos reales del INE (data/ va vacio en un clone limpio,
-# ver .gitignore) - los 65 tests usan solo dataframes sinteticos.
+# ver .gitignore) - todos los tests usan solo dataframes sinteticos.
 
 on:
   push:
@@ -24,5 +24,8 @@ jobs:
       - name: Instalar dependencias
         run: pip install -e ".[dev]"
 
-      - name: Correr tests
-        run: pytest -q
+      - name: Lint (ruff)
+        run: ruff check src/ tests/ tools/
+
+      - name: Correr tests (con cobertura)
+        run: pytest -q --cov=encuesta_hogares --cov-report=term-missing

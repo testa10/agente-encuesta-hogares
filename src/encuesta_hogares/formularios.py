@@ -12,6 +12,8 @@ Las funciones `plantilla_*` arman el HTML de cada paso del flujo (ver
 .claude/agents/encuesta-hogares.md para cuándo se usa cada una).
 """
 
+from __future__ import annotations
+
 import http.server
 import json
 import re
@@ -483,10 +485,6 @@ async function elegir(accion) {{
 
 def plantilla_bienvenida(anio_sugerido: str = "") -> str:
     """Paso 1: bienvenida + selección del año."""
-    opcion_sugerida = (
-        f'<option value="{anio_sugerido}" selected>{anio_sugerido}</option>'
-        if anio_sugerido else ""
-    )
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <title>Encuesta Continua de Hogares — Agente de Análisis</title>
 <style>{_ESTILO}</style></head><body>

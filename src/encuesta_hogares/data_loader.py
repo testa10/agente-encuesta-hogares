@@ -17,6 +17,8 @@ ese es el momento de extraer la interfaz común, con dos changes reales
 como guía en vez de una imaginada.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import pandas as pd
