@@ -126,20 +126,6 @@ def plot_penetracion_por_barrio(penetracion_por_barrio: pd.DataFrame):
     return fig
 
 
-def plot_tabla_barrios(penetracion_por_barrio: pd.DataFrame, nivel: str, titulo: str):
-    subset = penetracion_por_barrio[penetracion_por_barrio["nivel_suscripcion"] == nivel]
-    fig = go.Figure(
-        data=[
-            go.Table(
-                header=dict(values=["Barrio", "% de Abonados"], fill_color="moccasin", align="left"),
-                cells=dict(values=[subset["barrio"], subset["pct_abonados"]], fill_color="lavender", align="left"),
-            )
-        ]
-    )
-    fig.update_layout(title=titulo, width=500, height=600, title_x=0.5, title_y=0.90)
-    return fig
-
-
 def plot_clasificacion_barrios(resumen: pd.DataFrame):
     """Barras: cantidad de barrios en cada nivel de suscripción. Es un
     conteo de categorías (no una distribución continua), por eso barras y

@@ -398,7 +398,7 @@ proponer una métrica propia. Guardá los dos datos de la respuesta
 Ya no se pregunta preferencia de PDF acá: el informe siempre se entrega en
 los dos formatos (ver paso 8).
 
-**Nota sobre Brecha Digital y Hogares (métricas 1-18):** estas dos
+**Nota sobre Brecha Digital y Hogares (métricas 1-17):** estas dos
 categorías se rediseñaron para no depender de tecnología como eje fijo
 (antes, "Pobreza", "Territorio" y "Hogar y demografía" eran en realidad
 variaciones de "tema X según tenencia de streaming/celular" — un sesgo
@@ -458,7 +458,7 @@ alguna métrica de estos dos bloques):
   hacinamiento, razón de dependencia demográfica:
   https://statistics.cepal.org/portal/cepalstat/
 
-**Nota sobre Territorio (métricas 19-21), si el usuario las elige:** el
+**Nota sobre Territorio (métricas 18-20), si el usuario las elige:** el
 índice de desarrollo territorial (`analysis.indice_desarrollo_territorial`)
 combina pobreza, empleo, precariedad de vivienda y estrato socioeconómico
 por departamento en un único indicador — el criterio que distingue una
@@ -491,7 +491,7 @@ departamento (eso ya se hace, disperso, en Hogares/Empleo/Seguridad).
     desarrollo sostenible", 2009:
     https://repositorio.cepal.org/handle/11362/3663
 
-**Nota sobre Vivienda (métricas 22-26), si el usuario las elige:** las
+**Nota sobre Vivienda (métricas 21-25), si el usuario las elige:** las
 métricas de esta categoría se rediseñaron para no depender de la tenencia
 de tecnología (antes comparaban condiciones estructurales "según acceso a
 celular/streaming/internet" — el mismo sesgo que motivó el rediseño de
@@ -525,7 +525,7 @@ Brecha Digital y Hogares). Ahora usan un índice de conteo de carencias
     Arriagada, C. — "Perfil de déficit y políticas de vivienda de interés
     social", CEPAL, 2003: https://repositorio.cepal.org/handle/11362/5711
 
-**Nota sobre FIES (métricas 27-33), si el usuario las elige:** el archivo
+**Nota sobre FIES (métricas 26-32), si el usuario las elige:** el archivo
 `base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
 año (para 2024, ~32% de los hogares) — cualquier texto que describa estos
 resultados tiene que aclarar eso en una frase simple ("esto se calculó
@@ -537,7 +537,7 @@ e `inseguridad_alimentaria_por` en `analysis.py`) — nunca por conteo simple
 de filas, y nunca por el ponderador general de la encuesta (`w` de FIES es
 distinto del ponderador de Hogares/Personas).
 
-**Nota sobre Empleo (métricas 34-41), si el usuario las elige** (solo se
+**Nota sobre Empleo (métricas 33-40), si el usuario las elige** (solo se
 ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
 
 - Los cálculos ya vienen ponderados mes a mes y promediados entre los 12
@@ -568,7 +568,7 @@ ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
     Uruguay" — La Mañana:
     https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
 
-**Nota sobre Seguridad y Victimización (métricas 42-48), si el usuario las
+**Nota sobre Seguridad y Victimización (métricas 41-47), si el usuario las
 elige:**
 
 - **El período de referencia es "el mes anterior a la entrevista", no el
@@ -585,7 +585,7 @@ elige:**
   de ESE delito (`victimizado == True`) — filtrá antes de usarlas.
 - `violencia` no existe para Estafa ni para Robo o asalto fuera de la
   vivienda (esos dos tipos no tienen esa sub-pregunta en el cuestionario,
-  no es un error de carga) — la métrica 48 ("Casos con violencia por tipo
+  no es un error de carga) — la métrica 47 ("Casos con violencia por tipo
   de delito") solo aplica a los otros tres tipos.
 - La variable `v1` (percepción de seguridad en el barrio) sigue sin
   diccionario de valores publicado por el INE — se confirmó revisando la

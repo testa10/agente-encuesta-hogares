@@ -156,7 +156,7 @@ esa métrica del informe.
 
 **Tras confirmar el catálogo, el proceso demora un tiempo considerable.**
 No es un cálculo instantáneo: el agente construye y revisa cada gráfica
-seleccionada, una por una. Como referencia (catálogo completo, las 48
+seleccionada, una por una. Como referencia (catálogo completo, las 47
 métricas de los siete bloques): **entre 25 y 30 minutos**. Seleccionar
 menos bloques o menos métricas reduce el tiempo proporcionalmente. Este
 proceso también consume una parte del uso disponible de Claude Code (en

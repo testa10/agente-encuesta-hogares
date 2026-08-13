@@ -33,7 +33,7 @@ def test_plantilla_catalogo_no_incluye_nada_por_defecto():
     assert 'value="1"' not in html
 
 
-def test_plantilla_catalogo_incluye_las_48_metricas_con_todos_los_bloques():
+def test_plantilla_catalogo_incluye_las_47_metricas_con_todos_los_bloques():
     html = plantilla_catalogo(
         incluir_brecha_digital=True,
         incluir_hogares=True,
@@ -43,7 +43,7 @@ def test_plantilla_catalogo_incluye_las_48_metricas_con_todos_los_bloques():
         incluir_empleo=True,
         incluir_seguridad=True,
     )
-    for numero in range(1, 49):
+    for numero in range(1, 48):
         assert f'value="{numero}"' in html
     # los 7 bloques
     assert "Brecha Digital" in html
@@ -63,9 +63,9 @@ def test_plantilla_catalogo_cada_bloque_base_es_independiente():
     assert "Brecha Digital" not in html_solo_hogares
     assert "Territorio" not in html_solo_hogares
     assert "Vivienda" not in html_solo_hogares
-    for numero in range(13, 19):
+    for numero in range(12, 18):
         assert f'value="{numero}"' in html_solo_hogares
-    for numero in [1, 12, 19]:
+    for numero in [1, 11, 18]:
         assert f'value="{numero}"' not in html_solo_hogares
 
 
@@ -150,26 +150,26 @@ def test_plantilla_arranque_ofrece_empezar_y_salir():
 def test_plantilla_catalogo_no_incluye_fies_por_defecto():
     html = plantilla_catalogo()
     assert "Seguridad alimentaria" not in html
-    assert 'value="27"' not in html
+    assert 'value="26"' not in html
 
 
 def test_plantilla_catalogo_incluye_fies_cuando_se_pide():
     html = plantilla_catalogo(incluir_fies=True)
     assert "Seguridad alimentaria" in html
-    for numero in range(27, 34):
+    for numero in range(26, 33):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_incluye_empleo_cuando_se_pide():
     html = plantilla_catalogo(incluir_empleo=True)
     assert "6 · Empleo" in html
-    for numero in range(34, 42):
+    for numero in range(33, 41):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_sin_empleo_por_defecto():
     html = plantilla_catalogo()
-    assert 'value="34"' not in html
+    assert 'value="33"' not in html
 
 
 def test_plantilla_areas_siempre_ofrece_los_cuatro_bloques_base():
@@ -204,10 +204,10 @@ def test_plantilla_areas_muestra_solo_lo_disponible():
 def test_plantilla_catalogo_incluye_seguridad_cuando_se_pide():
     html = plantilla_catalogo(incluir_seguridad=True)
     assert "Seguridad y victimización" in html
-    for numero in range(42, 49):
+    for numero in range(41, 48):
         assert f'value="{numero}"' in html
 
 
 def test_plantilla_catalogo_sin_seguridad_por_defecto():
     html = plantilla_catalogo()
-    assert 'value="42"' not in html
+    assert 'value="41"' not in html
