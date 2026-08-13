@@ -927,9 +927,20 @@ compuerta de calidad antes de tocar ningún archivo permanente:
      dataset.
    - Que ya pasó la revisión metodológica de la sección 2 de
      `docs/METODOLOGIA.md` (falacia ecológica, sesgo de mediador, celdas
-     chicas, etc.) — si no estás seguro de que se hizo o hace tiempo que
-     no se revisó contra el dataset actual, hacela de nuevo ahora, no la
-     des por hecha.
+     chicas, ponderación, etc.) — si no estás seguro de que se hizo o hace
+     tiempo que no se revisó contra el dataset actual, hacela de nuevo
+     ahora, no la des por hecha.
+   - **¿La métrica depende de tenencia de tecnología sin que el usuario lo
+     haya pedido así explícitamente?** Esta pregunta puntual existe porque
+     ya pasó dos veces en este proyecto (Hogares/Brecha Digital, y después
+     Vivienda/Territorio) — un bloque entero terminó siendo, en el fondo,
+     "tema X según tenencia de streaming/celular", perdiendo de vista el
+     tema por sí mismo. Si la respuesta es sí, la tecnología va en Brecha
+     Digital, no mezclada en otro bloque — ver `docs/METODOLOGIA.md`.
+   - Qué tipo de gráfica le corresponde y qué principio/fuente lo
+     respalda (sección 9 de `docs/METODOLOGIA.md`) — si la fuente no está
+     ya en `docs/BIBLIOGRAFIA.md`, agregala ahí y en la nota del bloque
+     correspondiente en este archivo, no solo en el docstring del código.
    - Con qué año/dataset se validó el resultado (no alcanza con que el
      código corra sin error — tiene que haberse visto un número real,
      verosímil, antes de curarla).

@@ -6,6 +6,10 @@ calidad en cualquier año futuro. No es teoría abstracta: cada regla acá
 existe porque en el proyecto original encontramos un problema concreto,
 lo corregimos, y queremos evitar repetirlo.
 
+Las fuentes académicas e institucionales que respaldan cada métrica y cada
+tipo de gráfica están consolidadas en [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)
+— consultalo antes de buscar una fuente nueva, puede que ya esté citada.
+
 ## 1. Estructura estándar del análisis
 
 El análisis se organiza siempre en las mismas grandes partes (los números de

@@ -225,7 +225,9 @@ comparar el análisis de 2019 con el de 2024".
 **¿Dónde se documentan los criterios de rigor que sigue el agente?**
 En [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md), que reúne las reglas de
 rigor estadístico y claridad definidas durante la construcción del
-análisis original.
+análisis original. Las fuentes académicas e institucionales detrás de
+cada métrica y cada tipo de gráfica están consolidadas en
+[`docs/BIBLIOGRAFIA.md`](docs/BIBLIOGRAFIA.md).
 
 **¿El agente registra la actividad del usuario?**
 Sí, un registro mínimo y local: qué pantallas se mostraron, cuándo, y si
