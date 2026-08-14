@@ -724,6 +724,12 @@ def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, ti
     fig.update_layout(
         yaxis_title="", xaxis_title="% (ponderado, promedio mensual)",
         yaxis={"categoryorder": "total ascending"},
+        # Margen a la derecha de la barra más larga para que su etiqueta de
+        # porcentaje no quede cortada por el borde del gráfico (mismo motivo
+        # que plot_pct_por) — encontrado en una corrida real: sin este
+        # margen, "Tasa de desempleo por departamento" (Treinta y Tres,
+        # 14.9%, la barra más larga) recortaba el "%" final.
+        xaxis_range=[0, resumen["pct_promedio"].max() * 1.15],
         showlegend=False, width=750, height=500, title_x=0.5,
     )
     return fig
