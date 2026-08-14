@@ -1,11 +1,10 @@
 # Convenciones de gráficas: justificar el tipo elegido, con fundamento estadístico
 
-Se separó de [`METODOLOGIA.md`](METODOLOGIA.md) por ser un tema propio y
-consultado seguido (cada métrica nueva pasa por acá) — mantenerlo aparte
-evita que quien solo necesita elegir un tipo de gráfica tenga que leer
-todo el resto de las reglas de rigor estadístico para encontrarlo. Las
-citas completas de cada fuente mencionada acá están en
-[`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md).
+Este documento reúne las convenciones para justificar el tipo de gráfica
+elegido en cada métrica — distinto de
+[`METODOLOGIA.md`](METODOLOGIA.md), que reúne las reglas de rigor
+estadístico y terminología. Las citas completas de cada fuente
+mencionada acá están en [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md).
 
 **Cada gráfica del informe va acompañada de una justificación con
 fundamento, no solo una frase intuitiva.** El público al que está

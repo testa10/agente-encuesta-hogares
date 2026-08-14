@@ -2,8 +2,7 @@
 
 Todas las fuentes académicas e institucionales consultadas para diseñar el
 catálogo de métricas y elegir el tipo de gráfica de cada una, en un solo
-lugar — hasta ahora estaban dispersas, una por bloque, dentro de
-`.claude/agents/encuesta-hogares.md`. Ese archivo sigue siendo la fuente de
+lugar. `.claude/agents/encuesta-hogares.md` sigue siendo la fuente de
 verdad sobre *qué* fuente respalda *qué* métrica puntual (buscar el nombre
 del autor ahí para ver el contexto exacto); este documento es el índice
 único para auditar o reutilizar una cita sin tener que rastrearla.

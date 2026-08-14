@@ -14,9 +14,7 @@ código, ya sea una persona o una sesión de Claude Code.
    enteros antes de tocar cualquier archivo permanente.** No es opcional
    — reúnen las reglas de rigor estadístico y claridad, los
    procedimientos paso a paso, y las convenciones de gráficas que existen
-   porque en algún momento se encontró un problema real (los tres
-   documentos estaban originalmente mezclados en uno solo, separados por
-   este mismo motivo: se había vuelto difícil de navegar). Las reglas más
+   porque en algún momento se encontró un problema real. Las reglas más
    importantes, resumidas:
    - **Toda estadística de Hogares/Personas se pondera** por el factor de
      expansión muestral del INE — nunca `.mean()`/`.median()` simple. Usar

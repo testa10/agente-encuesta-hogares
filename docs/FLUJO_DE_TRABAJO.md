@@ -3,9 +3,7 @@
 Este documento reúne los procedimientos paso a paso del proyecto —
 distinto de [`METODOLOGIA.md`](METODOLOGIA.md), que reúne las reglas y
 principios (qué es correcto o incorrecto), este archivo es sobre *cómo
-ejecutar* el trabajo una vez que las reglas ya están claras. Se separó de
-`METODOLOGIA.md` porque ese documento había crecido mezclando ambos
-tipos de contenido y se había vuelto difícil de navegar.
+ejecutar* el trabajo una vez que las reglas ya están claras.
 
 ## 1. Flujo de verificación (seguir siempre, sin saltarse pasos)
 

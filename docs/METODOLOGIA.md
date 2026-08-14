@@ -15,9 +15,7 @@ incorrecto, y por qué) — para los procedimientos paso a paso ver
 [`FLUJO_DE_TRABAJO.md`](FLUJO_DE_TRABAJO.md) (verificación, generación
 del PDF, publicación, cómo manejar un año de datos nuevo) y, para cómo
 justificar el tipo de gráfica elegido en cada métrica, ver
-[`CONVENCIONES_DE_GRAFICAS.md`](CONVENCIONES_DE_GRAFICAS.md). Los tres
-documentos se separaron de uno solo que había crecido mezclando estos
-tres tipos de contenido y se había vuelto difícil de navegar.
+[`CONVENCIONES_DE_GRAFICAS.md`](CONVENCIONES_DE_GRAFICAS.md).
 
 ## 1. Estructura estándar del análisis
 
