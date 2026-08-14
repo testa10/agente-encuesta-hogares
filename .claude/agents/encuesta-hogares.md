@@ -767,7 +767,7 @@ Tufte, Knaflic, etc., según corresponda) **y la fórmula o definición
 exacta de la métrica cuando la tenga** (una tasa, un índice, una razón).
 El público de este informe puede ser académico, profesional, técnico o no
 técnico: la cita y la fórmula refuerzan que el número tiene sentido, no
-son ruido para evitar. Seguir la matriz de referencia de
+son ruido para evitar. Seguir la guía de referencia de
 `docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la fuente exacta de cada
 patrón. Esa justificación va en la misma celda de markdown que la
 pregunta guía, no en el código.
