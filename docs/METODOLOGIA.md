@@ -28,21 +28,11 @@ se mantiene):
 1. **Preparación de datos**: cargar Hogares y Personas, filtrar a Montevideo,
    clasificar nivel económico. Es la única parte que se genera siempre —
    toda infraestructura, sin contenido temático propio.
-2. **Panorama general de TV cable**, **Distribución por barrio** y
-   **Composición de los hogares con y sin cable** — a diferencia del punto
-   1, **estas tres NO se generan siempre**: son contenido del bloque
-   "Brecha Digital" (ver `.claude/agents/encuesta-hogares.md`, paso 5.2), así
-   que solo se arman si el usuario eligió ese bloque en el paso 3.5.
-   "Territorio" ya no depende de esto — su índice de desarrollo
-   territorial es infraestructura propia. No asumir que a todos les
-   interesa la tecnología es la misma razón por la que el catálogo dejó de
-   incluir esos bloques por defecto — aplicarla acá y no en el catálogo
-   hubiera sido inconsistente.
-3. **Bloques elegidos**, cada uno organizado como "Entorno" temático propio
+2. **Bloques elegidos**, cada uno organizado como "Entorno" temático propio
    (Brecha Digital, Hogares, Territorio, Vivienda, y — si corresponde —
    Seguridad Alimentaria, Empleo, Seguridad y Victimización): el usuario
    elige qué bloques quiere (paso 3.5) y qué métricas de cada uno (paso 4).
-4. **Resumen analítico final**, organizado por los mismos bloques que
+3. **Resumen analítico final**, organizado por los mismos bloques que
    terminó teniendo el informe (nunca por una lista fija de Entornos), con
    cifras reales (nunca estimadas) y redactado para un lector no técnico.
 
@@ -51,10 +41,11 @@ markdown, antes de la celda de código que la responde.** Nunca al revés.
 
 ## 2. Reglas de rigor estadístico (no negociables)
 
-Estas reglas surgieron de una revisión hecha "como si fuéramos un experto en
-estadística y censos" sobre el análisis original, que llevó a eliminar
-secciones enteras. Antes de agregar una gráfica o sección nueva, revisala
-contra esta lista:
+Estas reglas surgieron de la revisión del análisis original — que llevó a
+eliminar secciones enteras — sumadas a reglas nuevas incorporadas a partir
+de bibliografía de estadística y normas internacionales especializadas
+(ver [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)). Antes de agregar una gráfica o
+sección nueva, revisala contra esta lista:
 
 - **Falacia ecológica**: no mezclar el nivel de agregación. Si una variable
   describe un barrio (ej. el % de abonados de todo el barrio), no se puede
