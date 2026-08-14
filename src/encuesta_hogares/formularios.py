@@ -623,11 +623,11 @@ def plantilla_areas(fies_disponible: bool, empleo_disponible: bool, seguridad_di
         ("brecha_digital", "Brecha Digital",
          "acceso, calidad de conexión y uso de tecnología (TV cable, internet, computadora, streaming) en los hogares."),
         ("hogares", "Hogares",
-         "composición del hogar, pobreza, jefatura, hacinamiento — sin ninguna variable de tecnología."),
+         "composición del hogar, pobreza, jefatura, hacinamiento."),
         ("territorio", "Territorio",
          "un índice que combina pobreza, empleo, vivienda y nivel económico para comparar el desarrollo de los 19 departamentos."),
         ("vivienda", "Vivienda",
-         "condiciones estructurales de la vivienda (humedad, goteras, grietas, etc.), sin relación con la tenencia de tecnología."),
+         "condiciones estructurales de la vivienda (humedad, goteras, grietas, etc.)."),
     ]
     if fies_disponible:
         opciones.append((
