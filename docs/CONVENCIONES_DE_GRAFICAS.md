@@ -19,8 +19,8 @@ Cada celda de markdown con una métrica lleva, además de la pregunta guía:
 1. **Por qué ese tipo de gráfica** — con el principio de visualización que
    lo respalda y, cuando aplique, el autor/fuente (Cleveland & McGill
    sobre comparación visual de formas; Tufte sobre slopegraphs; Knaflic,
-   *Storytelling with Data*; Few sobre simplicidad — ver la chuleta más
-   abajo con la cita concreta de cada patrón).
+   *Storytelling with Data*; Few sobre simplicidad — ver la matriz de
+   referencia más abajo con la cita concreta de cada patrón).
 2. **La fórmula o definición exacta**, cuando la métrica la tenga (ej. una
    tasa, un índice compuesto, una razón) — no alcanza con describirla en
    palabras si existe una notación estándar. Ejemplo: "Razón de
@@ -33,7 +33,7 @@ Un solo número o una diferencia entre dos grupos siguen necesitando su
 gráfica (ver la entrada de "dumbbell chart" más abajo) y su fundamento,
 igual que cualquier otra.
 
-## Chuleta de referencia, con la fuente de cada patrón
+## Matriz de referencia, con la fuente de cada patrón
 
 - **Barras horizontales** (en vez de verticales): cuando las categorías
   tienen nombres largos (barrios, condiciones de vivienda) — se leen sin
