@@ -314,6 +314,21 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
 
     bitacora.registrar("formulario_timeout" if not completado else "formulario_respondido", nombre=nombre)
 
+    if not completado:
+        # Nadie respondió dentro del timeout (la persona cerró la pestaña,
+        # se fue, o lo que sea) - devolver {} tal cual hacía esto antes era
+        # un riesgo real: el chequeo estándar que sigue a cualquier
+        # mostrar_formulario() es `respuesta.get("salir_del_flujo")`, que
+        # con un dict vacío da None (no True) y no dispara la salida
+        # prolija - el siguiente acceso a un campo esperado (ej.
+        # `respuesta["anio"]`) tiraba un KeyError sin manejar, exactamente
+        # el tipo de falla cruda que este proyecto entero existe para
+        # evitarle a alguien sin conocimientos técnicos. Devolver
+        # salir_del_flujo=True hace que ese mismo chequeo, ya presente
+        # después de cada formulario, también cubra este caso sin
+        # necesitar ningún cambio en el resto del flujo.
+        return {"salir_del_flujo": True, "motivo": "timeout"}
+
     return resultado
 
 
@@ -393,6 +408,15 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
 
     bitacora.registrar("finalizacion_timeout" if not completado else "finalizacion_respondida")
 
+    if not completado:
+        # Mismo riesgo que en mostrar_formulario(): devolver {} dejaba que
+        # el siguiente `respuesta["accion"]` tirara un KeyError sin
+        # manejar. Acá no existe "salir_del_flujo" (esta pantalla ya es el
+        # final) - el equivalente seguro es tratarlo como si la persona
+        # hubiera elegido terminar, que es exactamente lo que ya sabe
+        # manejar el paso 8 del agente.
+        return {"accion": "terminar", "motivo": "timeout"}
+
     return resultado
 
 
@@ -455,8 +479,8 @@ def plantilla_arranque() -> str:
 <style>{_ESTILO}</style></head><body>
 <div class="tarjeta" id="tarjeta">
   <div class="emoji">👋</div>
-  <h1>Bienvenido a su agente de IA especializado en Encuesta de Hogares</h1>
-  <p class="subtitulo">Elija una opción para continuar.</p>
+  <h1>Bienvenido a tu agente de IA especializado en Encuesta de Hogares</h1>
+  <p class="subtitulo">Elegí una opción para continuar.</p>
   <button type="button" class="boton-accion boton-primario" onclick="elegir('empezar')">Empezar con la encuesta de hogares</button>
   <button type="button" class="boton-accion boton-secundario" onclick="elegir('salir')">Salir del agente</button>
 </div>
@@ -788,8 +812,14 @@ def plantilla_revision(propuesta: str, problema: str, alternativa: str) -> str:
 {_SCRIPT_SALIR}
 document.querySelectorAll('input[name=decision]').forEach(r => {{
   r.addEventListener('change', () => {{
-    document.getElementById('texto_nueva').style.display =
-      (r.value === 'nueva' && r.checked) ? 'block' : 'none';
+    const esNueva = r.value === 'nueva' && r.checked;
+    const textoNueva = document.getElementById('texto_nueva');
+    textoNueva.style.display = esNueva ? 'block' : 'none';
+    // Requerido solo mientras está visible: si alguien elige "tengo otra
+    // idea" y confirma sin escribir nada, antes se mandaba una propuesta
+    // vacía sin que nadie lo notara - con esto el navegador no deja
+    // enviar el formulario hasta que escriba algo.
+    textoNueva.required = esNueva;
   }});
 }});
 document.getElementById('form').addEventListener('submit', async (e) => {{
