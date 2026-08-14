@@ -8,13 +8,12 @@ citas completas de cada fuente mencionada acá están en
 [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md).
 
 **Cada gráfica del informe va acompañada de una justificación con
-fundamento, no solo una frase intuitiva.** El público de este informe es
-académico y profesional — "no técnico" no significa "sin formación": es
-gente que puede leer una cita o una fórmula y que la va a valorar como
-señal de que los números tienen sentido, no como ruido innecesario. Por
-eso, a diferencia de un criterio anterior de este proyecto (ya
-descartado), acá **sí correspondía citar la fuente y, cuando la métrica
-lo amerite, mostrar la fórmula o definición exacta** — no ocultarla.
+fundamento, no solo una frase intuitiva.** El público al que está
+orientado este proyecto —académico, profesional, técnico o no técnico—
+tiene que poder leer una cita, una fórmula o un gráfico y entender con
+claridad qué significan, los números que respaldan el análisis, las
+preguntas que lo originan, y la fuente estadística que justifica la
+elección.
 
 Cada celda de markdown con una métrica lleva, además de la pregunta guía:
 
