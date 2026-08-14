@@ -201,7 +201,7 @@ sus propios cuidados:
 4. Una vez validado el mapeo, correr el pipeline estándar completo (armar
    el notebook, verificarlo, generar HTML y PDF — secciones 1 y 2 de este
    documento) y regenerar los cortes/cuartiles reales para ese año — nunca
-   reusar los cortes del año anterior, van a haber cambiado.
+   reusar los cortes del año anterior, seguramente hayan cambiado.
 5. Presentarle el catálogo de métricas por categoría para que elija qué
    incluir en la Ampliación, y dejar espacio para que proponga una métrica
    propia si ninguna del catálogo le sirve (ver el paso 5 del archivo del
