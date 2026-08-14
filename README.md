@@ -30,7 +30,50 @@ necesidad de conocimientos técnicos previos.
 
 ---
 
-## Requisitos previos (instalación única)
+## Cómo instalar
+
+Hay dos caminos para llegar al mismo resultado — elija el que le quede
+más cómodo:
+
+- **Instalación rápida**, más abajo en esta misma sección: un solo
+  archivo para descargar y un doble clic. Pensada para quien no quiere
+  abrir una terminal ni escribir comandos.
+- **Instalación manual (con conocimientos técnicos)**, a partir de
+  "Requisitos previos": clonar el repositorio y correr cada paso por su
+  cuenta. Pensada para quien va a modificar el código o prefiere tener
+  control de cada paso.
+
+Los dos caminos terminan en el mismo lugar: el "Paso 3: Obtener los
+datos del año a analizar" y todo lo que sigue después es igual para
+ambos.
+
+### Instalación rápida
+
+1. Instale [Anaconda](https://www.anaconda.com/download) (incluye
+   Python) — es el único programa que hay que instalar a mano antes de
+   empezar. Use las opciones por defecto del instalador.
+2. Descargue
+   [`instalar_todo.bat`](https://raw.githubusercontent.com/testa10/agente-encuesta-hogares/main/instalar_todo.bat)
+   (clic derecho sobre el enlace → "Guardar enlace como...") y haga
+   doble clic en el archivo descargado.
+3. Ese archivo se encarga de todo: descarga el proyecto en la carpeta
+   Documentos, instala lo que falte, y abre el agente al final. Si en el
+   camino pide instalar Node.js, instálelo con las opciones por defecto
+   y vuelva a hacer doble clic en `instalar_todo.bat` para continuar
+   donde quedó.
+4. Es normal que Windows muestre un aviso de seguridad al abrir un
+   archivo descargado de internet ("Windows protegió su PC" o similar)
+   — haga clic en "Más información" y después en "Ejecutar de todas
+   formas". El contenido del archivo es público y se puede revisar
+   entero en este mismo repositorio
+   ([`instalar_todo.bat`](instalar_todo.bat)).
+
+Listo — continúe en el "Paso 3: Obtener los datos del año a analizar",
+más abajo.
+
+### Instalación manual (con conocimientos técnicos)
+
+#### Requisitos previos (instalación única)
 
 Los siguientes programas se instalan una sola vez. Si ya cuenta con
 alguno instalado, puede omitir ese paso.
@@ -304,6 +347,9 @@ barra lateral).
 
 ```
 agente-encuesta-hogares/
+├── instalar_todo.bat            # Instalación rápida: descarga + instala + abre, todo en uno
+├── instalar.bat                 # Instala lo que falte (Node.js, Claude Code, dependencias)
+├── abrir_agente.bat             # Abre el agente en una carpeta ya instalada
 ├── .claude/
 │   └── agents/
 │       └── encuesta-hogares.md  # El agente: sus instrucciones de trabajo
