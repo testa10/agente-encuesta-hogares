@@ -43,6 +43,17 @@ Si encuentra diferencias contra `origin/main`, revisarlas —puede ser
 trabajo real del agente sin publicar (commitearlo y hacer `git push`) o
 simplemente que esta copia está atrasada respecto a lo último subido.
 
+**Un usuario real nunca va a tener `.git` en su copia.** La instalación
+rápida del README (pensada para gente sin conocimientos técnicos) baja
+el proyecto con el botón "Download ZIP" de GitHub, que nunca incluye
+`.git` —es el comportamiento esperado, no un problema para diagnosticar
+ni reparar. Si esta misma carpeta (Documents) aparece sin `.git` en
+algún momento, lo más probable es que se haya probado esa instalación
+rápida ahí encima —confirmar con el dueño del proyecto antes de asumir
+nada, y nunca intentar "arreglarlo" corriendo `git init` sobre esa
+copia: para seguir desarrollando/publicando, clonar aparte (ej. en el
+scratchpad) en vez de tocar la copia de prueba.
+
 **Antes de publicar un cambio en `analysis.py`/`preprocessing.py` que
 toque cómo se leen o combinan los datos**, ejecutar también:
 
