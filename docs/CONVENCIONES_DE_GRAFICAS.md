@@ -90,20 +90,20 @@ igual que cualquier otra.
   Change". Implementación: `visualization.plot_dumbbell`.
 - **Comparar cualquier métrica del catálogo entre dos años (ej. "2024 vs.
   2025")**: es el mismo caso que el punto anterior — "año" es un grupo
-  específico como cualquier otro, no hace falta código nuevo. Calculá la
+  específico como cualquier otro, no hace falta código nuevo. Calcular la
   métrica una vez por año con la función que ya exista (la misma que usa
-  el informe de un solo año), cruzá las dos tablas con
-  `analysis.diferencia_entre_tablas` y graficá con
+  el informe de un solo año), cruzar las dos tablas con
+  `analysis.diferencia_entre_tablas` y graficar con
   `visualization.plot_dumbbell` — confirmado en una corrida real
   (Seguridad y Victimización, 41-47, comparando 2024 con 2025): se
   resolvió entero sin escribir ninguna función nueva. Para 3 años o más,
   o cuando lo que importa es la evolución en el tiempo más que un
-  "antes/después" puntual, usá en cambio el patrón de líneas con eje
+  "antes/después" puntual, usar en cambio el patrón de líneas con eje
   numérico real de más arriba (ver
   `analysis.tasas_actividad_empleo_desempleo_por_anio` como ejemplo ya
   resuelto para Empleo).
 
-Si una gráfica no encaja claramente en ninguno de estos patrones, aplicá
-el mismo criterio general: identificá el principio de percepción visual
-o de rigor estadístico que está en juego, y citalo — nunca elijas el tipo
-de gráfica "porque sí" o "porque se ve bien".
+Si una gráfica no encaja claramente en ninguno de estos patrones, aplicar
+el mismo criterio general: identificar el principio de percepción visual
+o de rigor estadístico que está en juego, y citarlo — nunca elegir el
+tipo de gráfica "porque sí" o "porque se ve bien".

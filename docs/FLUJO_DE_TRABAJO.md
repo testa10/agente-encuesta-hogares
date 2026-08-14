@@ -12,14 +12,14 @@ tipos de contenido y se había vuelto difícil de navegar.
 1. Escribir o editar el código en `src/encuesta_hogares/` (nunca directamente
    en el notebook si la lógica se puede poner en una función reutilizable
    y testeable).
-2. Si agregás una función nueva en `analysis.py`, agregale un test en
+2. Si se agrega una función nueva en `analysis.py`, agregarle un test en
    `tests/`.
 3. Correr `pytest -q` y confirmar que todo pasa.
 4. Editar el notebook con `nbformat` (no pegar JSON a mano).
 5. Re-ejecutar el notebook completo, cronometrando cuánto tarda (para
    poder ver después, con `tools/resumen_sesiones.py`, si el cuello de
    botella real está acá o en otro paso) — en vez de invocar `jupyter
-   nbconvert` directo por Bash, envolvelo con `bitacora.medir_comando()`:
+   nbconvert` directo por Bash, envolverlo con `bitacora.medir_comando()`:
    ```python
    import sys
    from encuesta_hogares import bitacora
@@ -34,19 +34,19 @@ tipos de contenido y se había vuelto difícil de navegar.
    output de la celda y mirarlo — no asumir que "si no tiró error, se ve
    bien". Revisar que los números y el orden de las barras tengan sentido.
    **Si hay que borrar PNGs viejos del scratchpad antes de una nueva
-   extracción, nunca uses un comodín en `rm` (ej. `rm -f celda_*.png`)** —
+   extracción, nunca usar un comodín en `rm` (ej. `rm -f celda_*.png`)** —
    la herramienta de Bash rechaza los patrones glob en operaciones de
    escritura/borrado, y esa aprobación interrumpe una corrida que se
-   supone que no necesita supervisión. Hacé el borrado con Python
+   supone que no necesita supervisión. Hacer el borrado con Python
    (`pathlib.Path(carpeta).glob("celda_*.png")` y `.unlink()` en un bucle,
-   dentro del mismo script que ya estás corriendo con `run_python.bat`) —
+   dentro del mismo script que ya se esté corriendo con `run_python.bat`) —
    mismo criterio que ya se sigue para editar el notebook (nbformat, nunca
    JSON a mano) y para correr comandos largos (`bitacora.medir_comando`,
    nunca `jupyter nbconvert` suelto).
 8. Generar el informe HTML sin código (para gente no técnica):
    - Copiar el notebook, filtrar del output los mensajes `stderr` de tipo
      `stream` (son warnings inofensivos de matplotlib, no errores reales).
-   - Igual que en el paso 5, envolvé la conversión con
+   - Igual que en el paso 5, envolver la conversión con
      `bitacora.medir_comando("generacion_html", [sys.executable, "-m", "jupyter", "nbconvert", "--to", "html", "--no-input", "<copia>.ipynb"])`
      en vez de invocar `jupyter nbconvert` directo.
    - Corregir el `<title>` del HTML generado (por defecto queda con el
@@ -56,7 +56,7 @@ tipos de contenido y se había vuelto difícil de navegar.
      del notebook (paso 5.2 de `.claude/agents/encuesta-hogares.md`): sin
      sufijos ni variantes, para que dos años nunca choquen y el respaldo
      de abajo se dispare solo cuando de verdad se repite el mismo año.
-   - **Antes de guardar el HTML final con ese nombre**, llamá a
+   - **Antes de guardar el HTML final con ese nombre**, llamar a
      `entrega.respaldar_si_existe(ruta_html_final)` — si ya existía un
      informe de una corrida anterior para ese mismo año (ej. alguien
      corrió el mismo año dos veces), queda como "Informe_ECH_{AÑO}
@@ -82,13 +82,13 @@ a PDF, igual que haría un navegador común.
 
 Pasos:
 
-1. Asegurate de tener Playwright listo (una sola vez por instalación):
-   `playwright install chromium`. Si no está, instalalo vos mismo con Bash
-   — es la descarga de un componente del propio paquete Python que ya está
-   en las dependencias del proyecto, no un programa externo nuevo que el
-   usuario tenga que gestionar.
-2. Tomá el HTML sin código ya generado (paso 8 de la sección 1) y anteponé
-   al `<body>` un bloque de portada:
+1. Asegurarse de tener Playwright listo (una sola vez por instalación):
+   `playwright install chromium`. Si no está, instalarlo con Bash — es la
+   descarga de un componente del propio paquete Python que ya está en las
+   dependencias del proyecto, no un programa externo nuevo que el usuario
+   tenga que gestionar.
+2. Tomar el HTML sin código ya generado (paso 8 de la sección 1) y
+   anteponer al `<body>` un bloque de portada:
    ```html
    <div class="portada">
      <h1>Encuesta Continua de Hogares — Informe {AÑO}</h1>
@@ -96,14 +96,14 @@ Pasos:
      <div class="meta">Generado el {fecha de hoy}</div>
    </div>
    ```
-3. Inyectá `docs/informe_estilo.css` dentro de un `<style>` en el `<head>`
-   del HTML (o enlazalo con `<link>` si vas a mantener el archivo al lado).
-   Esa hoja de estilos ya define tamaño A4, márgenes, tipografía, y sobre
-   todo `max-width`/`max-height` + `page-break-inside: avoid` en las
+3. Inyectar `docs/informe_estilo.css` dentro de un `<style>` en el `<head>`
+   del HTML (o enlazarlo con `<link>` si se va a mantener el archivo al
+   lado). Esa hoja de estilos ya define tamaño A4, márgenes, tipografía, y
+   sobre todo `max-width`/`max-height` + `page-break-inside: avoid` en las
    imágenes — es lo que evita que una gráfica quede cortada entre dos
-   páginas o se salga del ancho de la hoja. No la reinventes ni la
-   simplifiques: cada regla ahí resuelve un problema real de paginación.
-4. Convertí ese HTML a PDF con Playwright (script corto, vía Bash con
+   páginas o se salga del ancho de la hoja. No reinventarla ni
+   simplificarla: cada regla ahí resuelve un problema real de paginación.
+4. Convertir ese HTML a PDF con Playwright (script corto, vía Bash con
    `python -c` o un archivo temporal), cronometrando el bloque con
    `bitacora.medir()` y respaldando el PDF anterior si existía:
    ```python
@@ -131,7 +131,7 @@ Pasos:
            )
            browser.close()
    ```
-   Usá `header_template` / `footer_template` (no CSS `@page { @bottom-center }`)
+   Usar `header_template` / `footer_template` (no CSS `@page { @bottom-center }`)
    para la numeración de página: Chromium no soporta las cajas de margen de
    `@page` en su motor de impresión, solo esas plantillas HTML de Playwright.
 5. **El nombre del archivo es siempre exactamente `Informe_ECH_{AÑO}.pdf`**
@@ -141,8 +141,8 @@ Pasos:
    nunca choquen entre sí, y que `entrega.respaldar_si_existe()` (ver
    paso 8 de la sección 1) respalde correctamente solo cuando se repite
    el mismo año.
-6. Copiá el PDF a la carpeta de Descargas del usuario, además de dejarlo en
-   el proyecto — respaldando ahí también el que hubiera de una corrida
+6. Copiar el PDF a la carpeta de Descargas del usuario, además de dejarlo
+   en el proyecto — respaldando ahí también el que hubiera de una corrida
    anterior, por la misma razón del paso 8 de la sección 1:
    ```python
    from pathlib import Path
@@ -153,11 +153,11 @@ Pasos:
    shutil.copy(ruta_pdf_salida, ruta_descargas)
    ```
    `Path.home() / "Downloads"` funciona igual en Windows y en Mac. Si esa
-   carpeta no existe (poco común, pero puede pasar), avisale al usuario en
+   carpeta no existe (poco común, pero puede pasar), avisarle al usuario en
    vez de fallar en silencio.
-7. Abrí el PDF resultante (o al menos revisá la cantidad de páginas y que
-   el tamaño de archivo sea razonable) antes de darlo por terminado — no
-   asumas que la conversión salió bien solo porque no tiró error.
+7. Abrir el PDF resultante (o al menos revisar la cantidad de páginas y
+   que el tamaño de archivo sea razonable) antes de darlo por terminado —
+   no asumir que la conversión salió bien solo porque no tiró error.
 
 ## 3. Publicación (no es parte del flujo del agente)
 
@@ -196,8 +196,9 @@ sus propios cuidados:
    (comparar contra las etiquetas de variable, `column_labels` de
    pyreadstat).
 3. Si algún código cambió de nombre o desapareció, **nunca asumir un
-   reemplazo por tu cuenta**: proponerle al usuario la columna candidata
-   (por su etiqueta) y esperar su confirmación antes de tocar `config.py`.
+   reemplazo por cuenta propia**: proponerle al usuario la columna
+   candidata (por su etiqueta) y esperar su confirmación antes de tocar
+   `config.py`.
 4. Una vez validado el mapeo, correr el pipeline estándar completo (armar
    el notebook, verificarlo, generar HTML y PDF — secciones 1 y 2 de este
    documento) y regenerar los cortes/cuartiles reales para ese año — nunca

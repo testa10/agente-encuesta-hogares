@@ -4,7 +4,7 @@ Todas las fuentes académicas e institucionales consultadas para diseñar el
 catálogo de métricas y elegir el tipo de gráfica de cada una, en un solo
 lugar — hasta ahora estaban dispersas, una por bloque, dentro de
 `.claude/agents/encuesta-hogares.md`. Ese archivo sigue siendo la fuente de
-verdad sobre *qué* fuente respalda *qué* métrica puntual (buscá el nombre
+verdad sobre *qué* fuente respalda *qué* métrica puntual (buscar el nombre
 del autor ahí para ver el contexto exacto); este documento es el índice
 único para auditar o reutilizar una cita sin tener que rastrearla.
 
@@ -123,9 +123,9 @@ https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares
 
 ---
 
-**Cómo usar esto al agregar una métrica nueva:** si la fuente que
-consultaste ya está acá, no la vuelvas a buscar. Si es nueva, agregala en
-la sección del bloque que corresponda (o creá una nueva si no encaja en
+**Cómo usar esto al agregar una métrica nueva:** si la fuente consultada
+ya está acá, no hace falta volver a buscarla. Si es nueva, agregarla en
+la sección del bloque que corresponda (o crear una nueva si no encaja en
 ninguna) y también en la nota de ese bloque en
 `.claude/agents/encuesta-hogares.md`, que es donde el agente arma la
 sección "Fuentes de consulta para alineación de métricas" de cada informe

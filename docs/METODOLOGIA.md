@@ -3,12 +3,12 @@
 Este documento resume todo lo aprendido durante la construcción del análisis
 original (ECH 2019, Montevideo) para que se pueda reproducir con la misma
 calidad en cualquier año futuro. No es teoría abstracta: cada regla acá
-existe porque en el proyecto original encontramos un problema concreto,
-lo corregimos, y queremos evitar repetirlo.
+existe porque en el proyecto original se encontró un problema concreto,
+se corrigió, y se busca evitar repetirlo.
 
 Las fuentes académicas e institucionales que respaldan cada métrica y cada
 tipo de gráfica están consolidadas en [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)
-— consultalo antes de buscar una fuente nueva, puede que ya esté citada.
+— consultarlo antes de buscar una fuente nueva, puede que ya esté citada.
 
 Este documento reúne los principios y reglas (qué es correcto o
 incorrecto, y por qué) — para los procedimientos paso a paso ver
@@ -45,7 +45,7 @@ Estas reglas surgieron de la revisión del análisis original, sumadas a
 reglas nuevas incorporadas a partir de bibliografía de estadística y
 normas internacionales especializadas (ver
 [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)). Antes de agregar una gráfica o
-sección nueva, revisala contra esta lista:
+sección nueva, revisarla contra esta lista:
 
 - **Falacia ecológica**: no mezclar el nivel de agregación. Si una variable
   describe un barrio (ej. el % de abonados de todo el barrio), no se puede
@@ -59,9 +59,9 @@ sección nueva, revisala contra esta lista:
   cruzar "ingreso del hogar" con "nivel de suscripción del barrio" mezcla
   causa y efecto de forma confusa y no aporta una conclusión clara.
 - **Celdas chicas**: si un grupo tiene muy pocos casos, la comparación no es
-  confiable. Antes de publicar una gráfica nueva agrupada por algo, corré
+  confiable. Antes de publicar una gráfica nueva agrupada por algo, ejecutar
   `analysis.grupos_con_muestra_chica(df, columna_grupo)` sobre el
-  dataframe sin agrupar — si devuelve algún grupo, aclará en el texto que
+  dataframe sin agrupar — si devuelve algún grupo, aclarar en el texto que
   esa estimación puntual tiene poca base muestral (umbral: n=30).
 - **Ponderación por muestreo — no negociable, no es "un detalle técnico".**
   Toda estadística de Hogares/Personas (pobreza, hacinamiento, tipos de
@@ -75,13 +75,13 @@ sección nueva, revisala contra esta lista:
   2019, la pobreza de Montevideo da 6.71% sin ponderar contra 8.14%
   ponderada correctamente, y a nivel nacional 4.79% contra 5.87% — una
   diferencia de casi 1.1 puntos porcentuales, suficiente para cambiar una
-  conclusión. Nunca calcules una proporción/media/mediana de Hogares con
-  `.mean()`/`.median()`/`.value_counts()` simple — usá los helpers ya
+  conclusión. Nunca calcular una proporción/media/mediana de Hogares con
+  `.mean()`/`.median()`/`.value_counts()` simple — usar los helpers ya
   armados para esto: `analysis.pct_ponderado`/`pct_ponderado_por` (%),
   `media_ponderada_por` (promedio), `proporcion_ponderada` (value_counts
-  ponderado), `mediana_ponderada` (mediana). Si agregás una función nueva
-  de Hogares/Personas y no vas a ponderarla, dejá explícito por qué en el
-  docstring — no que se te haya olvidado. **Como "ponderado" ahora
+  ponderado), `mediana_ponderada` (mediana). Si se agrega una función
+  nueva de Hogares/Personas y no se va a ponderar, dejar explícito por qué
+  en el docstring — no que se haya olvidado. **Como "ponderado" ahora
   aparece en casi todas las gráficas, el informe le tiene que explicar
   ese término al lector una vez, en lenguaje simple** — ver la
   instrucción y el texto base en `.claude/agents/encuesta-hogares.md`,
@@ -96,7 +96,7 @@ sección nueva, revisala contra esta lista:
   error ni "diferencia estadísticamente significativa": son estimaciones
   puntuales ponderadas, no inferencia con incertidumbre cuantificada. Si
   alguna vez el INE publica las variables de diseño, esto se puede
-  reconsiderar — hasta entonces, no simules una precisión que no se puede
+  reconsiderar — hasta entonces, no simular una precisión que no se puede
   respaldar.
 - **Correlación vs. causación**: el lenguaje debe ser siempre observacional
   ("los hogares con X tienen más probabilidad de Y"), nunca causal ("X
@@ -107,7 +107,7 @@ sección nueva, revisala contra esta lista:
   ocupados" dentro de "hombres" y dentro de "mujeres"), no se pueden
   combinar en un gráfico de barras apiladas — eso implica una relación
   parte-todo que no existe. Para comparar varias categorías de este tipo a
-  la vez, preferí barras agrupadas (cada valor real, lado a lado) — ver
+  la vez, preferir barras agrupadas (cada valor real, lado a lado) — ver
   `tasas_por_grupo()` / `plot_tasas_por_grupo()` como ejemplo ya
   resuelto — y, para comparar solo dos grupos puntuales, el dumbbell chart
   de `docs/CONVENCIONES_DE_GRAFICAS.md`. En ambos casos se muestran los
@@ -124,7 +124,7 @@ sección nueva, revisala contra esta lista:
   "nivel económico" en todo el proyecto, con una aclaración de origen en la
   sección 1 del notebook.
 - **Si una variable describe al barrio y no al hogar (o a la persona y no
-  al hogar), decilo en el título de la gráfica**, no solo en el texto de
+  al hogar), decirlo en el título de la gráfica**, no solo en el texto de
   arriba — quien mira solo la gráfica también tiene que poder entenderla.
 - **No amontonar preguntas ni encabezados con dos puntos y texto extra.**
   Un encabezado es un encabezado; la pregunta que responde la sección va en
@@ -149,12 +149,12 @@ sección nueva, revisala contra esta lista:
   como `[np.int64(1), np.int64(2), ...]` en vez de nombres de mes legibles
   (ver `config.MESES_LABELS`).
   - Si el dato **ya está en la gráfica que sigue** (lo normal — la gráfica
-    ya trae las etiquetas con el valor exacto), no lo repitas con un
-    `print()`: sacalo directamente, no hace falta reformatearlo, alcanza
+    ya trae las etiquetas con el valor exacto), no repetirlo con un
+    `print()`: sacarlo directamente, no hace falta reformatearlo, alcanza
     con la gráfica.
   - Si de verdad hace falta reforzar un número en texto (porque la gráfica
     no lo deja lo bastante claro, o porque es la base de un cálculo
-    posterior), escribilo en prosa dentro de la celda de markdown de la
+    posterior), escribirlo en prosa dentro de la celda de markdown de la
     métrica, o con un `print(f"...")` explícitamente formateado (`:.2f`,
     `:,`, nombres en vez de códigos) — nunca la variable sola.
 
