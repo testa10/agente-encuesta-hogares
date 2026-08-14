@@ -51,7 +51,7 @@ sección nueva, revisala contra esta lista:
   describe un barrio (ej. el % de abonados de todo el barrio), no se puede
   usar para sacar conclusiones sobre hogares individuales de ese barrio, ni
   viceversa. Si se cruzan variables de distinto nivel (hogar vs. barrio vs.
-  persona), **aclarrarlo explícitamente en el texto y en los títulos de las
+  persona), **aclararlo explícitamente en el texto y en los títulos de las
   gráficas** (ver el caso de "nivel de suscripción del barrio" en la
   sección 4).
 - **Sesgo de mediador/selección**: no estratificar por una variable que es,
