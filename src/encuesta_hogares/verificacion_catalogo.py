@@ -32,7 +32,9 @@ el manifiesto documente el único camino verdadero.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from . import analysis, config, formularios, preprocessing, visualization
 from .verificacion_estructura import columnas_csv
@@ -142,6 +144,42 @@ def entradas_manifiesto_obsoletas(catalogo: dict[int, str]) -> set[int]:
     """Números de MANIFEST que ya no existen en el catálogo real (métrica
     renumerada o eliminada, entrada no limpiada)."""
     return set(MANIFEST) - set(catalogo)
+
+
+_VALIDADOR_DATOS_REALES = Path(__file__).resolve().parents[2] / "tools" / "validar_con_datos_reales.py"
+
+
+def metricas_sin_funcion_validada_con_datos_reales() -> dict[int, list[str]]:
+    """Números de MANIFEST cuya(s) función(es) de "funciones" nunca se
+    invocan en `tools/validar_con_datos_reales.py` — la garantía de
+    `referencias_rotas()` es solo que la función *existe*, no que alguien
+    la haya corrido de verdad contra datos reales del INE.
+
+    Nace de una evaluación de rigor real de este proyecto: 31 de las 47
+    métricas del catálogo activo no tenían ninguna de sus funciones
+    invocada ahí — esa brecha no la detectaba ni la suite sintética
+    (que no usa datos reales) ni "el pipeline no explota" (un test
+    sintético puede pasar aunque el cálculo esté mal para un caso real
+    que ese sintético no reproduce). Se cerró para las 47 en esa
+    evaluación; este chequeo existe para que la próxima métrica que se
+    agregue sin ejercitarla ahí falle un test en vez de sumarse en
+    silencio a la lista.
+
+    Solo mira coincidencia de nombre de función en el texto del archivo
+    (no ejecuta nada) — no reemplaza correr el script de verdad contra
+    datos reales, que sigue siendo manual (`./run_python.bat
+    tools/validar_con_datos_reales.py`, cuando hay datos en `data/`).
+    """
+    if not _VALIDADOR_DATOS_REALES.exists():
+        return {}
+    texto = _VALIDADOR_DATOS_REALES.read_text(encoding="utf-8")
+    faltantes: dict[int, list[str]] = {}
+    for numero, entrada in MANIFEST.items():
+        nombres = [ref.split(".")[-1] for ref in entrada["funciones"]]
+        invocada = any(re.search(rf"\b{re.escape(nombre)}\s*\(", texto) for nombre in nombres)
+        if not invocada:
+            faltantes[numero] = nombres
+    return faltantes
 
 
 def referencias_rotas() -> list[ReferenciaRota]:

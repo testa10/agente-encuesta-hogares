@@ -32,6 +32,18 @@ def test_toda_referencia_del_manifiesto_resuelve_a_una_funcion_real():
     )
 
 
+def test_toda_metrica_del_manifiesto_tiene_su_funcion_validada_con_datos_reales():
+    faltantes = vc.metricas_sin_funcion_validada_con_datos_reales()
+    detalle = "\n".join(f"  - {n}: {nombres}" for n, nombres in sorted(faltantes.items()))
+    assert not faltantes, (
+        "Hay métricas cuya función nunca se invoca en "
+        "tools/validar_con_datos_reales.py — el pipeline puede pasar la "
+        "suite sintética y calcular mal contra datos reales sin que nada "
+        "lo note. Agregá una llamada real (con datos de al menos un año) "
+        "y un assert de invariante genérico (ej. 0 <= pct <= 100):\n\n" + detalle
+    )
+
+
 def test_numeros_del_catalogo_cubre_los_47_bloques_conocidos():
     catalogo = vc.numeros_del_catalogo()
     assert min(catalogo) == 1

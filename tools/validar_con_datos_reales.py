@@ -17,13 +17,26 @@ tests sintéticos y solo aparecieron contra datos de verdad:
   confundir, y un dataframe sintético de prueba no distingue una de otra
   si no se arma con cuidado.
 
-No se prueban las 47 métricas del catálogo una por una a propósito —esa
-lista cambia seguido y mantenerla sincronizada acá sería el mismo tipo de
-comentario/lista que se desactualiza solo. En cambio, este script ejercita
-el pipeline completo (carga → preprocesamiento → una función real de cada
-bloque temático que toca datos nacionales) para las categorías de riesgo
-de arriba. Si hay datos de FIES/Empleo/Seguridad para el año, también se
-ejercitan.
+No se listan las 47 métricas del catálogo una por una — esa lista cambia
+seguido y mantenerla sincronizada acá sería el mismo tipo de
+comentario/lista que se desactualiza solo. En cambio, se invoca la
+función de `analysis.py` que sostiene cada una contra datos reales
+(muchas métricas comparten la misma función genérica con distinto
+argumento de agrupación, así que son bastantes menos de 47 llamadas) y se
+verifican invariantes genéricos (porcentajes entre 0 y 100, categorías
+mutuamente excluyentes sumando ~100%, sin valores nulos donde no
+corresponde) — no solo que el pipeline cargue sin explotar. Antes de esta
+versión, 31 de las 47 métricas no tenían ninguna función real invocada
+acá, y esa brecha no la detectaba ni la suite sintética ni "no tira
+error": números mal calculados podían pasar sin que nada lo notara.
+`test_verificacion_catalogo.py::test_toda_metrica_del_manifiesto_tiene_su_funcion_validada_con_datos_reales`
+falla si en el futuro se agrega una métrica nueva al catálogo cuya
+función no se ejercita en este archivo.
+
+Si hay datos de FIES/Empleo/Seguridad para el año, también se ejercitan.
+Si una columna específica de un año no está disponible (ej. situación
+ocupacional en 2025), se avisa explícitamente que esa parte no se pudo
+verificar en vez de saltearla en silencio.
 
 Si no hay ningún año en data/, termina con un aviso claro en vez de
 fallar — no es un error, es el estado normal de un clone limpio.
@@ -125,6 +138,53 @@ def validar_anio(anio: str) -> None:
     assert 0 <= jefatura["pct_jefatura_femenina"] <= 100
     print(f"Tipos de hogar: OK ({len(resumen_tipos)} categorías) — jefatura femenina: {jefatura['pct_jefatura_femenina']}%")
 
+    barrios_resumen = analysis.clasificacion_barrios_resumen(penetracion_barrio)
+    assert barrios_resumen["cantidad_barrios"].sum() == len(penetracion_barrio)
+
+    unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)
+    assert 0 <= unipersonales_mayores["pct_unipersonales_mayores"] <= 100
+
+    cat_a, cat_b = resumen_tipos["tipo_hogar"].iloc[0], resumen_tipos["tipo_hogar"].iloc[-1]
+    diferencia_tipos = analysis.diferencia_entre_categorias(resumen_tipos, "tipo_hogar", cat_a, cat_b, "pct_hogares")
+    assert -100 <= diferencia_tipos <= 100
+
+    carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)
+    assert carencias_frecuentes["pct_hogares"].between(0, 100).all() and len(carencias_frecuentes) == n_carencias
+    print(
+        "Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar / "
+        "carencias más frecuentes: OK"
+    )
+
+    # --- Brecha Digital por cohorte/jefatura/índice de acceso, Hacinamiento,
+    # Razón de dependencia: necesitan columnas derivadas que se arman acá
+    # mismo, siguiendo el mismo criterio que ya usa el notebook real.
+    hogares_ext_con_jefe = hogares_ext.merge(
+        tipo_hogar[["id_hogar", "jefe_sexo", "jefe_edad"]], on="id_hogar", how="left"
+    )
+    hogares_ext_con_jefe["cohorte"] = preprocessing.compute_cohorte_generacional(hogares_ext_con_jefe, int(anio))
+    hogares_ext_con_jefe["indice_acceso_digital"] = preprocessing.compute_indice_acceso_digital(hogares_ext_con_jefe)
+
+    brecha_cohorte = analysis.brecha_digital_por_cohorte(hogares_ext_con_jefe)
+    assert brecha_cohorte["pct_penetracion"].between(0, 100).all()
+    brecha_jefatura = analysis.brecha_digital_por_jefatura(hogares_ext_con_jefe)
+    assert brecha_jefatura["pct_penetracion"].between(0, 100).all()
+    indice_por_nivel = analysis.indice_acceso_digital_por(hogares_ext_con_jefe, "nivel_economico")
+    assert indice_por_nivel["indice_promedio"].between(0, 4).all()
+    if "tiene_tablet_ibirapita" in hogares_ext_con_jefe.columns:
+        tablet_por_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")
+        assert tablet_por_nivel["pct_con_tablet"].between(0, 100).all()
+    print("Brecha digital por cohorte / jefatura / índice de acceso digital: OK (ponderado)")
+
+    hogares_mdeo_hacinamiento = preprocessing.compute_hacinamiento(hogares_mdeo)
+    hacinamiento_por_nivel = analysis.pct_hacinamiento_por(hogares_mdeo_hacinamiento, "nivel_economico")
+    assert hacinamiento_por_nivel["pct_hacinamiento"].between(0, 100).all()
+    print("Hacinamiento por nivel económico: OK")
+
+    personas_con_depto = preprocessing.merge_personas(hogares, personas)
+    dependencia_por_depto = analysis.razon_dependencia_por(personas_con_depto, "departamento")
+    assert dependencia_por_depto["razon_dependencia"].dropna().ge(0).all()
+    print(f"Razón de dependencia demográfica por departamento: OK ({len(dependencia_por_depto)} departamentos)")
+
     disponibles = config.datos_disponibles(anio)
     print(f"Datos opcionales disponibles: {disponibles}")
 
@@ -135,6 +195,10 @@ def validar_anio(anio: str) -> None:
         assert 0 <= prevalencia["moderada_o_severa"] <= 100
         print(f"FIES: OK (inseguridad moderada o severa: {prevalencia['moderada_o_severa']}%)")
 
+        inseguridad_por_region = analysis.inseguridad_alimentaria_por(fies_clasificado, "region")
+        assert inseguridad_por_region["pct_inseguridad"].between(0, 100).all()
+        print(f"FIES por región: OK ({len(inseguridad_por_region)} regiones)")
+
     if disponibles["empleo"]:
         empleo = preprocessing.prepare_empleo(data_loader.load_empleo(anio))
         assert empleo["mes"].nunique() == 12, "el panel de empleo tiene que traer los 12 meses"
@@ -142,11 +206,52 @@ def validar_anio(anio: str) -> None:
         assert 0 <= tasas["tasa_desempleo"] <= 100
         print(f"Empleo: OK (tasa de desempleo promedio anual: {tasas['tasa_desempleo']}%)")
 
+        tasas_por_sexo = analysis.tasas_actividad_empleo_desempleo_por(empleo, "sexo_grupo")
+        assert tasas_por_sexo[["tasa_actividad", "tasa_empleo", "tasa_desempleo"]].apply(
+            lambda s: s.between(0, 100)
+        ).all().all()
+        sexos = tasas_por_sexo["sexo_grupo"].tolist()
+        if len(sexos) >= 2:
+            brecha_genero = analysis.brecha_por_grupo(tasas_por_sexo, "sexo_grupo", sexos[0], sexos[1])
+            assert brecha_genero.abs().le(100).all()
+        print("Empleo por sexo / brecha de género: OK")
+
+        ocupados = empleo[empleo["condicion_actividad"] == "Ocupados"]
+        if "es_informal" in ocupados.columns:
+            informalidad_por_sexo = analysis.tasa_mensual_promedio_por(ocupados, "sexo_grupo", "es_informal")
+            assert informalidad_por_sexo["pct_promedio"].between(0, 100).all()
+            print("Informalidad por sexo: OK")
+        else:
+            print("Informalidad por sexo: sin verificar — 'es_informal' no está disponible este año")
+
+        columna_sector = next((c for c in ("sit_ocup", "situacion_ocupacional") if c in ocupados.columns), None)
+        if columna_sector:
+            composicion_sector = analysis.composicion_categorica_por_mes_promedio(ocupados, "sexo_grupo", columna_sector)
+            assert composicion_sector.sum(axis=1).round(0).between(99, 101).all()
+            print("Situación ocupacional por sector y sexo: OK")
+        else:
+            print("Situación ocupacional por sector y sexo: sin verificar — columna no disponible este año")
+
     if disponibles["seguridad"]:
         victimizacion = data_loader.load_victimizacion(anio)
         largo = preprocessing.melt_delitos(preprocessing.prepare_victimizacion(victimizacion))
         assert len(largo) > 0
         print(f"Seguridad/Victimización: OK ({len(largo)} filas tipo_delito x persona)")
+
+        victimizados = largo[largo["victimizado"]]
+        comunicacion_por_delito = analysis.pct_ponderado_por(
+            victimizados, "tipo_delito", "comunicacion_policia", "ponderador_victimizacion"
+        )
+        assert comunicacion_por_delito["pct"].between(0, 100).all()
+        denuncia_por_delito = analysis.pct_ponderado_por(
+            victimizados, "tipo_delito", "denuncia_formal", "ponderador_victimizacion"
+        )
+        assert denuncia_por_delito["pct"].between(0, 100).all()
+        diferencia_comunicacion_denuncia = analysis.diferencia_entre_tablas(
+            comunicacion_por_delito, denuncia_por_delito, "tipo_delito", "pct"
+        )
+        assert diferencia_comunicacion_denuncia.abs().le(100).all()
+        print(f"Comunicación a la policía vs. denuncia formal, por tipo de delito: OK ({len(comunicacion_por_delito)} tipos)")
 
     print(f"\n[OK] Año {anio}: validación completa sin errores")
 
