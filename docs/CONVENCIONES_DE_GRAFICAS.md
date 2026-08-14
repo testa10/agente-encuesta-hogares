@@ -39,7 +39,11 @@ igual que cualquier otra.
   tienen nombres largos (barrios, condiciones de vivienda) — se leen sin
   inclinar la cabeza. Fundamento: Cleveland & McGill (1984), sobre
   precisión en la percepción de posición vs. longitud en distintas
-  orientaciones.
+  orientaciones. El orden de las categorías (`categoryorder: "total
+  ascending"`, ya usado en todo el proyecto) aplica además el principio
+  Gestalt de continuidad — Ware, *Information Visualization: Perception
+  for Design*: una secuencia ordenada se procesa como una sola tendencia,
+  no como valores sueltos sin relación entre sí.
 - **Barras agrupadas** (en vez de una sola barra con todo mezclado): para
   comparar el mismo dato entre 2 o más grupos lado a lado. Fundamento:
   principio de comparación directa (Few, *Show Me the Numbers*).
@@ -60,20 +64,35 @@ igual que cualquier otra.
 - **Nunca gráfico de torta con más de 3-4 categorías**: el ojo humano
   compara longitudes y posiciones con mayor precisión que ángulos
   (Cleveland & McGill, 1984) — con muchas porciones, un gráfico de torta
-  se vuelve difícil de leer con precisión.
+  se vuelve difícil de leer con precisión. Fundamento adicional: Cohen et
+  al. (2016), sobre el límite de la atención perceptiva — más porciones
+  que ese límite no se retienen como categorías distintas, se perciben
+  como ruido.
 - **Heatmap (mapa de calor)**: cuando se cruzan dos variables categóricas
   y lo que importa es la magnitud relativa de la concentración, no el
-  valor exacto de cada celda.
+  valor exacto de cada celda. Fundamento: principio Gestalt de similitud
+  — Ware, *Information Visualization: Perception for Design*: celdas de
+  color parecido se agrupan visualmente solas, sin necesidad de leer cada
+  valor individual.
 - **Gráfico de puntos/dispersión ordenado**: cuando hay muchas categorías
   (ej. 62 barrios) y lo que importa es el orden y la distancia entre
   ellas, no compararlas de a pares.
 - **Barras 100% apiladas**: cuando cada categoría se reparte en partes que
   suman exactamente 100% (ej. ocupados/desocupados/inactivos) — deja ver
-  la composición completa en una sola barra por grupo.
+  la composición completa en una sola barra por grupo. Fundamento: Wilke,
+  *Fundamentals of Data Visualization*, capítulo sobre proporciones.
 - **Barras de diferencia** (puntos porcentuales, no barras apiladas):
   cuando se comparan varios grupos que NO suman 100% entre sí — apilarlos
   daría una impresión de proporción que no existe (ver
-  `docs/METODOLOGIA.md`, sección 2).
+  `docs/METODOLOGIA.md`, sección 2; mismo fundamento de Wilke sobre
+  proporciones que la entrada anterior, aplicado al caso donde no
+  corresponde apilar).
+- **Nunca agregar a una gráfica un elemento que no aporte información**
+  (grillas de fondo densas, bordes gruesos, colores decorativos sin
+  significado, sombras): cada elemento visual compite por la atención de
+  quien lee, así que solo debería estar ahí lo que ayuda a leer el dato.
+  Fundamento: Tufte, principio de "data-ink ratio" (*The Visual Display
+  of Quantitative Information*, 1983).
 - **Dumbbell chart (o "barbell"/slopegraph)** — dos puntos por categoría,
   conectados por una línea, en vez de una barra con la resta ya calculada:
   para cualquier métrica que compare **dos grupos específicos** dentro de
@@ -89,9 +108,12 @@ igual que cualquier otra.
   Change". Implementación: `visualization.plot_dumbbell`.
 - **Comparar cualquier métrica del catálogo entre dos años (ej. "2024 vs.
   2025")**: es el mismo caso que el punto anterior — "año" es un grupo
-  específico como cualquier otro, no hace falta código nuevo. Calcular la
-  métrica una vez por año con la función que ya exista (la misma que usa
-  el informe de un solo año), cruzar las dos tablas con
+  específico como cualquier otro, no hace falta código nuevo. Es una
+  opción de primera clase del catálogo (`formularios.plantilla_catalogo`,
+  campo "¿Comparar estas métricas con otro año?"), no algo que la persona
+  tenga que pedir escribiéndolo en "otra métrica". Calcular la métrica
+  una vez por año con la función que ya exista (la misma que usa el
+  informe de un solo año), cruzar las dos tablas con
   `analysis.diferencia_entre_tablas` y graficar con
   `visualization.plot_dumbbell` — confirmado en una corrida real
   (Seguridad y Victimización, 41-47, comparando 2024 con 2025): se
