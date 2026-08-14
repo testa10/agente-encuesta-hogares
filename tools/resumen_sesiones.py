@@ -54,6 +54,13 @@ def main() -> None:
             print("  pasos medidos (de mayor a menor duración):")
             for paso in r.pasos_medidos:
                 print(f"    {paso['nombre']}: {paso['duracion_segundos']}s")
+        if r.checkpoints_paso5:
+            print("  paso 5 (construir el informe) - puntos de control:")
+            for cp in r.checkpoints_paso5:
+                if cp["segundos_desde_el_anterior"] is None:
+                    print(f"    {cp['etapa']}")
+                else:
+                    print(f"    +{cp['segundos_desde_el_anterior']}s  {cp['etapa']}")
         print()
 
 

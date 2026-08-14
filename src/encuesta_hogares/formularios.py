@@ -312,7 +312,16 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
         bitacora.registrar("formulario_error", nombre=nombre, mensaje=str(e), traceback=traceback.format_exc())
         raise
 
-    bitacora.registrar("formulario_timeout" if not completado else "formulario_respondido", nombre=nombre)
+    # Se guarda tambien lo que la persona respondio de verdad (no solo que
+    # respondio) - antes, un desajuste entre lo que alguien creia haber
+    # marcado y lo que terminaba en el informe (ej. tildar "Vivienda" y que
+    # el informe final trajera otro bloque en su lugar) era indiagnosticable
+    # despues del hecho: la bitacora solo decia "se respondio", nunca con
+    # que contenido.
+    if completado:
+        bitacora.registrar("formulario_respondido", nombre=nombre, respuesta=resultado)
+    else:
+        bitacora.registrar("formulario_timeout", nombre=nombre)
 
     if not completado:
         # Nadie respondió dentro del timeout (la persona cerró la pestaña,
@@ -406,7 +415,10 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
         bitacora.registrar("finalizacion_error", mensaje=str(e), traceback=traceback.format_exc())
         raise
 
-    bitacora.registrar("finalizacion_timeout" if not completado else "finalizacion_respondida")
+    if completado:
+        bitacora.registrar("finalizacion_respondida", respuesta=resultado)
+    else:
+        bitacora.registrar("finalizacion_timeout")
 
     if not completado:
         # Mismo riesgo que en mostrar_formulario(): devolver {} dejaba que

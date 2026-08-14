@@ -158,6 +158,7 @@ class ResumenSesion:
     errores: list[dict] = field(default_factory=list)
     pasos_medidos: list[dict] = field(default_factory=list)
     sugerencias_catalogo: list[dict] = field(default_factory=list)
+    checkpoints_paso5: list[dict] = field(default_factory=list)
 
 
 def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
@@ -166,6 +167,26 @@ def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
         for e in eventos
         if e["tipo"].endswith("_fin") and "duracion_segundos" in e
     ]
+
+    # A diferencia de pasos_medidos (que mide bloques de código Python que
+    # corren de punta a punta), estos puntos de control marcan instantes
+    # dentro del paso 5 en los que el modelo todavía no corrió nada -
+    # arman, en su lugar, tramos por diferencia entre puntos consecutivos.
+    # Nace de un hueco real de 9m41s entre el formulario del catálogo y el
+    # arranque de la carga de datos que la bitácora, hasta ahora, no podía
+    # explicar - ver paso 5 en .claude/agents/encuesta-hogares.md.
+    crudos = [e for e in eventos if e["tipo"] == "paso5_checkpoint"]
+    checkpoints_paso5 = []
+    anterior = None
+    for e in crudos:
+        entrada = {"etapa": e.get("etapa", "?"), "timestamp": e["timestamp"], "segundos_desde_el_anterior": None}
+        if anterior is not None:
+            t_anterior = datetime.fromisoformat(anterior["timestamp"])
+            t_actual = datetime.fromisoformat(e["timestamp"])
+            entrada["segundos_desde_el_anterior"] = round((t_actual - t_anterior).total_seconds(), 1)
+        checkpoints_paso5.append(entrada)
+        anterior = e
+
     return ResumenSesion(
         inicio=eventos[0]["timestamp"],
         fin=eventos[-1]["timestamp"],
@@ -174,4 +195,5 @@ def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
         errores=[e for e in eventos if e["tipo"].endswith("_error")],
         pasos_medidos=sorted(pasos_medidos, key=lambda p: -p["duracion_segundos"]),
         sugerencias_catalogo=[e for e in eventos if e["tipo"] == "sugerencia_catalogo"],
+        checkpoints_paso5=checkpoints_paso5,
     )

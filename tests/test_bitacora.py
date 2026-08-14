@@ -163,6 +163,38 @@ def test_resumir_sesion_incluye_sugerencias_de_catalogo():
     assert r.sugerencias_catalogo[0]["metrica"] == "Comparación por año"
 
 
+def test_resumir_sesion_arma_tramos_entre_checkpoints_de_paso5():
+    eventos = [
+        {"tipo": "formulario_respondido", "timestamp": "2026-01-01T09:00:00+00:00", "nombre": "Catálogo"},
+        {
+            "tipo": "paso5_checkpoint",
+            "timestamp": "2026-01-01T09:00:30+00:00",
+            "etapa": "lectura_referencia_fin",
+        },
+        {
+            "tipo": "paso5_checkpoint",
+            "timestamp": "2026-01-01T09:09:30+00:00",
+            "etapa": "script_notebook_escrito",
+        },
+        {
+            "tipo": "paso5_checkpoint",
+            "timestamp": "2026-01-01T09:09:45+00:00",
+            "etapa": "script_notebook_ejecutado",
+        },
+    ]
+
+    r = bitacora.resumir_sesion(eventos)
+
+    assert [c["etapa"] for c in r.checkpoints_paso5] == [
+        "lectura_referencia_fin",
+        "script_notebook_escrito",
+        "script_notebook_ejecutado",
+    ]
+    assert r.checkpoints_paso5[0]["segundos_desde_el_anterior"] is None
+    assert r.checkpoints_paso5[1]["segundos_desde_el_anterior"] == 540.0
+    assert r.checkpoints_paso5[2]["segundos_desde_el_anterior"] == 15.0
+
+
 def test_resumir_sesion_incluye_pasos_medidos_ordenados_por_duracion():
     eventos = [
         {"tipo": "carga_de_datos_fin", "timestamp": "2026-01-01T09:00:00+00:00", "duracion_segundos": 5.0},

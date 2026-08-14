@@ -685,6 +685,19 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    y `visualization.py` **una sola vez**, para saber qué funciones existen
    y qué parámetros reciben. No hace falta "probarlas" antes con datos de
    prueba — ya tienen tests en `tests/` que las validan; confiar en eso.
+
+   Justo después de terminar esta lectura, y antes de empezar a escribir
+   el script del punto 2, registrar un punto de control en la bitácora
+   (`run_python.bat -c "from encuesta_hogares import bitacora;
+   bitacora.registrar('paso5_checkpoint', etapa='lectura_referencia_fin')"`).
+   Nace de un caso real: entre que la persona terminaba el catálogo del
+   paso 4 y que arrancaba la carga de datos había un hueco de varios
+   minutos sin ningún evento — invisible en la bitácora, así que no había
+   forma de saber si el tiempo se iba en leer estos dos archivos, en que
+   el propio modelo escriba el script del punto 2 (lo más probable,
+   dada la cantidad de código que hay que generar cuando se eligen
+   muchas métricas y/o comparación entre varios años), o en correrlo.
+   Estos puntos de control dividen ese hueco en tramos medibles.
 2. Escribir **un único archivo** Python que arma la lista de celdas con
    `nbformat.v4.new_notebook()`, `new_markdown_cell()` y `new_code_cell()`
    (ver sección 1 de `docs/METODOLOGIA.md` para la estructura completa):
@@ -782,7 +795,20 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    DataFrame impresos tal cual muestran ruido técnico (`np.float64(...)`,
    `dtype: float64`, un índice 0/1/2 sin sentido) que no tiene lugar en un
    informe para un lector no técnico.
-3. Ejecutar ese único script **una vez** con `run_python.bat`.
+   Apenas termine la llamada a `Write` que crea este script (antes de
+   ejecutarlo), registrar otro punto de control: `run_python.bat -c
+   "from encuesta_hogares import bitacora; bitacora.registrar(
+   'paso5_checkpoint', etapa='script_notebook_escrito')"`. El tramo entre
+   este punto y el anterior (`lectura_referencia_fin`) es, casi siempre,
+   el más largo del paso 5 — es el tiempo que tarda el modelo en generar
+   todo el código del script, no tiempo de ejecución de nada.
+3. Ejecutar ese único script **una vez** con `run_python.bat`. Al
+   terminar, un tercer punto de control: `run_python.bat -c "from
+   encuesta_hogares import bitacora; bitacora.registrar(
+   'paso5_checkpoint', etapa='script_notebook_ejecutado')"` — con esto,
+   el tramo hasta acá queda dividido en tres partes medibles (leer,
+   escribir el script, correrlo), en vez de un solo hueco ciego entre el
+   formulario del catálogo y la carga de datos dentro del notebook.
 4. Ejecutar el notebook completo — eso es lo que corre los cálculos de
    verdad, no hace falta correrlos por separado antes ni verificar los
    números a mano en el camino. Envolver la ejecución con
