@@ -55,10 +55,9 @@ sección nueva, revisala contra esta lista:
   gráficas** (ver el caso de "nivel de suscripción del barrio" en la
   sección 4).
 - **Sesgo de mediador/selección**: no estratificar por una variable que es,
-  en parte, resultado de la variable que se está explicando. Ejemplo real
-  que se eliminó del proyecto original: cruzar "ingreso del hogar" con
-  "nivel de suscripción del barrio" mezclaba causa y efecto de forma
-  confusa y no aportaba una conclusión clara — se sacó toda la sección.
+  en parte, resultado de la variable que se está explicando. Ejemplo:
+  cruzar "ingreso del hogar" con "nivel de suscripción del barrio" mezcla
+  causa y efecto de forma confusa y no aporta una conclusión clara.
 - **Celdas chicas**: si un grupo tiene muy pocos casos, la comparación no es
   confiable. Antes de publicar una gráfica nueva agrupada por algo, corré
   `analysis.grupos_con_muestra_chica(df, columna_grupo)` sobre el
