@@ -25,16 +25,20 @@ if /i not "%ACCION%"=="EMPEZAR" (
     exit /b 0
 )
 
-REM -p/--print: corre el pedido y termina el proceso solo, en vez de
-REM quedarse en una sesion interactiva esperando mas mensajes para
-REM siempre. Sin esto, ni terminar el informe ni apretar "Salir sin
-REM terminar" en ningun formulario cerraba esta consola - se quedaba
-REM viva de fondo indefinidamente, algo que el usuario nunca deberia
-REM tener que notar ni cerrar a mano.
-claude -p "Quiero hacer la encuesta de hogares"
+REM Se probo -p/--print acá (corre el pedido y termina el proceso solo,
+REM en vez de quedarse en una sesion interactiva esperando mas mensajes
+REM para siempre) para que la consola se cierre sola al terminar o al
+REM salir antes. Revertido: en una prueba real, con -p el flujo se
+REM cortaba a mitad de camino y volvia a mostrar el formulario de
+REM bienvenida desde cero después de contestar el del año - -p no
+REM sostiene bien una conversacion larga con formularios que bloquean
+REM varios minutos esperando al usuario. El problema original (la
+REM consola queda viva de fondo sin cerrarse sola) sigue sin resolver;
+REM antes de volver a intentarlo, confirmar con la documentacion de
+REM Claude Code si hay una forma de cerrar el proceso al final de un
+REM turno largo sin cambiar el modo de ejecucion.
+claude "Quiero hacer la encuesta de hogares"
 
-if errorlevel 1 (
-    echo.
-    echo Hubo un problema y la sesion de Claude Code termino con error.
-    pause
-)
+echo.
+echo La sesion de Claude Code termino.
+pause
