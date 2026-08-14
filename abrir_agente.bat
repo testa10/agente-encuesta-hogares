@@ -25,8 +25,16 @@ if /i not "%ACCION%"=="EMPEZAR" (
     exit /b 0
 )
 
-claude "Quiero hacer la encuesta de hogares"
+REM -p/--print: corre el pedido y termina el proceso solo, en vez de
+REM quedarse en una sesion interactiva esperando mas mensajes para
+REM siempre. Sin esto, ni terminar el informe ni apretar "Salir sin
+REM terminar" en ningun formulario cerraba esta consola - se quedaba
+REM viva de fondo indefinidamente, algo que el usuario nunca deberia
+REM tener que notar ni cerrar a mano.
+claude -p "Quiero hacer la encuesta de hogares"
 
-echo.
-echo La sesion de Claude Code termino.
-pause
+if errorlevel 1 (
+    echo.
+    echo Hubo un problema y la sesion de Claude Code termino con error.
+    pause
+)
