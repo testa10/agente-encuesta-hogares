@@ -397,7 +397,7 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
 
 
 def plantilla_finalizacion(pdf_disponible: bool, html_disponible: bool) -> str:
-    """Último paso: agradecimiento + botones que abren el/los informe(s)."""
+    """Paso 8 (último): agradecimiento + botones que abren el/los informe(s)."""
     botones = []
     if pdf_disponible:
         botones.append(
@@ -521,7 +521,9 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 
 
 def plantilla_datos(anio: str, ficha_url: str = "") -> str:
-    """Pasos 2+3: instrucciones de descarga + confirmación, en una sola pantalla.
+    """Paso 2: instrucciones de descarga + confirmación, en una sola pantalla
+    (la validación del paso 3 corre después, como código, sin formulario
+    propio).
 
     La carpeta de destino se calcula acá adentro con `config.DATA_DIR`
     — nunca la recibe como parámetro de texto libre. Nace de un caso
@@ -760,7 +762,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 
 
 def plantilla_revision(propuesta: str, problema: str, alternativa: str) -> str:
-    """Paso 7: revisión de una métrica propuesta por el usuario, con tres salidas."""
+    """Paso 6: revisión de una métrica propuesta por el usuario, con tres salidas."""
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <title>Revisión de tu métrica propuesta</title>
 <style>{_ESTILO}</style></head><body>
