@@ -1,10 +1,11 @@
 # Metodología: cómo se construyó (y se debe mantener) este análisis
 
 Este documento resume todo lo aprendido durante la construcción del análisis
-original (ECH 2019, Montevideo) para que se pueda reproducir con la misma
-calidad en cualquier año futuro. No es teoría abstracta: cada regla acá
-existe porque en el proyecto original se encontró un problema concreto,
-se corrigió, y se busca evitar repetirlo.
+original (ECH 2019, Montevideo), diseñado por el dueño del proyecto, para
+que se pueda reproducir con la misma calidad en cualquier año futuro. No
+es teoría abstracta: cada regla acá existe porque en el proyecto original
+se encontró un problema concreto, se corrigió, y se busca evitar
+repetirlo.
 
 Las fuentes académicas e institucionales que respaldan cada métrica y cada
 tipo de gráfica están consolidadas en [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)
