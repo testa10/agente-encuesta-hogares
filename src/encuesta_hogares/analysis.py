@@ -488,8 +488,7 @@ def composicion_categorica_ponderada_por(
     Hogares que no vienen en panel rotativo. Cada fila (grupo) del
     resultado suma ~100%, apta para graficar con barras 100% apiladas o
     heatmap (ej. calidad de conexión por nivel económico — ver
-    `calidad_conexion_por` — o nivel de suscripción del barrio por nivel
-    económico — ver `suscripcion_vs_nivel_economico`).
+    `calidad_conexion_por`).
     """
     total_pond_grupo = df.groupby(columna_grupo, observed=True)[columna_ponderador].transform("sum")
     df = df.assign(_pct_pond=df[columna_ponderador] / total_pond_grupo * 100)
@@ -505,26 +504,6 @@ def calidad_conexion_por(df_con_calidad: pd.DataFrame, columna_grupo: str) -> pd
     para `visualization.plot_calidad_conexion_por` (barras 100% apiladas).
     """
     return composicion_categorica_ponderada_por(df_con_calidad, columna_grupo, "calidad_conexion")
-
-
-def suscripcion_vs_nivel_economico(hogares_abonados: pd.DataFrame) -> pd.DataFrame:
-    """% ponderado de hogares en cada nivel de suscripción del barrio (ver
-    `preprocessing.merge_penetracion`), dentro de cada nivel económico del
-    hogar — para ver si los barrios de mayor suscripción coinciden con
-    los de mayor nivel económico. Transpuesta (índice=nivel_suscripcion,
-    columnas=nivel_economico) para `visualization.plot_heatmap_suscripcion_vs_economico`.
-    """
-    tabla = composicion_categorica_ponderada_por(hogares_abonados, "nivel_economico", "nivel_suscripcion")
-    return tabla.T
-
-
-def streaming_vs_cable(df_extendido: pd.DataFrame) -> pd.DataFrame:
-    """% ponderado de hogares con/sin streaming, dentro de cada categoría
-    de tenencia de TV cable — para ver si un servicio reemplaza al otro o
-    si conviven. Apta para `visualization.plot_streaming_vs_cable`
-    (heatmap, índice=tiene_cable, columnas=tiene_streaming).
-    """
-    return composicion_categorica_ponderada_por(df_extendido, "tiene_cable", "tiene_streaming")
 
 
 def mediana_ponderada(valores: pd.Series, pesos: pd.Series) -> float:

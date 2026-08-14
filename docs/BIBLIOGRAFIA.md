@@ -62,7 +62,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   cantidades (barras 100% apiladas, barras de diferencia) de
   `docs/METODOLOGIA.md`.
 
-## Brecha Digital y Hogares (métricas 1-17)
+## Brecha Digital y Hogares (métricas 1-13)
 
 - CEPAL — Observatorio de Desarrollo Digital de América Latina y el Caribe:
   https://desarrollodigital.cepal.org/es/indicadores
@@ -81,7 +81,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
 - UIT/ITU — ICT Development Index:
   https://www.itu.int/en/ITU-D/Statistics/Pages/IDI/default.aspx
 
-## Territorio (métricas 18-20)
+## Territorio (métricas 14-16)
 
 - CEPAL — "Guía metodológica para el diseño de indicadores compuestos de
   desarrollo sostenible" (2009): https://repositorio.cepal.org/handle/11362/3663
@@ -93,7 +93,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   (IDERE-UY)". IECON-FCEA/UdelaR, financiado por ANII (Fondo María
   Viñas): https://ideas.repec.org/p/ulr/wpaper/dt-01-24.html
 
-## Vivienda (métricas 21-25)
+## Vivienda (métricas 17-21)
 
 - Arriagada, C. (2003). "Perfil de déficit y políticas de vivienda de
   interés social". CEPAL: https://repositorio.cepal.org/handle/11362/5711
@@ -110,7 +110,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   of housing"):
   https://unhabitat.org/sites/default/files/2020/06/metadata_on_sdg_indicator_11.1.1.pdf
 
-## Seguridad alimentaria (FIES, métricas 26-32)
+## Seguridad alimentaria (FIES, métricas 22-28)
 
 - FAO — metodología FIES (Food Insecurity Experience Scale): umbral
   estándar de probabilidad (modelo Rasch) usado para clasificar
@@ -118,7 +118,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   `config.UMBRAL_FIES`; sin URL directa registrada — buscar "FIES
   methodology FAO" para la documentación oficial vigente).
 
-## Empleo (métricas 33-40)
+## Empleo (métricas 29-36)
 
 - OIT/ILO — Indicadores Clave del Mercado de Trabajo (KILM):
   https://www.ilo.org/resource/key-indicators-labour-market-kilm
@@ -130,7 +130,7 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   Uruguay" — La Mañana:
   https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
 
-## Seguridad y Victimización (métricas 41-47)
+## Seguridad y Victimización (métricas 37-43)
 
 - Manual para Encuestas de Victimización — UNODC/UNECE:
   https://www.unodc.org/documents/data-and-analysis/Crime-statistics/Manual_Victimization_surveys_2009_spanish.pdf

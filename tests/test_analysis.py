@@ -37,8 +37,6 @@ from encuesta_hogares.analysis import (
     razon_dependencia_demografica,
     razon_dependencia_por,
     resumen_conectividad,
-    streaming_vs_cable,
-    suscripcion_vs_nivel_economico,
     tasa_mensual_promedio_por,
     tasas_actividad_empleo_desempleo,
     tasas_actividad_empleo_desempleo_por,
@@ -185,32 +183,6 @@ def test_calidad_conexion_por_usa_la_columna_calidad_conexion():
     assert tabla.loc["5-Alto", "Banda ancha fija"] == 100.0
 
 
-def test_suscripcion_vs_nivel_economico_queda_transpuesta():
-    df = pd.DataFrame(
-        {
-            "nivel_economico": ["1-Bajo", "1-Bajo", "5-Alto"],
-            "nivel_suscripcion": ["1-Baja", "2-Media-Baja", "4-Alta"],
-            "ponderador_hogar": [10.0, 30.0, 50.0],
-        }
-    )
-    tabla = suscripcion_vs_nivel_economico(df)
-    # Transpuesta: índice=nivel_suscripcion, columnas=nivel_economico.
-    assert tabla.loc["1-Baja", "1-Bajo"] == 25.0
-    assert tabla.loc["2-Media-Baja", "1-Bajo"] == 75.0
-    assert tabla.loc["4-Alta", "5-Alto"] == 100.0
-
-
-def test_streaming_vs_cable_cruza_tenencia_de_ambos_servicios():
-    df = pd.DataFrame(
-        {
-            "tiene_cable": [True, True, False, False],
-            "tiene_streaming": [True, False, True, True],
-            "ponderador_hogar": [10.0, 30.0, 20.0, 20.0],
-        }
-    )
-    tabla = streaming_vs_cable(df)
-    assert tabla.loc[True, True] == 25.0
-    assert tabla.loc[False, True] == 100.0
 
 
 def test_precariedad_estructural_cuenta_con_al_menos_una_carencia():

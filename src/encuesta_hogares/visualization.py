@@ -145,24 +145,6 @@ def plot_clasificacion_barrios(resumen: pd.DataFrame):
     return fig
 
 
-def plot_heatmap_suscripcion_vs_economico(tabla_pct: pd.DataFrame):
-    """Heatmap: % PONDERADO de hogares en cada nivel de suscripción del
-    barrio, dentro de cada nivel económico (ver
-    `analysis.suscripcion_vs_nivel_economico`, que arma `tabla_pct` con
-    índice=nivel_suscripcion, columnas=nivel_economico).
-    """
-    fig, ax = plt.subplots(figsize=(9, 7.5))
-    sns.heatmap(tabla_pct, cmap="viridis", annot=True, fmt=".1f", cbar=True, ax=ax)
-    ax.set_xlabel("Nivel económico")
-    ax.set_ylabel("Nivel de suscripción")
-    ax.set_title(
-        "Relación entre el nivel de suscripción\ny el nivel económico de los hogares de Mdeo.",
-        fontsize=13, pad=12,
-    )
-    fig.tight_layout()
-    return fig
-
-
 def _plot_grid_por_filtros(df: pd.DataFrame, get_serie, titulo: str, ylabel: str, value_fmt: str):
     """Grilla 2x2 genérica: un subplot de barras por cada segmento de FILTROS_SUSCRIPCION.
 
@@ -261,26 +243,6 @@ def _plot_barras_100_apiladas(tabla_pct: pd.DataFrame, titulo: str, xlabel: str)
     sns.despine(ax=ax)
     fig.tight_layout()
     return fig
-
-
-def _plot_heatmap_cruzado(tabla_pct: pd.DataFrame, titulo: str, xlabel: str, ylabel: str):
-    """Heatmap de una tabla cruzada de proporciones entre dos variables categóricas."""
-    fig, ax = plt.subplots(figsize=(6, 4.5))
-    sns.heatmap(tabla_pct, annot=True, fmt=".1f", cmap="viridis", cbar_kws={"label": "%"}, ax=ax)
-    ax.set_title(titulo, fontsize=13)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
-    return fig
-
-
-def plot_streaming_vs_cable(tabla_streaming: pd.DataFrame):
-    return _plot_heatmap_cruzado(
-        tabla_streaming,
-        titulo="¿Sustituye el streaming a la TV cable?",
-        xlabel="Tiene streaming",
-        ylabel="Tiene TV cable",
-    )
 
 
 def plot_ingreso_hogar_departamento(serie: pd.Series):
@@ -804,28 +766,3 @@ def plot_pct_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str, xlabel:
     )
     return fig
 
-
-def plot_penetracion_nacional(resumen_departamentos: pd.DataFrame, resaltar: str = "MONTEVIDEO"):
-    """Gráfico de puntos ordenado: penetración de TV cable por departamento, con uno resaltado."""
-    df_plot = resumen_departamentos.copy()
-    df_plot["resaltado"] = df_plot["departamento"] == resaltar
-
-    fig = px.scatter(
-        df_plot, x="pct_cable", y="departamento", color="resaltado",
-        title="Penetración de TV cable por departamento (Uruguay)",
-        color_discrete_map={True: "#d1495b", False: "#8d99ae"},
-    )
-    fig.update_traces(marker=dict(size=12))
-    fig.update_layout(
-        xaxis_title="% de hogares con TV cable", yaxis_title="",
-        yaxis={"categoryorder": "total ascending"},
-        # Mismo motivo que en plot_penetracion_por_barrio: un scatter no
-        # arranca en cero solo, hay que fijarlo a mano.
-        xaxis_range=[0, df_plot["pct_cable"].max() * 1.1],
-        showlegend=False, width=800, height=550, title_x=0.5,
-    )
-    promedio = df_plot["pct_cable"].mean()
-    fig.add_vline(x=promedio, line_dash="dash", line_color="gray")
-    fig.add_annotation(x=promedio, y=1.04, yref="paper", text=f"Promedio nacional: {promedio:.1f}%",
-                        showarrow=False, font=dict(color="gray"))
-    return fig

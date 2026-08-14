@@ -5,10 +5,12 @@ Nace de dos incidentes reales de este proyecto: primero, `pesoano`/`W_ANO`
 ningún lado salvo FIES/Empleo/Seguridad — se corrigió con un retrofit
 grande de analysis.py. Después, al construir esta misma verificación, la
 revisión encontró un segundo caso que ese retrofit no había tocado:
-`compute_penetracion_por_barrio` y `compute_penetracion_nacional`, en
-preprocessing.py, seguían calculando el % de hogares con TV cable con un
-`.mean()` sin ponderar — código que alimenta directamente las métricas 7,
-8, 9 y 10 del catálogo activo (Brecha Digital).
+`compute_penetracion_por_barrio`, en preprocessing.py, seguía calculando
+el % de hogares con TV cable con un `.mean()` sin ponderar — código que
+alimenta directamente varias métricas del catálogo activo (Brecha
+Digital). (La función hermana que tenía el mismo problema a nivel
+nacional, `compute_penetracion_nacional`, se borró después junto con la
+métrica del catálogo que la usaba — ver CHANGELOG.md.)
 
 Ninguno de los dos casos lo encontró una revisión manual completa a
 tiempo. Ese tipo de revisión no escala: cada función nueva agregada en
@@ -16,12 +18,13 @@ una corrida real puede repetir el mismo descuido sin que nadie la vuelva
 a mirar entera.
 
 Un tercer caso, encontrado en la misma revisión, ni siquiera vivía en una
-función de cálculo: `plot_heatmap_suscripcion_vs_economico`, en
-`visualization.py`, calculaba un `.value_counts(normalize=True)` sin
-ponderar directamente dentro de la función de gráfica — nada en
-`analysis.py`/`preprocessing.py` lo hacía, así que ninguna revisión que
-se limitara a esos dos módulos lo iba a encontrar nunca. Por eso esta
-verificación también escanea `visualization.py`.
+función de cálculo: una función de `visualization.py` que se borró
+después junto con su métrica del catálogo (ver CHANGELOG.md) calculaba un
+`.value_counts(normalize=True)` sin ponderar directamente dentro de la
+función de gráfica — nada en `analysis.py`/`preprocessing.py` lo hacía,
+así que ninguna revisión que se limitara a esos dos módulos lo iba a
+encontrar nunca. Por eso esta verificación también escanea
+`visualization.py`.
 
 Esta verificación automatiza la señal más barata de un descuido de
 ponderación: un cálculo estadístico "crudo" (`.mean()`, `.median()`,
@@ -82,11 +85,6 @@ ALLOWLIST: dict[str, str] = {
         "(ver preprocessing.compute_penetracion_por_barrio) — es el promedio "
         "de referencia entre barrios que se dibuja como línea punteada, no "
         "una estadística nueva sobre datos crudos."
-    ),
-    "plot_penetracion_nacional": (
-        "mismo caso que plot_penetracion_por_barrio: mean() promedia "
-        "`pct_cable`, ya ponderada por departamento, para la línea de "
-        "referencia nacional del gráfico."
     ),
 }
 

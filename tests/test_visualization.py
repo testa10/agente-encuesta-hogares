@@ -2,11 +2,10 @@
 
 No es un test exhaustivo de cada función de `visualization.py` (son
 muchas y la mayoría son variaciones directas de `analysis.py`, ya
-cubierto). Estos dos casos puntuales sí se testean porque ya fallaron una
-vez en un informe real: un `px.scatter` no ancla el eje en cero solo (a
-diferencia de un `px.bar`), así que si alguien edita estas funciones sin
-saberlo, puede volver a exagerar visualmente las diferencias sin que
-nada lo note.
+cubierto). Este caso puntual sí se testea porque ya falló una vez en un
+informe real: un `px.scatter` no ancla el eje en cero solo (a diferencia
+de un `px.bar`), así que si alguien edita esta función sin saberlo, puede
+volver a exagerar visualmente las diferencias sin que nada lo note.
 """
 
 import pandas as pd
@@ -26,14 +25,6 @@ def test_plot_penetracion_por_barrio_ancla_el_eje_y_en_cero():
     fig = viz.plot_penetracion_por_barrio(df)
 
     assert fig.layout.yaxis.range[0] == 0
-
-
-def test_plot_penetracion_nacional_ancla_el_eje_x_en_cero():
-    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "RIVERA", "SALTO"], "pct_cable": [55.0, 20.0, 35.0]})
-
-    fig = viz.plot_penetracion_nacional(df)
-
-    assert fig.layout.xaxis.range[0] == 0
 
 
 # ============================================================================
@@ -114,24 +105,6 @@ def test_plot_composicion_categorica_no_falla():
         index=pd.Index(["Formal", "Informal"], name="sector"),
     )
     fig = viz.plot_composicion_categorica(df, "Situación ocupacional por sector", "Sector")
-    assert fig is not None
-
-
-def test_plot_heatmap_suscripcion_vs_economico_no_falla():
-    df = pd.DataFrame(
-        {"1-Bajo": [40.0, 60.0], "5-Alto": [10.0, 90.0]},
-        index=pd.Index(["1-Baja", "4-Alta"], name="nivel_suscripcion"),
-    )
-    fig = viz.plot_heatmap_suscripcion_vs_economico(df)
-    assert fig is not None
-
-
-def test_plot_streaming_vs_cable_no_falla():
-    df = pd.DataFrame(
-        {True: [60.0, 90.0], False: [40.0, 10.0]},
-        index=pd.Index([True, False], name="tiene_cable"),
-    )
-    fig = viz.plot_streaming_vs_cable(df)
     assert fig is not None
 
 

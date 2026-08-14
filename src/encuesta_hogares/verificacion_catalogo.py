@@ -10,16 +10,22 @@ identificaste"). Nada verifica automáticamente que esa asociación siga
 siendo válida.
 
 Construyendo este manifiesto se encontraron 4 métricas del catálogo
-activo (3, 9, 11 y 40) que **no tenían ninguna función de análisis
-propia, ponderada y testeada** — el cálculo quedaba librado a que el
-agente lo improvisara dentro del notebook en cada corrida, sin test, sin
-revisión, y en al menos un caso (métrica 9) directamente sin ponderar.
-Se corrigieron agregando las funciones que faltaban (ver
-`analysis.composicion_categorica_ponderada_por` y sus tres usos
-concretos: `calidad_conexion_por`, `suscripcion_vs_nivel_economico`,
-`streaming_vs_cable`) — este módulo existe para que la próxima métrica
+activo de ese momento (calidad de conexión, relación entre barrio y
+nivel económico, streaming vs. cable, y situación ocupacional por
+sector) que **no tenían ninguna función de análisis propia, ponderada y
+testeada** — el cálculo quedaba librado a que el agente lo improvisara
+dentro del notebook en cada corrida, sin test, sin revisión, y en al
+menos un caso directamente sin ponderar. Se corrigieron agregando las
+funciones que faltaban (ver `analysis.composicion_categorica_ponderada_por`
+y sus usos concretos) — este módulo existe para que la próxima métrica
 en esa misma situación falle un test en vez de esperar a que alguien la
 note en una corrida real.
+
+(Dos de esas cuatro — relación entre barrio y nivel económico, y
+streaming vs. cable — se sacaron después del catálogo por completo
+junto con "Montevideo frente al resto del país" y "Suscripción a TV
+cable por barrio"; sus funciones, ya sin ningún uso real, se borraron
+con ellas. Ver CHANGELOG.md para cuándo y por qué.)
 
 MANIFEST no pretende ser el ÚNICO camino válido para cada métrica —
 varias reutilizan un mismo helper genérico (`pct_ponderado_por`,
@@ -53,53 +59,49 @@ MANIFEST: dict[int, dict] = {
     4: {"funciones": ["analysis.brecha_digital_por_jefatura"], "visualizacion": "visualization.plot_brecha_digital_por_jefatura"},
     5: {"funciones": ["analysis.indice_acceso_digital_por"], "visualizacion": "visualization.plot_indice_acceso_digital_por"},
     6: {"funciones": ["analysis.adopcion_tablet_ibirapita_por"], "visualizacion": "visualization.plot_adopcion_tablet_ibirapita"},
-    7: {"funciones": ["preprocessing.compute_penetracion_por_barrio"], "visualizacion": "visualization.plot_penetracion_por_barrio"},
-    8: {"funciones": ["analysis.clasificacion_barrios_resumen"], "visualizacion": "visualization.plot_clasificacion_barrios"},
-    9: {"funciones": ["analysis.suscripcion_vs_nivel_economico"], "visualizacion": "visualization.plot_heatmap_suscripcion_vs_economico"},
-    10: {"funciones": ["preprocessing.compute_penetracion_nacional"], "visualizacion": "visualization.plot_penetracion_nacional"},
-    11: {"funciones": ["analysis.streaming_vs_cable"], "visualizacion": "visualization.plot_streaming_vs_cable"},
+    7: {"funciones": ["analysis.clasificacion_barrios_resumen"], "visualizacion": "visualization.plot_clasificacion_barrios"},
     # 2 · Hogares
-    12: {"funciones": ["analysis.pct_pobres_indigentes"], "visualizacion": "visualization.plot_pct_pobres_indigentes"},
-    13: {"funciones": ["analysis.tasa_jefatura_femenina"], "visualizacion": "visualization.plot_tasa_jefatura_femenina"},
-    14: {"funciones": ["analysis.pct_hacinamiento_por", "preprocessing.compute_hacinamiento"], "visualizacion": "visualization.plot_hacinamiento_por"},
-    15: {"funciones": ["analysis.tipos_hogar_resumen"], "visualizacion": "visualization.plot_tipos_hogar"},
-    16: {"funciones": ["analysis.razon_dependencia_por"], "visualizacion": "visualization.plot_razon_dependencia_por"},
-    17: {"funciones": ["analysis.pct_unipersonales_mayores"], "visualizacion": "visualization.plot_pct_unipersonales_mayores"},
+    8: {"funciones": ["analysis.pct_pobres_indigentes"], "visualizacion": "visualization.plot_pct_pobres_indigentes"},
+    9: {"funciones": ["analysis.tasa_jefatura_femenina"], "visualizacion": "visualization.plot_tasa_jefatura_femenina"},
+    10: {"funciones": ["analysis.pct_hacinamiento_por", "preprocessing.compute_hacinamiento"], "visualizacion": "visualization.plot_hacinamiento_por"},
+    11: {"funciones": ["analysis.tipos_hogar_resumen"], "visualizacion": "visualization.plot_tipos_hogar"},
+    12: {"funciones": ["analysis.razon_dependencia_por"], "visualizacion": "visualization.plot_razon_dependencia_por"},
+    13: {"funciones": ["analysis.pct_unipersonales_mayores"], "visualizacion": "visualization.plot_pct_unipersonales_mayores"},
     # 3 · Territorio
-    18: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_indice_desarrollo_territorial"},
-    19: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_perfil_territorial"},
-    20: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    14: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_indice_desarrollo_territorial"},
+    15: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_perfil_territorial"},
+    16: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
     # 4 · Vivienda
-    21: {"funciones": ["analysis.precariedad_estructural"], "visualizacion": "visualization.plot_precariedad_estructural"},
-    22: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
-    23: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
-    24: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
-    25: {"funciones": ["analysis.carencias_estructurales_mas_frecuentes"], "visualizacion": "visualization.plot_carencias_estructurales_mas_frecuentes"},
+    17: {"funciones": ["analysis.precariedad_estructural"], "visualizacion": "visualization.plot_precariedad_estructural"},
+    18: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
+    19: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
+    20: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    21: {"funciones": ["analysis.carencias_estructurales_mas_frecuentes"], "visualizacion": "visualization.plot_carencias_estructurales_mas_frecuentes"},
     # 5 · Seguridad alimentaria (FIES)
-    26: {"funciones": ["analysis.prevalencia_inseguridad_alimentaria"], "visualizacion": "visualization.plot_prevalencia_inseguridad_alimentaria"},
+    22: {"funciones": ["analysis.prevalencia_inseguridad_alimentaria"], "visualizacion": "visualization.plot_prevalencia_inseguridad_alimentaria"},
+    23: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
+    24: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
+    25: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    26: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     27: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     28: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    29: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
-    30: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    31: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    32: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     # 6 · Empleo
-    33: {"funciones": ["analysis.tasas_actividad_empleo_desempleo"], "visualizacion": "visualization.plot_tasas_actividad_empleo_desempleo"},
-    34: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
-    35: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    36: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    37: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    38: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    39: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
-    40: {"funciones": ["analysis.composicion_categorica_por_mes_promedio"], "visualizacion": "visualization.plot_composicion_categorica"},
+    29: {"funciones": ["analysis.tasas_actividad_empleo_desempleo"], "visualizacion": "visualization.plot_tasas_actividad_empleo_desempleo"},
+    30: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
+    31: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
+    32: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
+    33: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
+    34: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
+    35: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
+    36: {"funciones": ["analysis.composicion_categorica_por_mes_promedio"], "visualizacion": "visualization.plot_composicion_categorica"},
     # 7 · Seguridad y victimización
+    37: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
+    38: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
+    39: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
+    40: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     41: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    42: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
+    42: {"funciones": ["analysis.diferencia_entre_tablas"], "visualizacion": "visualization.plot_dumbbell"},
     43: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    44: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    45: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    46: {"funciones": ["analysis.diferencia_entre_tablas"], "visualizacion": "visualization.plot_dumbbell"},
-    47: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
 }
 
 
@@ -220,9 +222,9 @@ def referencias_rotas() -> list[ReferenciaRota]:
 # — ver preprocessing.prepare_empleo); situación ocupacional (40) por
 # ahora solo tiene un camino conocido.
 COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
-    36: [["INFORMAL"], ["f82"]],
-    37: [["INFORMAL"], ["f82"]],
-    40: [["SIT_OCUP", "SECTOR_F"]],
+    32: [["INFORMAL"], ["f82"]],
+    33: [["INFORMAL"], ["f82"]],
+    36: [["SIT_OCUP", "SECTOR_F"]],
 }
 
 

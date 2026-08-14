@@ -383,12 +383,12 @@ que mostrar".
 **Si "empleo" quedó entre las áreas elegidas, ejecutar
 `verificacion_catalogo.aviso_metricas_no_disponibles(anio)` antes de
 mostrar el catálogo del paso 4.** Nace de un caso real: en 2025 el INE
-dejó de publicar las columnas que sostienen la métrica 40 (situación
+dejó de publicar las columnas que sostienen la métrica 36 (situación
 ocupacional por sector), y nadie se enteraba hasta que la corrida
 reventaba a mitad de camino, después de que la persona ya la había
 elegido. Si la función devuelve algo, contárselo por chat en un mensaje
 corto ANTES del formulario del catálogo (ej. "Para 2025 no va a estar
-disponible la métrica 40 — situación ocupacional por sector — porque el
+disponible la métrica 36 — situación ocupacional por sector — porque el
 INE no publicó esas columnas este año.") — no hace falta que el
 formulario en sí la oculte, alcanza con que la persona lo sepa antes de
 marcarla y se lleve una sorpresa después.
@@ -466,7 +466,7 @@ momento — por eso ahora es una opción del catálogo en vez de depender de
 que la persona lo escriba en "otra métrica", y por eso se generalizó
 también al caso de 3 años o más en vez de dejarlo limitado a dos.
 
-**Nota sobre Brecha Digital y Hogares (métricas 1-17):** estas dos
+**Nota sobre Brecha Digital y Hogares (métricas 1-13):** estas dos
 categorías se rediseñaron para no depender de tecnología como eje fijo
 (antes, "Pobreza", "Territorio" y "Hogar y demografía" eran en realidad
 variaciones de "tema X según tenencia de streaming/celular" — un sesgo
@@ -530,7 +530,7 @@ alguna métrica de estos dos bloques):
   hacinamiento, razón de dependencia demográfica:
   https://statistics.cepal.org/portal/cepalstat/
 
-**Nota sobre Territorio (métricas 18-20), si el usuario las elige:** el
+**Nota sobre Territorio (métricas 14-16), si el usuario las elige:** el
 índice de desarrollo territorial (`analysis.indice_desarrollo_territorial`)
 combina pobreza, empleo, precariedad de vivienda y estrato socioeconómico
 por departamento en un único indicador — el criterio que distingue una
@@ -563,7 +563,7 @@ departamento (eso ya se hace, disperso, en Hogares/Empleo/Seguridad).
     desarrollo sostenible", 2009:
     https://repositorio.cepal.org/handle/11362/3663
 
-**Nota sobre Vivienda (métricas 21-25), si el usuario las elige:** las
+**Nota sobre Vivienda (métricas 17-21), si el usuario las elige:** las
 métricas de esta categoría se rediseñaron para no depender de la tenencia
 de tecnología (antes comparaban condiciones estructurales "según acceso a
 celular/streaming/internet" — el mismo sesgo que motivó el rediseño de
@@ -597,7 +597,7 @@ Brecha Digital y Hogares). Ahora usan un índice de conteo de carencias
     Arriagada, C. — "Perfil de déficit y políticas de vivienda de interés
     social", CEPAL, 2003: https://repositorio.cepal.org/handle/11362/5711
 
-**Nota sobre FIES (métricas 26-32), si el usuario las elige:** el archivo
+**Nota sobre FIES (métricas 22-28), si el usuario las elige:** el archivo
 `base_FIES_{año}.csv` cubre una **submuestra** de hogares, no el total del
 año (para 2024, ~32% de los hogares) — cualquier texto que describa estos
 resultados tiene que aclarar eso en una frase simple ("esto se calculó
@@ -609,7 +609,7 @@ e `inseguridad_alimentaria_por` en `analysis.py`) — nunca por conteo simple
 de filas, y nunca por el ponderador general de la encuesta (`w` de FIES es
 distinto del ponderador de Hogares/Personas).
 
-**Nota sobre Empleo (métricas 33-40), si el usuario las elige** (solo se
+**Nota sobre Empleo (métricas 29-36), si el usuario las elige** (solo se
 ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
 
 - Los cálculos ya vienen ponderados mes a mes y promediados entre los 12
@@ -640,7 +640,7 @@ ofrecen si contestó que sí en `plantilla_areas()`, paso 3.5 más arriba):
     Uruguay" — La Mañana:
     https://www.xn--lamaana-7za.uy/actualidad/trabajo-subempleo-e-informalidad-afectan-a-casi-3-de-cada-10-ocupados-en-uruguay/
 
-**Nota sobre Seguridad y Victimización (métricas 41-47), si el usuario las
+**Nota sobre Seguridad y Victimización (métricas 37-43), si el usuario las
 elige:**
 
 - **El período de referencia es "el mes anterior a la entrevista", no el
@@ -657,7 +657,7 @@ elige:**
   de ESE delito (`victimizado == True`) — filtrar antes de usarlas.
 - `violencia` no existe para Estafa ni para Robo o asalto fuera de la
   vivienda (esos dos tipos no tienen esa sub-pregunta en el cuestionario,
-  no es un error de carga) — la métrica 47 ("Casos con violencia por tipo
+  no es un error de carga) — la métrica 43 ("Casos con violencia por tipo
   de delito") solo aplica a los otros tres tipos.
 - La variable `v1` (percepción de seguridad en el barrio) sigue sin
   diccionario de valores publicado por el INE — se confirmó revisando la
@@ -733,11 +733,14 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
      el paso 3.5. **Nunca generarlas solo "porque siempre se hizo así"**
      — son contenido de Brecha Digital como cualquier otra métrica del
      catálogo, y por eso mismo dependen de que ese bloque se haya elegido.
-   - **Distribución por barrio**: solo si se eligió "Brecha Digital" (la
-     métrica 7 del catálogo, "Suscripción a TV cable por barrio", reutiliza
-     esta sección en vez de repetirla). "Territorio" ya no tiene ninguna
-     métrica de tecnología — su índice de desarrollo territorial es
-     infraestructura propia, no depende de esta sección.
+   - **Distribución por barrio**: solo si se eligió "Brecha Digital" — usa
+     `preprocessing.compute_penetracion_por_barrio` y
+     `visualization.plot_penetracion_por_barrio`, la misma tabla que
+     también alimenta la métrica 7 del catálogo ("Clasificación de
+     barrios por nivel de suscripción"), así que no hay que recalcularla
+     dos veces. "Territorio" ya no tiene ninguna métrica de tecnología —
+     su índice de desarrollo territorial es infraestructura propia, no
+     depende de esta sección.
    - Después de esas secciones (las que correspondan), una celda de
      markdown (pregunta guía + justificación del tipo de gráfica) y una de
      código por cada métrica que el usuario eligió del catálogo del paso 4,

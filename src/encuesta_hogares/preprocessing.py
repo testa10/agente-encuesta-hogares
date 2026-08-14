@@ -64,13 +64,6 @@ def compute_penetracion_por_barrio(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     return resumen
 
 
-def merge_penetracion(hogares_mdeo: pd.DataFrame, penetracion_por_barrio: pd.DataFrame) -> pd.DataFrame:
-    """Agrega el nivel de suscripción del barrio a cada hogar."""
-    return hogares_mdeo.merge(
-        penetracion_por_barrio[["barrio", "nivel_suscripcion"]], on="barrio", how="left"
-    )
-
-
 def merge_personas(hogares_resumen: pd.DataFrame, personas: pd.DataFrame) -> pd.DataFrame:
     """Agrega datos de las personas del hogar (edad, sexo, ingresos) a la tabla de hogares."""
     combinado = hogares_resumen.merge(personas, on="id_hogar", how="left").sort_values("id_hogar")
@@ -360,22 +353,3 @@ def compute_indice_acceso_digital(df_extendido: pd.DataFrame) -> pd.Series:
     return df_extendido[columnas].astype("boolean").sum(axis=1).astype("Int64")
 
 
-def compute_penetracion_nacional(hogares: pd.DataFrame) -> pd.DataFrame:
-    """% PONDERADO (por `ponderador_hogar`) de hogares con TV cable por
-    departamento, para todo el país (sin filtrar a Montevideo).
-    `total_hogares` sí queda sin ponderar a propósito — ver
-    `compute_penetracion_por_barrio`.
-    """
-    df = hogares.copy()
-    df["_abonado_pond"] = df["ponderador_hogar"].where(df["tipo_abonado"] == 1.0, 0.0)
-    resumen = (
-        df.groupby("departamento")
-        .agg(
-            total_hogares=("id_hogar", "count"),
-            _total_pond=("ponderador_hogar", "sum"),
-            _abonado_pond=("_abonado_pond", "sum"),
-        )
-        .reset_index()
-    )
-    resumen["pct_cable"] = (resumen["_abonado_pond"] / resumen["_total_pond"] * 100).round(2)
-    return resumen.drop(columns=["_total_pond", "_abonado_pond"]).sort_values("pct_cable", ascending=False)

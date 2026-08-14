@@ -44,11 +44,11 @@ def test_toda_metrica_del_manifiesto_tiene_su_funcion_validada_con_datos_reales(
     )
 
 
-def test_numeros_del_catalogo_cubre_los_47_bloques_conocidos():
+def test_numeros_del_catalogo_cubre_los_43_bloques_conocidos():
     catalogo = vc.numeros_del_catalogo()
     assert min(catalogo) == 1
-    assert max(catalogo) == 47
-    assert len(catalogo) == 47
+    assert max(catalogo) == 43
+    assert len(catalogo) == 43
 
 
 def test_resolver_devuelve_none_para_una_referencia_inexistente():
@@ -67,21 +67,21 @@ def test_resolver_devuelve_none_para_una_referencia_inexistente():
 
 
 def test_metricas_no_disponibles_acepta_cualquier_opcion_completa():
-    # Caso real 2025: falta INFORMAL pero esta f82 - la 36/37 tienen que
+    # Caso real 2025: falta INFORMAL pero esta f82 - la 32/33 tienen que
     # quedar disponibles (segunda opcion completa), no marcadas.
     columnas = {"ID", "nper", "mes", "POBPCOAC", "f82", "SUBEMPLEO", "W"}
     no_disponibles = vc.metricas_no_disponibles(columnas)
-    assert 36 not in no_disponibles
-    assert 37 not in no_disponibles
+    assert 32 not in no_disponibles
+    assert 33 not in no_disponibles
 
 
 def test_metricas_no_disponibles_marca_metrica_sin_ninguna_opcion_completa():
     # Caso real 2025: SIT_OCUP y SECTOR_F no estan, sin ningun camino
-    # alternativo conocido para la metrica 40.
+    # alternativo conocido para la metrica 36.
     columnas = {"ID", "nper", "mes", "POBPCOAC", "INFORMAL", "SUBEMPLEO", "W"}
     no_disponibles = vc.metricas_no_disponibles(columnas)
-    assert 36 not in no_disponibles
-    assert set(no_disponibles[40]) == {"SIT_OCUP", "SECTOR_F"}
+    assert 32 not in no_disponibles
+    assert set(no_disponibles[36]) == {"SIT_OCUP", "SECTOR_F"}
 
 
 def test_metricas_empleo_no_disponibles_lee_el_primer_archivo_existente(tmp_path, monkeypatch):
@@ -93,8 +93,8 @@ def test_metricas_empleo_no_disponibles_lee_el_primer_archivo_existente(tmp_path
 
     no_disponibles = vc.metricas_empleo_no_disponibles("2025")
 
-    assert 36 not in no_disponibles  # f82 esta en columnas_2025
-    assert set(no_disponibles[40]) == {"SIT_OCUP", "SECTOR_F"}
+    assert 32 not in no_disponibles  # f82 esta en columnas_2025
+    assert set(no_disponibles[36]) == {"SIT_OCUP", "SECTOR_F"}
 
 
 def test_metricas_empleo_no_disponibles_vacio_si_no_hay_archivos(tmp_path, monkeypatch):
@@ -112,5 +112,5 @@ def test_aviso_metricas_no_disponibles_redacta_mensaje_legible(tmp_path, monkeyp
     avisos = vc.aviso_metricas_no_disponibles("2025")
 
     assert len(avisos) == 1
-    assert "Métrica 40" in avisos[0]
+    assert "Métrica 36" in avisos[0]
     assert "SIT_OCUP" in avisos[0] and "SECTOR_F" in avisos[0]

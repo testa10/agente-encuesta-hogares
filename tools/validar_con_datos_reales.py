@@ -17,7 +17,7 @@ tests sintéticos y solo aparecieron contra datos de verdad:
   confundir, y un dataframe sintético de prueba no distingue una de otra
   si no se arma con cuidado.
 
-No se listan las 47 métricas del catálogo una por una — esa lista cambia
+No se listan las 43 métricas del catálogo una por una — esa lista cambia
 seguido y mantenerla sincronizada acá sería el mismo tipo de
 comentario/lista que se desactualiza solo. En cambio, se invoca la
 función de `analysis.py` que sostiene cada una contra datos reales
@@ -112,23 +112,12 @@ def validar_anio(anio: str) -> None:
     assert penetracion_barrio["pct_abonados"].between(0, 100).all()
     print(f"Penetración por barrio: OK ({len(penetracion_barrio)} barrios, ponderado)")
 
-    penetracion_nacional = preprocessing.compute_penetracion_nacional(hogares)
-    assert penetracion_nacional["pct_cable"].between(0, 100).all()
-    print(f"Penetración nacional por departamento: OK ({len(penetracion_nacional)} departamentos, ponderado)")
-
-    # --- Métricas 3, 9, 11: sin función de análisis propia hasta esta corrida ---
+    # --- Métrica 3: sin función de análisis propia hasta la corrida que agregó este manifiesto ---
     hogares_ext["calidad_conexion"] = preprocessing.clasificar_calidad_conexion(hogares_ext)
     calidad = analysis.calidad_conexion_por(hogares_ext, "nivel_economico")
     assert calidad.sum(axis=1).round(0).between(99, 101).all()
     assert visualization.plot_calidad_conexion_por(calidad, "nivel económico") is not None
-
-    hogares_abonados = preprocessing.merge_penetracion(hogares_mdeo, penetracion_barrio)
-    suscripcion_vs_economico = analysis.suscripcion_vs_nivel_economico(hogares_abonados)
-    assert visualization.plot_heatmap_suscripcion_vs_economico(suscripcion_vs_economico) is not None
-
-    streaming = analysis.streaming_vs_cable(hogares_ext)
-    assert visualization.plot_streaming_vs_cable(streaming) is not None
-    print("Calidad de conexión / suscripción vs. nivel económico / streaming vs. cable: OK (ponderado)")
+    print("Calidad de conexión por nivel económico: OK (ponderado)")
 
     # --- Hogares: composición vía Personas, requiere el merge completo ---
     tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)

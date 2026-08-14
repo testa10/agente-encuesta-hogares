@@ -10,6 +10,28 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.6.0] — 2026-08-14
+
+### Eliminado
+
+- **Cuatro métricas del bloque Brecha Digital, sacadas del catálogo por
+  completo**: "Suscripción a TV cable por barrio", "Relación entre el
+  barrio y el nivel económico", "Montevideo frente al resto del país" y
+  "¿El streaming reemplaza a la TV cable?" (antes 7, 9, 10 y 11). El
+  catálogo pasa de 47 a 43 métricas, renumeradas del 1 al 43 sin huecos
+  (ver el mapeo completo en el historial de `formularios.py` si hace
+  falta comparar con un informe generado antes de este cambio). Las
+  funciones que quedaron sin ningún uso real se borraron con ellas:
+  `analysis.streaming_vs_cable`, `analysis.suscripcion_vs_nivel_economico`,
+  `preprocessing.compute_penetracion_nacional`,
+  `preprocessing.merge_penetracion`,
+  `visualization.plot_streaming_vs_cable` y
+  `visualization.plot_heatmap_suscripcion_vs_economico`. La tabla de
+  penetración por barrio (`preprocessing.compute_penetracion_por_barrio`)
+  se mantiene — la sigue usando la métrica 7 actual ("Clasificación de
+  barrios por nivel de suscripción") y la sección "Distribución por
+  barrio" que se muestra siempre que se elige el bloque Brecha Digital.
+
 ## [0.5.0] — 2026-08-14
 
 ### Agregado
