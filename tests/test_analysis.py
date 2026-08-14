@@ -8,6 +8,7 @@ from encuesta_hogares.analysis import (
     calidad_conexion_por,
     carencias_estructurales_mas_frecuentes,
     clasificacion_barrios_resumen,
+    combinar_por_anio,
     composicion_categorica_por_mes_promedio,
     composicion_categorica_ponderada_por,
     diferencia_entre_categorias,
@@ -422,6 +423,30 @@ def test_tasas_actividad_empleo_desempleo_por_anio_ordena_y_deja_anio_numerico()
     assert tabla["anio"].tolist() == [2019, 2024, 2025]
     assert pd.api.types.is_integer_dtype(tabla["anio"])
     assert tabla.set_index("anio").loc[2024, "tasa_desempleo"] == 8.18
+
+
+def test_combinar_por_anio_con_metrica_de_un_solo_numero():
+    # Caso simple: la métrica es un único porcentaje por año (ej. pobreza),
+    # sin sub-series. Mismo criterio que la función que generaliza: orden
+    # ascendente y año numérico.
+    valores_por_anio = {2024: 12.99, 2019: 8.14, 2025: 14.14}
+    tabla = combinar_por_anio(valores_por_anio)
+    assert tabla["anio"].tolist() == [2019, 2024, 2025]
+    assert pd.api.types.is_integer_dtype(tabla["anio"])
+    assert tabla.set_index("anio").loc[2025, "valor"] == 14.14
+
+
+def test_combinar_por_anio_con_metrica_de_varias_series():
+    # Caso con sub-series (ej. jefatura por sexo) - mismo comportamiento
+    # que tasas_actividad_empleo_desempleo_por_anio, generalizado a
+    # cualquier dict de valores, no solo esas tres tasas puntuales.
+    valores_por_anio = {
+        2024: {"jefatura_hombre": 44.14, "jefatura_mujer": 55.86},
+        2019: {"jefatura_hombre": 53.43, "jefatura_mujer": 46.57},
+    }
+    tabla = combinar_por_anio(valores_por_anio)
+    assert tabla["anio"].tolist() == [2019, 2024]
+    assert tabla.set_index("anio").loc[2024, "jefatura_mujer"] == 55.86
 
 
 def test_brecha_por_grupo_calcula_diferencia_en_puntos():

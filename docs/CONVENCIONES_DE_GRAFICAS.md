@@ -48,10 +48,13 @@ igual que cualquier otra.
   comparar el mismo dato entre 2 o más grupos lado a lado. Fundamento:
   principio de comparación directa (Few, *Show Me the Numbers*).
 - **Líneas con marcadores, eje x numérico real (no categórico)**: para
-  comparar la misma métrica entre corridas de distintos años que no son
-  necesariamente consecutivos (ej. 2019, 2024, 2025 — ver
-  `analysis.tasas_actividad_empleo_desempleo_por_anio` /
-  `visualization.plot_tasas_por_anio`). El año tiene que quedar en su
+  comparar la misma métrica entre corridas de 3 años o más que no son
+  necesariamente consecutivas (ej. 2019, 2024, 2025 — ver
+  `analysis.combinar_por_anio` / `visualization.plot_serie_por_anio`,
+  genéricas para cualquier métrica del catálogo; `Empleo` tiene además su
+  propio par especializado ya existente,
+  `tasas_actividad_empleo_desempleo_por_anio` /
+  `plot_tasas_por_anio`, con las 3 tasas fijas). El año tiene que quedar en su
   escala real, no parejo espaciado como una categoría — si no, un salto de
   5 años (2019→2024) se ve visualmente igual de "cerca" que uno de 1 año
   (2024→2025), y la línea sugiere una tendencia continua e interpolada
@@ -106,23 +109,26 @@ igual que cualquier otra.
   "More on slopegraphs" (2014); Nightingale/Data Visualization Society,
   "Beyond the Bar: Alternative Methods for Visualizing Two Points of
   Change". Implementación: `visualization.plot_dumbbell`.
-- **Comparar cualquier métrica del catálogo entre dos años (ej. "2024 vs.
-  2025")**: es el mismo caso que el punto anterior — "año" es un grupo
-  específico como cualquier otro, no hace falta código nuevo. Es una
-  opción de primera clase del catálogo (`formularios.plantilla_catalogo`,
-  campo "¿Comparar estas métricas con otro año?"), no algo que la persona
-  tenga que pedir escribiéndolo en "otra métrica". Calcular la métrica
-  una vez por año con la función que ya exista (la misma que usa el
-  informe de un solo año), cruzar las dos tablas con
-  `analysis.diferencia_entre_tablas` y graficar con
-  `visualization.plot_dumbbell` — confirmado en una corrida real
-  (Seguridad y Victimización, 41-47, comparando 2024 con 2025): se
-  resolvió entero sin escribir ninguna función nueva. Para 3 años o más,
-  o cuando lo que importa es la evolución en el tiempo más que un
-  "antes/después" puntual, usar en cambio el patrón de líneas con eje
-  numérico real de más arriba (ver
-  `analysis.tasas_actividad_empleo_desempleo_por_anio` como ejemplo ya
-  resuelto para Empleo).
+- **Comparar cualquier métrica del catálogo entre varios años (ej. "2024
+  vs. 2025", o "2019 vs. 2024 vs. 2025")**: "año" es un grupo específico
+  como cualquier otro, no hace falta código nuevo en ninguno de los dos
+  casos. Es una opción de primera clase del catálogo
+  (`formularios.plantilla_catalogo`, campo "¿Comparar estas métricas con
+  otros años?", admite cualquier cantidad), no algo que la persona tenga
+  que pedir escribiéndolo en "otra métrica". Calcular la métrica una vez
+  por año con la función que ya exista (la misma que usa el informe de un
+  solo año) y después:
+  - **Exactamente 2 años**: cruzar las dos tablas con
+    `analysis.diferencia_entre_tablas` y graficar con
+    `visualization.plot_dumbbell` — confirmado en una corrida real
+    (Seguridad y Victimización, 41-47, comparando 2024 con 2025).
+  - **3 años o más**: combinar los resultados con
+    `analysis.combinar_por_anio` y graficar con el patrón de líneas con
+    eje numérico real de más arriba (`visualization.plot_serie_por_anio`)
+    — generaliza a cualquier métrica el mismo patrón que antes solo
+    existía, especializado, para las tasas de Empleo.
+  En los dos casos se resuelve entero reusando funciones ya existentes,
+  sin escribir ninguna función nueva por corrida.
 
 Si una gráfica no encaja claramente en ninguno de estos patrones, aplicar
 el mismo criterio general: identificar el principio de percepción visual

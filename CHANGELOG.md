@@ -10,6 +10,27 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.5.0] — 2026-08-14
+
+### Agregado
+
+- **Nueva opción en el catálogo de métricas (paso 4): comparar todo lo
+  elegido con otros años, cualquier cantidad.** Antes había que pedirlo
+  escribiéndolo a mano en "otra métrica" cada vez; nace de una sugerencia
+  real registrada en la bitácora del agente, después de resolver el caso
+  de 2 años dos veces a mano (Empleo, luego Seguridad) sin necesitar
+  ninguna función nueva en `src/`. `formularios.plantilla_catalogo()`
+  ahora devuelve también `comparar_anios` (lista de enteros, vacía si no
+  se pidió). Para exactamente 2 años en total reusa el patrón ya
+  documentado en `docs/CONVENCIONES_DE_GRAFICAS.md`
+  (`analysis.diferencia_entre_tablas` + `visualization.plot_dumbbell`);
+  para 3 o más, generaliza a cualquier métrica el patrón que antes solo
+  existía para las tasas de Empleo, con dos funciones nuevas y genéricas:
+  `analysis.combinar_por_anio` + `visualization.plot_serie_por_anio` —
+  ambas genéricas para toda métrica del catálogo (reciben el resultado ya
+  calculado por año, no vuelven a calcular nada), sin un motor de
+  comparación automática por separado para cada una de las 47 métricas.
+
 ## [0.4.0] — 2026-08-13
 
 ### Cambiado (cambia el número de pobreza/indigencia de 2024 — impacta la comparación con informes generados antes de esta versión)

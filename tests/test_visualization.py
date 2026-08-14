@@ -177,6 +177,35 @@ def test_plot_tasas_por_anio_usa_eje_x_numerico_con_los_anios_reales():
     assert all(trace.mode == "lines+markers" for trace in fig.data)
 
 
+def test_plot_serie_por_anio_con_una_sola_serie():
+    # Caso simple: una métrica de un solo número por año (ej. pobreza),
+    # comparando 3 años no consecutivos.
+    tabla = pd.DataFrame({"anio": [2019, 2024, 2025], "valor": [8.14, 12.99, 14.14]})
+    fig = viz.plot_serie_por_anio(tabla, titulo="Pobreza por año", ylabel="% (ponderado)")
+    assert fig.layout.xaxis.type == "linear"
+    assert list(fig.layout.xaxis.tickvals) == [2019, 2024, 2025]
+    assert len(fig.data) == 1
+    assert fig.data[0].mode == "lines+markers"
+
+
+def test_plot_serie_por_anio_con_varias_series_y_etiquetas():
+    tabla = pd.DataFrame(
+        {
+            "anio": [2019, 2024],
+            "jefatura_hombre": [53.43, 44.14],
+            "jefatura_mujer": [46.57, 55.86],
+        }
+    )
+    fig = viz.plot_serie_por_anio(
+        tabla,
+        etiquetas={"jefatura_hombre": "Hombre", "jefatura_mujer": "Mujer"},
+        titulo="Jefatura por sexo",
+    )
+    assert len(fig.data) == 2
+    nombres = {trace.name for trace in fig.data}
+    assert nombres == {"Hombre", "Mujer"}
+
+
 def test_plot_tasa_mensual_promedio_por_no_falla_y_es_horizontal():
     df = pd.DataFrame({"departamento": ["MONTEVIDEO", "TREINTA Y TRES"], "pct_promedio": [7.5, 9.2]})
     fig = viz.plot_tasa_mensual_promedio_por(df, "departamento", "Desempleo por departamento")

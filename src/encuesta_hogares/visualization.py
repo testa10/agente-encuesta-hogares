@@ -705,6 +705,53 @@ def plot_tasas_por_anio(tabla: pd.DataFrame):
     return fig
 
 
+def plot_serie_por_anio(
+    tabla: pd.DataFrame,
+    columnas_valor: list[str] | None = None,
+    etiquetas: dict[str, str] | None = None,
+    titulo: str = "",
+    ylabel: str = "%",
+):
+    """Generaliza `plot_tasas_por_anio` a cualquier métrica del catálogo
+    (no solo Empleo): líneas con marcadores, eje x con los años en su
+    escala numérica real — mismo fundamento (Cleveland & McGill 1984,
+    aplicado al eje temporal en vez de solo al de categorías; ver
+    `docs/CONVENCIONES_DE_GRAFICAS.md`) y misma razón para no tratar el
+    año como categoría (ver `analysis.combinar_por_anio`).
+
+    Para exactamente 2 años, usar en cambio `plot_dumbbell` — es la
+    práctica recomendada por sobre una línea de dos puntos, y conserva
+    mejor la comparación puntual.
+
+    `columnas_valor` son las columnas de `tabla` a graficar como líneas
+    (una por columna) — por defecto, todas menos `anio`. `etiquetas`
+    traduce el nombre de columna a un nombre legible en la leyenda (ej.
+    `{"valor": "Pobreza"}`); si no se pasa, usa el nombre de columna tal
+    cual.
+    """
+    if columnas_valor is None:
+        columnas_valor = [c for c in tabla.columns if c != "anio"]
+    # value_name fijo ("_valor_") en vez del nombre real de la columna:
+    # si la tabla ya tiene una sola columna de valor (caso común, ej.
+    # "valor" de combinar_por_anio), pd.melt no permite que value_name
+    # coincida con una columna existente.
+    df_plot = tabla.melt(id_vars="anio", value_vars=columnas_valor, var_name="serie", value_name="_valor_")
+    if etiquetas:
+        df_plot["serie"] = df_plot["serie"].map(lambda c: etiquetas.get(c, c))
+    fig = px.line(
+        df_plot, x="anio", y="_valor_", color="serie", markers=True,
+        title=titulo, color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig.update_traces(marker=dict(size=10))
+    fig.update_xaxes(type="linear", tickmode="array", tickvals=sorted(tabla["anio"].unique()))
+    fig.update_layout(
+        xaxis_title="Año", yaxis_title=ylabel,
+        legend_title="", showlegend=len(columnas_valor) > 1,
+        width=800, height=500, title_x=0.5,
+    )
+    return fig
+
+
 def plot_tasa_mensual_promedio_por(resumen: pd.DataFrame, columna_grupo: str, titulo: str):
     """Barras horizontales: % ponderado (promedio mensual) por grupo —
     informalidad, subempleo, desempleo, lo que corresponda según el

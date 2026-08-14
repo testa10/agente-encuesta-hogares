@@ -416,10 +416,55 @@ cada uno `True` solo si esa clave está en la lista `areas` que devolvió el
 paso 3.5. Un bloque que la persona no eligió ahí **ni aparece** en el
 catálogo: no es una categoría marcable que quede vacía, directamente no
 existe en el formulario. El catálogo también trae, siempre, el campo para
-proponer una métrica propia. Guardar los dos datos de la respuesta
-(`metricas`, `otra_metrica`) — hacen falta en los próximos pasos. Ya no se
-pregunta preferencia de PDF acá: el informe siempre se entrega en los dos
-formatos (ver paso 8).
+proponer una métrica propia y la opción de comparar todo lo elegido con
+otros años (cualquier cantidad, no solo uno). Guardar los tres datos de
+la respuesta (`metricas`, `otra_metrica`, `comparar_anios` — esta última
+ya es una lista de enteros, el formulario se encarga de separarla y
+filtrar cualquier texto que no sea un año de 4 dígitos). Hacen falta en
+los próximos pasos. Ya no se pregunta preferencia de PDF acá: el informe
+siempre se entrega en los dos formatos (ver paso 8).
+
+**Si `comparar_anios` viene con al menos un año**: antes de seguir,
+validar cada uno de esos años con el mismo procedimiento del paso 3
+(existencia y estructura de los datos en `data/{año}/`) — el año elegido
+en el paso 1 ya está validado, no hace falta repetirlo. Si alguno de los
+años de `comparar_anios` no tiene datos o falla la validación, sacarlo de
+la lista y avisarle a la persona por chat en una frase simple (ej. "No
+encontré datos de 2022, así que la comparación va a incluir solo 2019,
+2024 y 2025") — nunca bloquear el informe completo por esto, ni mostrar
+otro formulario para resolverlo. Si ningún año de la lista valida, seguir
+el resto del flujo como si `comparar_anios` hubiera llegado vacía (sin
+comparación).
+
+**Con los años que sí validaron (el del paso 1 + los de `comparar_anios`
+que pasaron la validación), construir la comparación según cuántos años
+queden en total** — este criterio ya está documentado con su fundamento
+en `docs/CONVENCIONES_DE_GRAFICAS.md` ("Comparar cualquier métrica del
+catálogo entre varios años" y la entrada de líneas con eje numérico
+real); acá el resumen operativo:
+
+- **Exactamente 2 años en total**: para cada métrica elegida del
+  catálogo, calcularla una vez por año con la función que ya exista,
+  cruzar las dos tablas con `analysis.diferencia_entre_tablas` y
+  graficar con `visualization.plot_dumbbell` — sin escribir código
+  nuevo. Confirmado en corridas reales (Empleo, luego Seguridad).
+- **3 años o más en total**: para cada métrica elegida, calcularla una
+  vez por cada año con la función que ya exista, combinar los
+  resultados con `analysis.combinar_por_anio` (recibe un dict
+  `{año: resultado}`, para métricas de un solo número o con varias
+  series) y graficar con `visualization.plot_serie_por_anio` — tampoco
+  hace falta código nuevo, generaliza el mismo patrón que ya resolvía
+  esto solo para las tasas de Empleo.
+
+En ambos casos, la celda de "Preparación de datos" (paso 5) tiene que
+cargar y preparar los datos de **todos** los años involucrados por
+separado (un DataFrame por año, el mismo preprocesamiento de siempre
+aplicado a cada uno). Nace de una sugerencia real registrada en la
+bitácora, después de resolver el caso de 2 años a mano dos veces
+(Empleo, luego Seguridad) sin necesitar ninguna función nueva en su
+momento — por eso ahora es una opción del catálogo en vez de depender de
+que la persona lo escriba en "otra métrica", y por eso se generalizó
+también al caso de 3 años o más en vez de dejarlo limitado a dos.
 
 **Nota sobre Brecha Digital y Hogares (métricas 1-17):** estas dos
 categorías se rediseñaron para no depender de tecnología como eje fijo
@@ -843,16 +888,18 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
    escribir nada: ir directo a sumar la celda al notebook.
 
    **Caso ya resuelto, no reinventarlo: "comparar cualquier métrica del
-   catálogo entre dos años" (ej. 2024 vs. 2025) no necesita código
-   nuevo.** Calcular la métrica una vez por año con la función que ya usa
-   el informe de un solo año, cruzar las dos tablas con
+   catálogo entre varios años" (ej. 2024 vs. 2025, o 2019 vs. 2024 vs.
+   2025) no necesita código nuevo — y ya es, además, una opción del
+   catálogo (paso 4, `comparar_anios`), no hace falta que la persona lo
+   pida como métrica propia.** Calcular la métrica una vez por año con
+   la función que ya usa el informe de un solo año y, según cuántos años
+   sean en total: exactamente 2, cruzar las dos tablas con
    `analysis.diferencia_entre_tablas` y graficar con
-   `visualization.plot_dumbbell` — ver `docs/CONVENCIONES_DE_GRAFICAS.md`
-   para el detalle, confirmado dos veces en corridas reales (Empleo y
-   Seguridad). Para 3 años o más, o cuando importa la evolución en el
-   tiempo más que un antes/después puntual, ver
-   `analysis.tasas_actividad_empleo_desempleo_por_anio` como patrón ya
-   resuelto.
+   `visualization.plot_dumbbell`; 3 o más, combinar con
+   `analysis.combinar_por_anio` y graficar con
+   `visualization.plot_serie_por_anio` — ver
+   `docs/CONVENCIONES_DE_GRAFICAS.md` para el detalle y el fundamento de
+   cada caso.
 
    Si de verdad hace falta código nuevo — ni una función existente ni un
    patrón ya documentado en `docs/CONVENCIONES_DE_GRAFICAS.md` resuelve

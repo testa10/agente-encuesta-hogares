@@ -656,7 +656,7 @@ def plantilla_catalogo(
     incluir_empleo: bool = False,
     incluir_seguridad: bool = False,
 ) -> str:
-    """Paso 5: catálogo de métricas por categoría + propuesta libre. El informe
+    """Paso 4: catálogo de métricas por categoría + propuesta libre. El informe
     final siempre se entrega en PDF y HTML — no se pregunta preferencia acá.
 
     **Todos los parámetros son opt-in y ninguno tiene que ver con qué datos
@@ -664,8 +664,15 @@ def plantilla_catalogo(
     (que ya filtró FIES/Empleo/Seguridad por disponibilidad real — acá ya no
     hace falta volver a chequear eso). Si un bloque no fue elegido, su
     categoría ni aparece: no es una opción marcable que quede vacía,
-    directamente no existe en el formulario. Ver
-    .claude/agents/encuesta-hogares.md.
+    directamente no existe en el formulario.
+
+    **También trae la opción de comparar las métricas elegidas con otros
+    años** (`comparar_anios` en la respuesta — lista de enteros, vacía si
+    no se pidió comparación; ej. `[2019, 2024, 2025]`). Nace de una
+    sugerencia real registrada en la bitácora: antes había que escribirlo
+    a mano en "otra métrica" cada vez; ahora es una opción de primera
+    clase del catálogo, y admite cualquier cantidad de años (no solo
+    uno). Ver .claude/agents/encuesta-hogares.md.
     """
     bloques = []
     barra = '<div class="barra-acciones"><button type="button" onclick="marcarTodas(true)">Seleccionar todas</button><button type="button" onclick="marcarTodas(false)">Ninguna</button></div>'
@@ -706,6 +713,16 @@ def plantilla_catalogo(
       <label style="margin-top:0;">¿Hay alguna otra métrica que se te ocurra y no esté en la lista?</label>
       <textarea id="otra_metrica" placeholder="Nombre y una breve explicación de qué mostraría (opcional)"></textarea>
     </div>
+    <div class="comparar">
+      <label class="metrica" style="margin-top:1rem;">
+        <input type="checkbox" id="comparar_check">
+        <span class="texto"><b>¿Comparar estas métricas con otros años?</b> — <span class="explicacion">se agrega, para cada métrica elegida, una gráfica que la compara entre todos los años que indiques (necesitás tener los datos de cada uno de esos años).</span></span>
+      </label>
+      <div id="comparar_anios_wrap" style="display:none; margin-top:0.5rem;">
+        <label>¿Con qué años? (separados por coma)</label>
+        <input type="text" id="comparar_anios" placeholder="ej. 2019, 2024, 2025">
+      </div>
+    </div>
     <button type="submit">Confirmar selección →</button>
   </form>
   {_BOTON_SALIR}
@@ -716,12 +733,27 @@ def plantilla_catalogo(
 function marcarTodas(valor) {{
   document.querySelectorAll('input[name=m]').forEach(cb => cb.checked = valor);
 }}
+document.getElementById('comparar_check').addEventListener('change', (e) => {{
+  document.getElementById('comparar_anios_wrap').style.display = e.target.checked ? 'block' : 'none';
+}});
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   const metricas = Array.from(document.querySelectorAll('input[name=m]:checked')).map(cb => parseInt(cb.value));
   const otra = document.getElementById('otra_metrica').value.trim();
+  const compararCheck = document.getElementById('comparar_check').checked;
+  // Separa por coma (o espacio, por si alguien no usa comas) y se queda
+  // solo con los tokens que son un año de 4 dígitos - cualquier otra cosa
+  // escrita ahí se descarta acá mismo, en vez de mandarla tal cual al agente.
+  const comparar_anios = compararCheck
+    ? [...new Set(document.getElementById('comparar_anios').value
+        .split(/[,\\s]+/)
+        .map(t => t.trim())
+        .filter(t => /^[0-9]{{4}}$/.test(t))
+        .map(t => parseInt(t)))]
+      .sort((a, b) => a - b)
+    : [];
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
-    body: JSON.stringify({{metricas: metricas, otra_metrica: otra}})}});
+    body: JSON.stringify({{metricas: metricas, otra_metrica: otra, comparar_anios: comparar_anios}})}});
   mostrarListo();
 }});
 </script></body></html>"""

@@ -105,6 +105,17 @@ def test_plantilla_catalogo_incluye_las_47_metricas_con_todos_los_bloques():
     assert 'name="pdf"' not in html
 
 
+def test_plantilla_catalogo_incluye_opcion_de_comparar_con_otros_anios():
+    html = plantilla_catalogo(incluir_hogares=True)
+    assert 'id="comparar_check"' in html
+    assert 'id="comparar_anios"' in html
+    # el campo de años arranca oculto - solo aparece si se tilda el checkbox
+    assert "display:none" in html
+    assert "comparar_anios: comparar_anios" in html
+    # admite más de un año, no solo uno
+    assert "2019, 2024, 2025" in html
+
+
 def test_plantilla_catalogo_cada_bloque_base_es_independiente():
     html_solo_hogares = plantilla_catalogo(incluir_hogares=True)
     assert "Hogares" in html_solo_hogares

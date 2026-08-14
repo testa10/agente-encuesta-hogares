@@ -334,6 +334,34 @@ def tasas_actividad_empleo_desempleo_por_anio(tasas_por_anio: dict[int, dict]) -
     return pd.DataFrame(filas)
 
 
+def combinar_por_anio(valores_por_anio: dict[int, float | dict]) -> pd.DataFrame:
+    """Generaliza `tasas_actividad_empleo_desempleo_por_anio` a cualquier
+    métrica del catálogo, no solo a las tasas de Empleo: combina un
+    resultado ya calculado, una vez por año (`{2019: 8.14, 2024: 12.99,
+    2025: 14.14}` para una métrica de un solo número, o `{2019: {...},
+    2024: {...}}` para una con varias series, como jefatura por sexo) en
+    una sola tabla con el año como columna numérica — para graficar la
+    evolución entre 3 años o más (no necesariamente consecutivos) con
+    `visualization.plot_serie_por_anio`. Para exactamente 2 años, usar en
+    cambio `diferencia_entre_tablas` + `visualization.plot_dumbbell` (ver
+    `docs/CONVENCIONES_DE_GRAFICAS.md`) — es la práctica recomendada por
+    sobre una línea de dos puntos.
+
+    Mismo criterio que la función que generaliza: el año queda numérico
+    (`int`), nunca una categoría, por la misma razón (ver el docstring de
+    `tasas_actividad_empleo_desempleo_por_anio`).
+    """
+    filas = []
+    for anio, valor in sorted(valores_por_anio.items()):
+        fila: dict = {"anio": anio}
+        if isinstance(valor, dict):
+            fila.update(valor)
+        else:
+            fila["valor"] = valor
+        filas.append(fila)
+    return pd.DataFrame(filas)
+
+
 def brecha_por_grupo(resumen_por_grupo: pd.DataFrame, columna_grupo: str, grupo_a: str, grupo_b: str) -> pd.Series:
     """Diferencia en puntos porcentuales (grupo_a menos grupo_b) de cada
     tasa, a partir de una tabla ya calculada con
