@@ -35,13 +35,14 @@ necesidad de conocimientos técnicos previos.
 Hay dos caminos para llegar al mismo resultado — elija el que le quede
 más cómodo:
 
-- **Instalación rápida**, más abajo en esta misma sección: un solo
-  archivo para descargar y un doble clic. Pensada para quien no quiere
-  abrir una terminal ni escribir comandos.
+- **Instalación rápida**, más abajo en esta misma sección: descargar el
+  proyecto como un archivo comprimido (ZIP) desde la propia página de
+  GitHub y hacer doble clic en dos archivos ya incluidos. No hace falta
+  instalar Git ni abrir una terminal.
 - **Instalación manual (con conocimientos técnicos)**, a partir de
-  "Requisitos previos": clonar el repositorio y correr cada paso por su
-  cuenta. Pensada para quien va a modificar el código o prefiere tener
-  control de cada paso.
+  "Requisitos previos": clonar el repositorio con Git y correr cada paso
+  por su cuenta. Pensada para quien va a modificar el código o prefiere
+  tener control de cada paso.
 
 Los dos caminos terminan en el mismo lugar: el "Paso 3: Obtener los
 datos del año a analizar" y todo lo que sigue después es igual para
@@ -52,21 +53,24 @@ ambos.
 1. Instale [Anaconda](https://www.anaconda.com/download) (incluye
    Python) — es el único programa que hay que instalar a mano antes de
    empezar. Use las opciones por defecto del instalador.
-2. Descargue
-   [`instalar_todo.bat`](https://raw.githubusercontent.com/testa10/agente-encuesta-hogares/main/instalar_todo.bat)
-   (clic derecho sobre el enlace → "Guardar enlace como...") y haga
-   doble clic en el archivo descargado.
-3. Ese archivo se encarga de todo: descarga el proyecto en la carpeta
-   Documentos, instala lo que falte, y abre el agente al final. Si en el
+2. Vaya a la página de este proyecto en GitHub:
+   https://github.com/testa10/agente-encuesta-hogares — haga clic en el
+   botón verde **"Code"** y después en **"Download ZIP"**. Se descarga
+   un archivo `agente-encuesta-hogares-main.zip` (normalmente a la
+   carpeta Descargas).
+3. Descomprímalo: haga clic derecho sobre el archivo ZIP descargado →
+   **"Extraer todo..."** (Windows lo hace sin necesidad de instalar
+   nada aparte) → elija como destino la carpeta **Documentos** y
+   confirme. Esto crea la carpeta
+   `Documentos\agente-encuesta-hogares-main` con el proyecto adentro.
+4. Abra esa carpeta y haga doble clic en **`instalar.bat`**. Se abre una
+   ventana que verifica qué falta e instala automáticamente lo
+   necesario (puede tardar unos minutos la primera vez). Si en el
    camino pide instalar Node.js, instálelo con las opciones por defecto
-   y vuelva a hacer doble clic en `instalar_todo.bat` para continuar
-   donde quedó.
-4. Es normal que Windows muestre un aviso de seguridad al abrir un
-   archivo descargado de internet ("Windows protegió su PC" o similar)
-   — haga clic en "Más información" y después en "Ejecutar de todas
-   formas". El contenido del archivo es público y se puede revisar
-   entero en este mismo repositorio
-   ([`instalar_todo.bat`](instalar_todo.bat)).
+   y vuelva a hacer doble clic en `instalar.bat` para continuar donde
+   quedó.
+5. Cuando termine, haga doble clic en **`abrir_agente.bat`**, dentro de
+   esa misma carpeta.
 
 Listo — continúe en el "Paso 3: Obtener los datos del año a analizar",
 más abajo.
@@ -347,9 +351,8 @@ barra lateral).
 
 ```
 agente-encuesta-hogares/
-├── instalar_todo.bat            # Instalación rápida: descarga + instala + abre, todo en uno
 ├── instalar.bat                 # Instala lo que falte (Node.js, Claude Code, dependencias)
-├── abrir_agente.bat             # Abre el agente en una carpeta ya instalada
+├── abrir_agente.bat             # Abre el agente
 ├── .claude/
 │   └── agents/
 │       └── encuesta-hogares.md  # El agente: sus instrucciones de trabajo
