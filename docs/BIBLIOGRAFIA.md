@@ -17,8 +17,18 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
   de por qué el proyecto usa barras horizontales para categorías con
   nombres largos, y por qué evita gráficos de torta con muchas categorías
   — la percepción de posición/longitud es más precisa que la de ángulos.
+- Cohen, M.A. et al. (2016). "What Is the Bandwidth of Perceptual
+  Experience?". *Trends in Cognitive Sciences*. Fundamento adicional
+  (junto con Cleveland & McGill) de por qué limitar la cantidad de
+  categorías o series visibles a la vez en una misma gráfica — la
+  atención perceptiva tiene un límite de capacidad.
 - Few, S. *Show Me the Numbers*. Fundamento del uso de barras agrupadas
   para comparación directa entre grupos.
+- Healy, K. (2018). *Data Visualization: A Practical Introduction*.
+  Princeton University Press. Fundamento de la regla de integridad visual
+  del eje y la escala (sección 2 de `docs/METODOLOGIA.md`): nunca truncar
+  el eje y para exagerar una diferencia, nunca usar gráficos 3D que
+  distorsionan la percepción real de la magnitud.
 - Hofmann, H., Wickham, H. & Kafadar, K. (2017). "Letter-Value Plots:
   Boxplots for Large Data". *Journal of Computational and Graphical
   Statistics*. Referencia para el día que el catálogo incluya una métrica
@@ -31,13 +41,26 @@ Organizado por tema. Dentro de cada tema, alfabético por autor/organismo.
 - Nightingale / Data Visualization Society. "Beyond the Bar: Alternative
   Methods for Visualizing Two Points of Change". Segundo fundamento del
   dumbbell chart.
-- Tufte, E. (slopegraphs, años 80). Tercer fundamento del dumbbell chart —
-  el originador del formato.
+- Tufte, E. — slopegraphs (años 80), tercer fundamento del dumbbell chart
+  y originador del formato; y *The Visual Display of Quantitative
+  Information* (1983), fundamento del principio de "data-ink ratio"
+  (nunca agregar a una gráfica un elemento visual — grilla, borde, color
+  decorativo — que no aporte información) aplicado en general en el
+  proyecto.
+- Ware, C. *Information Visualization: Perception for Design*. Fundamento
+  de los principios Gestalt (proximidad, similitud, continuidad, cierre)
+  usados para justificar agrupamientos y ordenamientos visuales — ej. el
+  orden de categorías en las barras horizontales y en los heatmaps.
 - Weissgerber, T.L. et al. (2015). "Beyond Bar and Line Graphs: Time for a
   New Data Presentation Paradigm". *PLOS Biology*. Fundamento de por qué
   el proyecto evita el patrón "dynamite plot" (barra + error, sin mostrar
   la distribución real) para variables continuas — ver la nota en
   `visualization.plot_composicion_edades`.
+- Wilke, C.O. (2019). *Fundamentals of Data Visualization*. O'Reilly
+  Media. Fuente base para elegir el tipo de gráfica según el tipo de
+  variable (categórica/numérica) y para las reglas de proporciones y
+  cantidades (barras 100% apiladas, barras de diferencia) de
+  `docs/METODOLOGIA.md`.
 
 ## Brecha Digital y Hogares (métricas 1-17)
 

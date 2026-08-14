@@ -101,6 +101,12 @@ sección nueva, revisarla contra esta lista:
   ("los hogares con X tienen más probabilidad de Y"), nunca causal ("X
   provoca Y"), salvo que el diseño del estudio lo permita (no es el caso
   acá: es una encuesta transversal).
+- **Integridad visual del eje y la escala.** El eje y de un gráfico de
+  barras siempre arranca en cero — nunca truncarlo para exagerar
+  visualmente una diferencia real pero chica. Nunca usar gráficos 3D: la
+  perspectiva distorsiona la percepción real de la magnitud de cada barra
+  o sector. Fundamento: Healy, *Data Visualization: A Practical
+  Introduction* (ver `docs/BIBLIOGRAFIA.md`).
 - **Proporciones que no suman 100% entre sí no se apilan.** Si dos barras
   representan porcentajes calculados sobre bases distintas (ej. "% de
   ocupados" dentro de "hombres" y dentro de "mujeres"), no se pueden
