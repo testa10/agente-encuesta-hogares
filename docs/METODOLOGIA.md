@@ -41,10 +41,10 @@ markdown, antes de la celda de código que la responde.** Nunca al revés.
 
 ## 2. Reglas de rigor estadístico (no negociables)
 
-Estas reglas surgieron de la revisión del análisis original — que llevó a
-eliminar secciones enteras — sumadas a reglas nuevas incorporadas a partir
-de bibliografía de estadística y normas internacionales especializadas
-(ver [`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)). Antes de agregar una gráfica o
+Estas reglas surgieron de la revisión del análisis original, sumadas a
+reglas nuevas incorporadas a partir de bibliografía de estadística y
+normas internacionales especializadas (ver
+[`BIBLIOGRAFIA.md`](BIBLIOGRAFIA.md)). Antes de agregar una gráfica o
 sección nueva, revisala contra esta lista:
 
 - **Falacia ecológica**: no mezclar el nivel de agregación. Si una variable
