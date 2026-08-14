@@ -14,7 +14,8 @@
       "Bash(grep *)",
       "Bash(*instalar.bat*)",
       "Write",
-      "Edit"
+      "Edit",
+      "WebFetch(domain:www4.ine.gub.uy)"
     ],
     "deny": [
       "Bash(git *)",
