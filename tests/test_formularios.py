@@ -116,6 +116,16 @@ def test_plantilla_catalogo_incluye_opcion_de_comparar_con_otros_anios():
     assert "2019, 2024, 2025" in html
 
 
+def test_plantilla_catalogo_no_deja_confirmar_sin_metricas_ni_propuesta():
+    # Nace de una pregunta real: ¿qué pasa si se marca "comparar entre
+    # años" sin elegir ninguna métrica? Antes, nada lo impedía - quedaba
+    # librado a que el agente interpretara bien un caso ambiguo. Ahora el
+    # propio formulario no deja confirmar en ese estado.
+    html = plantilla_catalogo(incluir_hogares=True)
+    assert "metricas.length === 0 && otra === ''" in html
+    assert 'id="error_seleccion"' in html
+
+
 def test_plantilla_catalogo_cada_bloque_base_es_independiente():
     html_solo_hogares = plantilla_catalogo(incluir_hogares=True)
     assert "Hogares" in html_solo_hogares

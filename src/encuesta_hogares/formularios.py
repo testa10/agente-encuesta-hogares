@@ -757,6 +757,9 @@ def plantilla_catalogo(
         <input type="text" id="comparar_anios" placeholder="ej. 2019, 2024, 2025">
       </div>
     </div>
+    <div id="error_seleccion" style="display:none; color:#d1495b; margin-top:0.5rem; font-weight:600;">
+      Elegí al menos una métrica del catálogo, o escribí una propuesta en "¿Hay alguna otra métrica...?", antes de continuar.
+    </div>
     <button type="submit">Confirmar selección →</button>
   </form>
   {_BOTON_SALIR}
@@ -774,6 +777,16 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
   const metricas = Array.from(document.querySelectorAll('input[name=m]:checked')).map(cb => parseInt(cb.value));
   const otra = document.getElementById('otra_metrica').value.trim();
+  // "Comparar entre años" solo tiene sentido si hay al menos una métrica
+  // elegida (se aplica "a cada métrica elegida", nunca a todo el
+  // catálogo) - sin este chequeo, se podía confirmar con el catálogo
+  // vacío y años para comparar marcados, un caso ambiguo que quedaba
+  // librado a que el agente lo interpretara bien.
+  if (metricas.length === 0 && otra === '') {{
+    document.getElementById('error_seleccion').style.display = 'block';
+    return;
+  }}
+  document.getElementById('error_seleccion').style.display = 'none';
   const compararCheck = document.getElementById('comparar_check').checked;
   // Separa por coma (o espacio, por si alguien no usa comas) y se queda
   // solo con los tokens que son un año de 4 dígitos - cualquier otra cosa

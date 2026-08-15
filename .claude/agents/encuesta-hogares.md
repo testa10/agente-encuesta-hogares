@@ -424,6 +424,16 @@ filtrar cualquier texto que no sea un año de 4 dígitos). Hacen falta en
 los próximos pasos. Ya no se pregunta preferencia de PDF acá: el informe
 siempre se entrega en los dos formatos (ver paso 8).
 
+**`comparar_anios` nunca significa "comparar todo el catálogo" — se
+aplica únicamente a las métricas que estén en `metricas` (o a la
+propuesta de `otra_metrica`, si el usuario escribió una).** El propio
+formulario ya impide confirmar con `metricas` vacía y `otra_metrica`
+vacía al mismo tiempo, así que en la práctica esta combinación no
+debería llegar — pero si alguna vez llegara igual (ej. JavaScript
+deshabilitado en el navegador), tratarla como una selección vacía: no
+generar ningún informe, mostrar de nuevo el catálogo con un mensaje
+corto por chat pidiendo elegir al menos una métrica.
+
 **Si `comparar_anios` viene con al menos un año**: antes de seguir,
 validar cada uno de esos años con el mismo procedimiento del paso 3
 (existencia y estructura de los datos en `data/{año}/`) — el año elegido
