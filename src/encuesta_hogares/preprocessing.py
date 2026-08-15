@@ -24,6 +24,25 @@ def classify_edad_grupo(edad: pd.Series) -> pd.Series:
     return pd.cut(edad, bins=config.EDAD_BINS, labels=config.EDAD_LABELS, right=False)
 
 
+def normalizar_departamento(df: pd.DataFrame) -> pd.DataFrame:
+    """Deja "departamento" en mayúsculas, consistente entre años — no se
+    escribe igual en todos ("MONTEVIDEO" en el .sav de 2019, "Montevideo"
+    en el CSV combinado de 2024 en adelante). Sin esto, cruzar dos tablas
+    de años distintos por departamento (para comparar cualquier métrica
+    "por departamento" entre años) cruza cero filas en vez de fallar con
+    un error claro — encontrado corriendo notebook_builder de verdad
+    contra 2019 vs. 2024 (razón de dependencia por departamento).
+
+    Llamar siempre apenas se carga `hogares` (o cualquier tabla derivada
+    que traiga esta columna) y antes de cualquier comparación entre años
+    — no solo en el camino mecánico de notebook_builder.py, también si
+    se escribe el cruce a mano (paso 6 del agente).
+    """
+    df = df.copy()
+    df["departamento"] = df["departamento"].str.upper()
+    return df
+
+
 def prepare_hogares_montevideo(hogares: pd.DataFrame) -> pd.DataFrame:
     """Filtra los hogares de Montevideo y agrega el nivel económico.
 
@@ -62,6 +81,18 @@ def compute_penetracion_por_barrio(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
         resumen["pct_abonados"], q=4, labels=config.NIVEL_SUSCRIPCION_LABELS
     )
     return resumen
+
+
+def merge_penetracion(hogares_mdeo: pd.DataFrame, penetracion_por_barrio: pd.DataFrame) -> pd.DataFrame:
+    """Agrega el nivel de suscripción del barrio a cada hogar — lo sigue
+    necesitando la sección "Composición de los hogares con y sin cable"
+    del panorama de Brecha Digital (FILTROS_SUSCRIPCION filtra por
+    nivel_suscripcion además de tipo_abonado), aunque la métrica puntual
+    que antes también la usaba (9, "Relación entre el barrio y el nivel
+    económico") se sacó del catálogo — ver CHANGELOG.md."""
+    return hogares_mdeo.merge(
+        penetracion_por_barrio[["barrio", "nivel_suscripcion"]], on="barrio", how="left"
+    )
 
 
 def merge_personas(hogares_resumen: pd.DataFrame, personas: pd.DataFrame) -> pd.DataFrame:

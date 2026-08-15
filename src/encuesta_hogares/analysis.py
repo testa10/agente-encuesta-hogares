@@ -334,6 +334,19 @@ def tasas_actividad_empleo_desempleo_por_anio(tasas_por_anio: dict[int, dict]) -
     return pd.DataFrame(filas)
 
 
+def tabla_a_dict(tabla: pd.DataFrame, columna_indice: str, columna_valor: str) -> dict:
+    """Convierte una tabla de una sola columna de valor por categoría (ej.
+    el resultado de `tipos_hogar_resumen`, índice=tipo_hogar,
+    valor=pct_hogares) en el dict `{categoría: valor}` que
+    `combinar_por_anio` espera para el caso de "más de una serie" — para
+    poder comparar entre 3 años o más una métrica que a nivel de un solo
+    año se ve como tabla, no como dict. Antes esta conversión se
+    reescribía a mano en cada notebook; ahora es una función real, con
+    test, en vez de un fragmento que se reinventaba cada corrida.
+    """
+    return tabla.set_index(columna_indice)[columna_valor].to_dict()
+
+
 def combinar_por_anio(valores_por_anio: dict[int, float | dict]) -> pd.DataFrame:
     """Generaliza `tasas_actividad_empleo_desempleo_por_anio` a cualquier
     métrica del catálogo, no solo a las tasas de Empleo: combina un

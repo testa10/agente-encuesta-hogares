@@ -466,6 +466,16 @@ momento — por eso ahora es una opción del catálogo en vez de depender de
 que la persona lo escriba en "otra métrica", y por eso se generalizó
 también al caso de 3 años o más en vez de dejarlo limitado a dos.
 
+**Si alguna métrica compara "por departamento" entre años, llamar a
+`preprocessing.normalizar_departamento(hogares)` apenas se carga cada
+año, antes de cruzar nada.** El nombre del departamento no se escribe
+igual todos los años ("MONTEVIDEO" en el .sav de 2019, "Montevideo" en
+el CSV combinado desde 2024) — sin esto, `diferencia_entre_tablas` o el
+merge para el dumbbell cruzan cero filas (no un error claro, una tabla
+vacía) en vez de fallar donde se pueda notar. Encontrado corriendo de
+verdad una comparación 2019 vs. 2024 de razón de dependencia por
+departamento.
+
 **Nota sobre Brecha Digital y Hogares (métricas 1-13):** estas dos
 categorías se rediseñaron para no depender de tecnología como eje fijo
 (antes, "Pobreza", "Territorio" y "Hogar y demografía" eran en realidad
@@ -698,80 +708,78 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    dada la cantidad de código que hay que generar cuando se eligen
    muchas métricas y/o comparación entre varios años), o en correrlo.
    Estos puntos de control dividen ese hueco en tramos medibles.
-2. Escribir **un único archivo** Python que arma la lista de celdas con
-   `nbformat.v4.new_notebook()`, `new_markdown_cell()` y `new_code_cell()`
-   (ver sección 1 de `docs/METODOLOGIA.md` para la estructura completa):
-   - **Preparación de datos**: siempre (carga, filtro a Montevideo, nivel
-     económico) — es infraestructura, no un bloque temático. **La celda de
-     markdown de esta sección tiene que explicar, en un párrafo corto, qué
-     significa "ponderado"** — la palabra aparece en casi todas las
-     gráficas y porcentajes del informe (ver la regla de ponderación en
-     `docs/METODOLOGIA.md`, sección 2), y el público de este informe no
-     tiene por qué saber de entrada qué es un ponderador de muestreo, aun
-     siendo un público académico/profesional. Un texto que sirve de base
-     (adaptarlo, no copiarlo literal si no encaja con el resto del
-     párrafo):
+2. Escribir **un único archivo** Python que arma la lista de celdas.
 
-     > *"La palabra 'ponderado' aparece en casi todos los porcentajes de
-     > este informe. La Encuesta Continua de Hogares no encuesta a todos
-     > los hogares del país en la misma proporción en que existen en la
-     > realidad — un departamento chico, por ejemplo, puede terminar
-     > levemente sub o sobrerrepresentado en la muestra real respecto a su
-     > peso real en la población. Para corregir eso, el INE le asigna a
-     > cada hogar encuestado un 'ponderador': un factor que ajusta cuánto
-     > pesa ese hogar al calcular un promedio o porcentaje, para que el
-     > resultado final represente a toda la población, no solo a quienes
-     > quedaron en la muestra tal cual. Es el mismo criterio que usa el
-     > propio INE en sus publicaciones oficiales, no una decisión de este
-     > informe."*
+   **Para las 43 métricas fijas del catálogo (paso 4), usar
+   `notebook_builder.py` en vez de escribir el código a mano** — ver su
+   docstring para el porqué (una medición real: 7 de los ~10 minutos que
+   tardaba este paso eran el modelo escribiendo texto que, para el
+   catálogo fijo, siempre es la misma llamada a la misma función ya
+   testeada). El patrón:
 
-     No hace falta repetir esta explicación en cada métrica — una sola vez
-     acá alcanza; en el resto del informe, "ponderado" ya se puede usar
-     sin volver a explicarlo.
-   - **Panorama general de TV cable** y **Composición de los hogares con y
-     sin cable**: solo si el usuario eligió el bloque "Brecha Digital" en
-     el paso 3.5. **Nunca generarlas solo "porque siempre se hizo así"**
-     — son contenido de Brecha Digital como cualquier otra métrica del
-     catálogo, y por eso mismo dependen de que ese bloque se haya elegido.
-   - **Distribución por barrio**: solo si se eligió "Brecha Digital" — usa
-     `preprocessing.compute_penetracion_por_barrio` y
-     `visualization.plot_penetracion_por_barrio`, la misma tabla que
-     también alimenta la métrica 7 del catálogo ("Clasificación de
-     barrios por nivel de suscripción"), así que no hay que recalcularla
-     dos veces. "Territorio" ya no tiene ninguna métrica de tecnología —
-     su índice de desarrollo territorial es infraestructura propia, no
-     depende de esta sección.
-   - Después de esas secciones (las que correspondan), una celda de
-     markdown (pregunta guía + justificación del tipo de gráfica) y una de
-     código por cada métrica que el usuario eligió del catálogo del paso 4,
-     en ese orden, llamando directo a las funciones que ya identificaste en
-     el paso 1.
+   ```python
+   from encuesta_hogares import notebook_builder as nb
 
-   Si el usuario no eligió "Brecha Digital", el notebook arranca directo
-   de Preparación de datos a las métricas elegidas — sin panorama
-   general, sin distribución por barrio, sin composición de hogares. Un
-   informe sobre Empleo y Seguridad, por ejemplo, no tiene por qué
-   mencionar TV cable en ningún lado.
+   celdas = [nb.celda_preparacion_datos(anio, incluir_fies)]
+   if incluir_empleo:
+       celdas.append(nb.celda_preparacion_empleo(anio))
+   if incluir_seguridad:
+       celdas.append(nb.celda_preparacion_seguridad(anio))
+   if incluir_brecha_digital:
+       celdas.extend(nb.celdas_intro_brecha_digital())
+
+   for numero in metricas:  # todas las elegidas del paso 4, en orden
+       celdas.append(nb.construir_celdas_metrica(numero))
+       if numero in metricas_comparadas:  # ver más abajo
+           celdas.append(<celda de comparación escrita a mano>)
+
+   nb.escribir_notebook(celdas, ruta_notebook)
+   ```
+
+   `celda_preparacion_datos`/`celda_preparacion_empleo`/
+   `celda_preparacion_seguridad`/`celdas_intro_brecha_digital`/
+   `construir_celdas_metrica` **ya se encargan de todo lo que antes había
+   que armar a mano acá**: la explicación de "ponderado" en la celda de
+   Preparación de datos, el panorama de Brecha Digital (Panorama general,
+   Distribución por barrio, Composición de hogares con y sin cable) solo
+   si se eligió ese bloque, `bitacora.medir("carga_de_datos")` alrededor
+   de la carga, y la pregunta guía + justificación de cada métrica en
+   markdown antes de su código. No hace falta reescribir nada de eso.
+
+   **La comparación entre años (paso 4, `comparar_anios`/
+   `metricas_comparadas`) queda fuera de `notebook_builder.py` a
+   propósito** — se probó mecanizarla ahí y, corriéndola de verdad contra
+   datos reales, aparecieron dos bugs (variables de un año pisando las de
+   otro; "departamento" escrito distinto entre años haciendo que un cruce
+   diera cero filas). Se decidió, con el dueño del proyecto, que cruzar
+   datos de años distintos es justo el tipo de tarea donde conviene que
+   alguien (o algo) note que un resultado no cierra y lo investigue, no
+   una plantilla fija. Para cada número en `metricas_comparadas`, agregar
+   una celda de comparación aparte, a mano, **después** de la celda que ya
+   armó `notebook_builder` para esa métrica — mismo criterio ya
+   documentado más abajo en esta sección (2 años → dumbbell, 3+ →
+   serie), y usar siempre `preprocessing.normalizar_departamento` /
+   `analysis.tabla_a_dict`, ya escritas y testeadas, en vez de reinventar
+   ese código.
+
+   **Las métricas a medida del paso 6 tampoco pasan por
+   `notebook_builder.py`** — se agregan igual que siempre, a mano, con
+   `notebook_builder.Celda(markdown=..., codigo=...)` para que queden en
+   el mismo formato que el resto de la lista.
 
    **La ruta es siempre exactamente
    `notebooks/Informe_ECH_{año}.ipynb`** (el año elegido en el paso 1, sin
    ningún sufijo ni variante — nada de `_personalizado`, `_v2`, una
    descripción del contenido, etc.): es lo que hace que dos años
-   distintos nunca choquen entre sí, y que el respaldo del punto
-   siguiente solo se dispare cuando de verdad se repite el mismo año.
-   Antes de escribirlo, respaldar el notebook del mismo año si ya existía
-   uno de una corrida anterior con `entrega.respaldar_si_existe(ruta_notebook)`
-   — evita perder en silencio un informe ya generado si alguien vuelve a
-   correr el mismo año. Termina escribiendo el notebook a disco con
-   `nbformat.write(...)`.
+   distintos nunca choquen entre sí, y que el respaldo solo se dispare
+   cuando de verdad se repite el mismo año. `nb.escribir_notebook(...)` ya
+   se encarga del respaldo (`entrega.respaldar_si_existe`) y de escribir
+   el `.ipynb` a disco — no hace falta llamar a `nbformat.write` aparte.
 
-   **La celda de "preparación de datos" (la que llama a
-   `load_hogares_personas_csv` / `load_hogares` / `load_personas`, etc.)
-   tiene que envolver esa carga con `bitacora.medir("carga_de_datos"):`**
-   — es la única forma de saber, después, si el tiempo de la corrida se va
-   en cargar los datos o en el resto del notebook (gráficas). Ver
-   `docs/FLUJO_DE_TRABAJO.md`, sección 1, para el resto de las mediciones
-   (ejecución del notebook, conversión a PDF).
+   Las reglas de las próximas dos secciones ya están aplicadas en todo lo
+   que arma `notebook_builder.py` — importan para las celdas de
+   comparación entre años y las métricas a medida del paso 6, que se
+   siguen escribiendo a mano.
 
    **Cómo terminar cada celda que llama a una función `viz.plot_*` —
    comprobado que dejarla mal duplica la gráfica en el informe final:**

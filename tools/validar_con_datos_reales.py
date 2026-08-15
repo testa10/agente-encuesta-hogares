@@ -49,9 +49,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 warnings.filterwarnings("ignore")
 
+import nbformat  # noqa: E402
 import pandas as pd  # noqa: E402
+from nbclient import NotebookClient  # noqa: E402
+from nbclient.exceptions import CellExecutionError  # noqa: E402
 
-from encuesta_hogares import analysis, config, data_loader, preprocessing, visualization  # noqa: E402
+from encuesta_hogares import (  # noqa: E402
+    analysis,
+    config,
+    data_loader,
+    notebook_builder,
+    preprocessing,
+    verificacion_catalogo,
+    visualization,
+)
 
 
 def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -245,6 +256,67 @@ def validar_anio(anio: str) -> None:
     print(f"\n[OK] Año {anio}: validación completa sin errores")
 
 
+def validar_notebook_builder(anio: str) -> None:
+    """Corre DE VERDAD el código que genera `notebook_builder.py` para
+    todas las métricas del catálogo disponibles este año (no una
+    reimplementación a mano de la misma lógica, como el resto de este
+    archivo) — así, si una plantilla queda desincronizada de
+    `analysis.py`/`visualization.py` (un parámetro renombrado, una
+    función que ya no existe), esto revienta acá, en un chequeo que ya es
+    parte del flujo esperado antes de publicar, no en un informe real de
+    un usuario.
+
+    Nace de la misma revisión que agregó `notebook_builder.py`: con solo
+    un test de que "cada número del catálogo tiene una función" (ver
+    `test_notebook_builder.py`) no alcanza — ese test no ejecuta nada
+    contra datos reales, y un año concreto le faltaba una columna que
+    otro sí tenía (ver SIT_OCUP/SECTOR_F más abajo). Solo cubre el año
+    base — la comparación entre años quedó en código libre (ver el
+    docstring de notebook_builder.py), no hay una plantilla que probar
+    para eso acá.
+    """
+    print(f"\n--- notebook_builder: ejecutando las plantillas del catálogo para {anio} ---")
+    disponibles = config.datos_disponibles(anio)
+    catalogo = verificacion_catalogo.numeros_del_catalogo()
+    no_disponibles_empleo = set(verificacion_catalogo.metricas_empleo_no_disponibles(anio))
+    metricas = sorted(n for n in catalogo if n not in no_disponibles_empleo)
+    if not disponibles["fies"]:
+        metricas = [n for n in metricas if n not in range(22, 29)]
+    if not disponibles["empleo"]:
+        metricas = [n for n in metricas if n not in range(29, 37)]
+    if not disponibles["seguridad"]:
+        metricas = [n for n in metricas if n not in range(37, 44)]
+
+    celdas = notebook_builder.construir_celdas_notebook(
+        anio_base=int(anio),
+        metricas=metricas,
+        incluir_brecha_digital=True,
+        incluir_fies=disponibles["fies"],
+        incluir_empleo=disponibles["empleo"],
+        incluir_seguridad=disponibles["seguridad"],
+    )
+
+    # Se ejecuta con un kernel de Jupyter de verdad (nbclient), no exec()
+    # crudo en este mismo proceso: `fig.show()` de Plotly depende de los
+    # hooks de display de IPython para renderizar — fuera de un kernel
+    # real, cae a un camino distinto (print de HTML crudo a la consola)
+    # que no es el que corre en un notebook real y que además puede
+    # fallar por la codificación de la consola sin que sea un error de
+    # verdad de la plantilla.
+    ruta_tmp = config.PROJECT_ROOT / "notebooks" / f"_validacion_notebook_builder_{anio}.ipynb"
+    notebook_builder.escribir_notebook(celdas, ruta_tmp)
+    nb = nbformat.read(str(ruta_tmp), as_version=4)
+    try:
+        NotebookClient(nb, timeout=180, kernel_name="python3").execute()
+    except CellExecutionError as e:
+        raise AssertionError(f"notebook_builder rompió ejecutando el notebook de prueba para {anio}: {e}") from e
+    finally:
+        ruta_tmp.unlink(missing_ok=True)
+        Path(str(ruta_tmp).replace(".ipynb", " (anterior).ipynb")).unlink(missing_ok=True)
+
+    print(f"[OK] {len(metricas)} métricas del catálogo, plantillas ejecutadas sin error ({len(celdas)} celdas)")
+
+
 def main() -> int:
     anios = sorted(p.name for p in config.DATA_DIR.iterdir() if p.is_dir() and p.name.isdigit()) if config.DATA_DIR.exists() else []
     anios = [a for a in anios if list((config.DATA_DIR / a).glob("H_*.sav")) or config.hogares_csv_file(a).exists()]
@@ -256,6 +328,9 @@ def main() -> int:
 
     for anio in anios:
         validar_anio(anio)
+
+    for anio in anios:
+        validar_notebook_builder(anio)
 
     print(f"\n\n[OK] VALIDACIÓN COMPLETA: {', '.join(anios)}")
     return 0

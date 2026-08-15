@@ -11,6 +11,8 @@ from encuesta_hogares.preprocessing import (
     compute_hacinamiento,
     compute_indice_acceso_digital,
     compute_penetracion_por_barrio,
+    merge_penetracion,
+    normalizar_departamento,
     decode_condiciones_vivienda,
     decode_si_no,
     melt_delitos,
@@ -250,6 +252,14 @@ def test_prepare_hogares_montevideo_ignora_mayusculas():
     assert sorted(resultado["id_hogar"].tolist()) == [1, 2]
 
 
+def test_normalizar_departamento_deja_mayusculas_consistentes_entre_anios():
+    hogares_2019 = pd.DataFrame({"departamento": ["MONTEVIDEO", "SALTO"]})
+    hogares_2024 = pd.DataFrame({"departamento": ["Montevideo", "Salto"]})
+    a = normalizar_departamento(hogares_2019)
+    b = normalizar_departamento(hogares_2024)
+    assert a["departamento"].tolist() == b["departamento"].tolist() == ["MONTEVIDEO", "SALTO"]
+
+
 def test_compute_penetracion_por_barrio_pondera_por_ponderador_hogar():
     hogares_mdeo = pd.DataFrame(
         {
@@ -266,6 +276,17 @@ def test_compute_penetracion_por_barrio_pondera_por_ponderador_hogar():
     assert barrio_a["pct_abonados"] == 25.0
     assert barrio_a["total_hogares"] == 2  # tamaño de muestra, sin ponderar a propósito
     assert set(resumen["nivel_suscripcion"].dropna().unique()) <= set(config.NIVEL_SUSCRIPCION_LABELS)
+
+
+def test_merge_penetracion_agrega_nivel_suscripcion_por_barrio():
+    hogares_mdeo = pd.DataFrame({"id_hogar": [1, 2, 3], "barrio": ["A", "A", "B"]})
+    penetracion_por_barrio = pd.DataFrame(
+        {"barrio": ["A", "B"], "nivel_suscripcion": ["3-Media-Alta", "1-Baja"]}
+    )
+    resultado = merge_penetracion(hogares_mdeo, penetracion_por_barrio)
+    assert resultado.set_index("id_hogar")["nivel_suscripcion"].tolist() == [
+        "3-Media-Alta", "3-Media-Alta", "1-Baja",
+    ]
 
 
 def test_prepare_fies_clasifica_por_umbral_y_etiqueta_region():

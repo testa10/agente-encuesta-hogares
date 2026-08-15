@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encuesta-hogares-agente"
-version = "0.6.0"
+version = "0.7.0"
 description = "Agente y paquete reutilizable para analizar la Encuesta Continua de Hogares (ECH, INE Uruguay) — brecha digital, hogares, territorio, vivienda, seguridad alimentaria, empleo y seguridad/victimizacion — para cualquier año de datos disponible."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -21,6 +21,7 @@ dependencies = [
     "seaborn>=0.12",
     "kaleido>=0.2",
     "playwright>=1.40",
+    "nbformat>=5.0",
 ]
 
 [project.optional-dependencies]

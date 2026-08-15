@@ -10,6 +10,43 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.7.0] — 2026-08-15
+
+### Agregado
+
+- **`notebook_builder.py`: arma mecánicamente las celdas de las 43
+  métricas fijas del catálogo, para el año base.** Nace de una medición
+  real — de los ~10 minutos que tardaba el paso 5 en una corrida con
+  comparación entre años, 7m11s eran el modelo escribiendo texto que,
+  para el catálogo fijo, siempre es la misma llamada a la misma función
+  ya testeada. Se probó a fondo contra datos reales (2019/2024/2025, las
+  43 métricas, con un kernel de Jupyter de verdad) y quedó limpio.
+- `preprocessing.normalizar_departamento`: deja "departamento" en
+  mayúsculas consistentes entre años (se escribe distinto según el año
+  de origen). Sin esto, cruzar tablas de años distintos por departamento
+  cruza cero filas en vez de fallar con un error claro — encontrado
+  probando el módulo nuevo, corregido para que el camino libre también
+  lo use.
+- `analysis.tabla_a_dict`: convierte una tabla de una categoría por fila
+  en el dict que `combinar_por_anio` espera — antes se reescribía a mano
+  en cada notebook que comparaba 3+ años.
+- La detección de qué formato de archivo (.sav vs. CSV combinado) usa un
+  año dado ahora sigue el mismo criterio general que ya usaba
+  `tools/validar_con_datos_reales.py`, en vez de asumir que solo 2019 usa
+  `.sav`.
+
+### Decisión de diseño
+
+- **La comparación entre años queda en código libre, no mecanizada.** Se
+  probó mecanizarla también, y corriéndola contra datos reales aparecieron
+  dos bugs reales (variables de un año pisando las de otro; el problema de
+  "departamento" de arriba). Cruzar datos de años distintos es justo el
+  tipo de tarea donde conviene que alguien note que un resultado no
+  cierra y lo investigue, no una plantilla fija — decisión tomada en
+  conjunto con el dueño del proyecto. Las métricas a medida del paso 6
+  tampoco se mecanizan, por el mismo motivo de siempre (no tienen función
+  ya validada a la que apuntar).
+
 ## [0.6.0] — 2026-08-14
 
 ### Eliminado
