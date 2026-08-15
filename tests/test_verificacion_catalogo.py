@@ -114,3 +114,58 @@ def test_aviso_metricas_no_disponibles_redacta_mensaje_legible(tmp_path, monkeyp
     assert len(avisos) == 1
     assert "Métrica 36" in avisos[0]
     assert "SIT_OCUP" in avisos[0] and "SECTOR_F" in avisos[0]
+
+
+def test_metricas_empleo_no_disponibles_no_marca_metricas_de_vivienda(tmp_path, monkeypatch):
+    # Caso real que este test evita repetir: al agregar las entradas de
+    # Vivienda (17-21) a COLUMNAS_REQUERIDAS, metricas_empleo_no_disponibles
+    # las marcaba igual como "no disponibles" solo porque el archivo de
+    # Empleo (obviamente) no tiene columnas de vivienda - metricas_no_disponibles
+    # ahora necesita saber que a un archivo de Empleo solo le corresponde
+    # responder por las métricas de Empleo.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2025"
+    carpeta.mkdir()
+    (carpeta / "ECH_01_2025.csv").write_text(",".join(config.EMPLEO_COLUMNS) + "\n")
+
+    no_disponibles = vc.metricas_empleo_no_disponibles("2025")
+
+    assert not {14, 15, 16, 17, 18, 19, 20, 21} & set(no_disponibles)
+
+
+def test_metricas_hogares_no_disponibles_detecta_modulo_vivienda_ausente(tmp_path, monkeypatch):
+    # Caso real: 2023 no tiene ninguna columna del módulo C5 en el CSV
+    # combinado de Hogares/Personas.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2023"
+    carpeta.mkdir()
+    columnas_sin_vivienda = [c for c in config.HOGARES_COLUMNS_CSV if c not in config.CONDICIONES_VIVIENDA_COLUMNS_CSV]
+    (carpeta / "ECH_2023.csv").write_text(",".join(columnas_sin_vivienda) + "\n")
+
+    no_disponibles = vc.metricas_hogares_no_disponibles("2023")
+
+    assert set(no_disponibles) == {14, 15, 16, 17, 18, 19, 20, 21}
+    # metricas de Empleo no deberian aparecer al chequear un archivo de Hogares
+    assert 32 not in no_disponibles and 36 not in no_disponibles
+
+
+def test_metricas_hogares_no_disponibles_ok_si_hay_al_menos_una_columna(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2030"
+    carpeta.mkdir()
+    (carpeta / "ECH_2030.csv").write_text(",".join(config.HOGARES_COLUMNS_CSV) + "\n")
+
+    assert vc.metricas_hogares_no_disponibles("2030") == {}
+
+
+def test_aviso_metricas_no_disponibles_incluye_vivienda(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2023"
+    carpeta.mkdir()
+    columnas_sin_vivienda = [c for c in config.HOGARES_COLUMNS_CSV if c not in config.CONDICIONES_VIVIENDA_COLUMNS_CSV]
+    (carpeta / "ECH_2023.csv").write_text(",".join(columnas_sin_vivienda) + "\n")
+
+    avisos = vc.aviso_metricas_no_disponibles("2023")
+
+    numeros_avisados = {int(a.split(" ")[1]) for a in avisos}
+    assert {14, 15, 16, 17, 18, 19, 20, 21} <= numeros_avisados

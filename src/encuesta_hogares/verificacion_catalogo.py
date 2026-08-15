@@ -43,7 +43,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import analysis, config, formularios, preprocessing, visualization
-from .verificacion_estructura import columnas_csv
+from .verificacion_estructura import columnas_csv, columnas_sav
 
 _MODULOS = {"analysis": analysis, "preprocessing": preprocessing, "visualization": visualization}
 
@@ -225,19 +225,60 @@ COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
     32: [["INFORMAL"], ["f82"]],
     33: [["INFORMAL"], ["f82"]],
     36: [["SIT_OCUP", "SECTOR_F"]],
+    # Territorio + Vivienda (14-21): TODA la sección depende, directa o
+    # indirectamente, de analysis.precariedad_estructural/_por (y
+    # carencias_estructurales_mas_frecuentes en 21) - ver
+    # `analysis._condiciones_vivienda_disponibles`. No es solo 17-19/21
+    # (las que MANIFEST asocia directamente con esas funciones): 14/15
+    # arman el índice territorial con precariedad como uno de sus 3
+    # componentes fijos (notebook_builder._COMPONENTES_TERRITORIO), 16
+    # reutiliza ese mismo índice para "mejor vs. peor departamento", y 20
+    # compara precariedad entre nivel económico bajo y alto - MANIFEST
+    # solo lista su función "oficial" (diferencia_entre_categorias en
+    # ambos casos), no esta dependencia real de datos. Basta con que UNA
+    # columna del módulo C5 esté presente para que las funciones de
+    # precariedad tengan algo que calcular.
+    #
+    # Encontrado con datos reales de 2023: ese año el INE no relevó el
+    # módulo C5 en absoluto (no es un cambio de nombre de columna, el
+    # módulo entero no está en el cuestionario), y nada avisaba de eso
+    # hasta que la métrica reventaba a mitad de una corrida - mismo tipo
+    # de caso que ya motivó este mapeo para Empleo. El dueño del proyecto
+    # eligió avisar explícitamente en vez de recalcular el índice
+    # territorial con menos componentes (ver la nota en
+    # tools/validar_con_datos_reales.py).
+    14: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    15: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    16: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    17: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    18: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    19: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    20: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
+    21: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
 }
 
+# Qué números de COLUMNAS_REQUERIDAS le corresponde chequear a cada fuente
+# de datos (Empleo vs. Hogares) - sin esto, `metricas_empleo_no_disponibles`
+# marcaría las métricas de Vivienda como "no disponibles" solo porque el
+# archivo de Empleo (obviamente) no tiene columnas de vivienda, y viceversa.
+_METRICAS_EMPLEO = {32, 33, 36}
+_METRICAS_HOGARES = {14, 15, 16, 17, 18, 19, 20, 21}
 
-def metricas_no_disponibles(columnas_presentes: set[str]) -> dict[int, list[str]]:
+
+def metricas_no_disponibles(columnas_presentes: set[str], numeros: set[int] | None = None) -> dict[int, list[str]]:
     """De `COLUMNAS_REQUERIDAS`, qué métricas no se pueden calcular con
     `columnas_presentes` (las columnas crudas que de verdad trae el
-    archivo de un año — ver `metricas_empleo_no_disponibles` para
-    obtenerlas solas con leer el encabezado). Devuelve
-    `{número: columnas que le faltarían a la opción más cercana}` — solo
-    para las métricas donde NINGUNA opción está completa.
+    archivo de un año — ver `metricas_empleo_no_disponibles`/
+    `metricas_hogares_no_disponibles` para obtenerlas solas con leer el
+    encabezado). `numeros` restringe la revisión a esas entradas de
+    COLUMNAS_REQUERIDAS (todas por defecto) - necesario porque cada fuente
+    de datos solo puede hablar de sus propias columnas, no de las de otra
+    fuente. Devuelve `{número: columnas que le faltarían a la opción más
+    cercana}` — solo para las métricas donde NINGUNA opción está completa.
     """
     resultado = {}
-    for numero, opciones in COLUMNAS_REQUERIDAS.items():
+    entradas = COLUMNAS_REQUERIDAS if numeros is None else {n: COLUMNAS_REQUERIDAS[n] for n in numeros}
+    for numero, opciones in entradas.items():
         if any(all(c in columnas_presentes for c in opcion) for opcion in opciones):
             continue
         mejor_opcion = min(opciones, key=lambda op: sum(1 for c in op if c not in columnas_presentes))
@@ -256,18 +297,36 @@ def metricas_empleo_no_disponibles(anio: int | str) -> dict[int, list[str]]:
     primero = next((a for a in config.empleo_files(anio) if a.exists()), None)
     if primero is None:
         return {}
-    return metricas_no_disponibles(columnas_csv(primero))
+    return metricas_no_disponibles(columnas_csv(primero), _METRICAS_EMPLEO)
+
+
+def metricas_hogares_no_disponibles(anio: int | str) -> dict[int, list[str]]:
+    """Igual que `metricas_empleo_no_disponibles`, pero mirando el archivo
+    de Hogares/Personas de `anio` - CSV combinado (2024 en adelante, y
+    2023 con `config.hogares_csv_file`) o `H_*.sav` (2019 y anteriores).
+    Diccionario vacío si el año no tiene ningún archivo de Hogares
+    todavía, o si no falta nada.
+    """
+    csv_path = config.hogares_csv_file(anio)
+    if csv_path.exists():
+        return metricas_no_disponibles(columnas_csv(csv_path), _METRICAS_HOGARES)
+    candidatos = sorted((config.DATA_DIR / str(anio)).glob("H_*.sav"))
+    if not candidatos:
+        return {}
+    return metricas_no_disponibles(columnas_sav(candidatos[0]), _METRICAS_HOGARES)
 
 
 def aviso_metricas_no_disponibles(anio: int | str) -> list[str]:
-    """Mensajes ya redactados, uno por métrica de Empleo no disponible
-    para `anio` — para mostrarle al usuario ANTES de que elija el
-    catálogo (paso 4 de `.claude/agents/encuesta-hogares.md`), no después
-    de que la corrida falle. Lista vacía si no hay nada para avisar.
+    """Mensajes ya redactados, uno por métrica de Empleo o de Vivienda no
+    disponible para `anio` — para mostrarle al usuario ANTES de que elija
+    el catálogo (paso 4 de `.claude/agents/encuesta-hogares.md`), no
+    después de que la corrida falle. Lista vacía si no hay nada para
+    avisar.
     """
     catalogo = numeros_del_catalogo()
+    faltantes_por_metrica = {**metricas_empleo_no_disponibles(anio), **metricas_hogares_no_disponibles(anio)}
     avisos = []
-    for numero, faltantes in sorted(metricas_empleo_no_disponibles(anio).items()):
+    for numero, faltantes in sorted(faltantes_por_metrica.items()):
         titulo = catalogo.get(numero, "?")
         plural = "n" if len(faltantes) > 1 else ""
         avisos.append(

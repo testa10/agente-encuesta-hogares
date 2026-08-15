@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from encuesta_hogares.analysis import (
     adopcion_tablet_ibirapita_por,
@@ -207,6 +208,33 @@ def test_precariedad_estructural_tolera_columnas_faltantes():
     df = pd.DataFrame({"goteras": [True, False], "ponderador_hogar": [10.0, 10.0]})
     resultado = precariedad_estructural(df)
     assert resultado["pct_con_carencia"] == 50.0
+
+
+def test_precariedad_estructural_explota_si_no_hay_ninguna_columna_de_vivienda():
+    # Caso real: 2023 no tiene NINGUNA columna del módulo C5 (no cambió de
+    # nombre, el módulo entero no se relevó ese año). Antes, con la lista
+    # de columnas vacía, `df[[]].any(axis=1)` da False para todas las
+    # filas y la función devolvía silenciosamente "0% con carencia" - un
+    # número que parece un cálculo real y no lo es. Tiene que fallar
+    # fuerte en vez de eso, para que quien llama avise explícitamente que
+    # el módulo no está disponible (ver
+    # verificacion_catalogo.aviso_metricas_no_disponibles) en vez de
+    # mostrar ese 0% fantasma en un informe real.
+    df = pd.DataFrame({"ponderador_hogar": [10.0, 10.0]})
+    with pytest.raises(ValueError):
+        precariedad_estructural(df)
+
+
+def test_precariedad_estructural_por_explota_si_no_hay_ninguna_columna_de_vivienda():
+    df = pd.DataFrame({"departamento": ["MONTEVIDEO", "SALTO"], "ponderador_hogar": [10.0, 10.0]})
+    with pytest.raises(ValueError):
+        precariedad_estructural_por(df, "departamento")
+
+
+def test_carencias_estructurales_mas_frecuentes_explota_si_no_hay_ninguna_columna_de_vivienda():
+    df = pd.DataFrame({"ponderador_hogar": [10.0, 10.0]})
+    with pytest.raises(ValueError):
+        carencias_estructurales_mas_frecuentes(df)
 
 
 def test_precariedad_estructural_por_agrupa_correctamente():

@@ -80,29 +80,47 @@ def validar_anio(anio: str) -> None:
     print(f"Hogares (nacional): {len(hogares)} — departamentos: {hogares['departamento'].nunique()}")
     assert hogares["departamento"].nunique() > 1, "se esperaban varios departamentos en la base nacional"
 
-    # --- Vivienda: la cantidad de carencias cambia de año a año ---
+    # --- Vivienda: la cantidad de carencias cambia de año a año, y algunos
+    # años (2023, verificado contra los datos reales) no tienen ninguna -
+    # el módulo C5 completo no se relevó ese año. analysis.py ya convierte
+    # eso en un ValueError explícito (ver
+    # analysis._condiciones_vivienda_disponibles) en vez de devolver un
+    # "0% con carencia" que parecería un cálculo real y no lo es - acá se
+    # respeta esa señal en vez de forzar el cálculo.
     hogares_cond = preprocessing.decode_condiciones_vivienda(hogares)
     n_carencias = sum(1 for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_cond.columns)
     print(f"Carencias de vivienda disponibles: {n_carencias}")
-    assert n_carencias > 0, "ningún año debería quedarse sin ninguna columna de vivienda"
-    resultado = analysis.precariedad_estructural(hogares_cond)
-    assert 0 <= resultado["pct_con_carencia"] <= 100
-    assert visualization.plot_precariedad_estructural(resultado) is not None
+    if n_carencias > 0:
+        resultado = analysis.precariedad_estructural(hogares_cond)
+        assert 0 <= resultado["pct_con_carencia"] <= 100
+        assert visualization.plot_precariedad_estructural(resultado) is not None
+    else:
+        print("Precariedad estructural: sin verificar — módulo de condiciones de vivienda no disponible este año")
 
-    # --- Territorio: índice compuesto sobre la base nacional (no Montevideo) ---
+    # --- Territorio: índice compuesto sobre la base nacional (no Montevideo).
+    # El dueño del proyecto eligió "avisar explícitamente que un año sin
+    # vivienda no da un componente de precariedad" sobre "recalcular el
+    # índice completo con menos columnas". No eligió entre marcar el
+    # índice territorial entero como no disponible ese año o recalcularlo
+    # solo con pobreza+estrato (quedó abierto) - se optó acá por lo más
+    # conservador (marcarlo entero) para no mezclar, bajo el mismo nombre
+    # de métrica, un índice de 3 componentes con uno de 2 sin que se note.
     hogares_cond["pobre"] = hogares_cond["pobre"] == 1.0
-    pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")
-    estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")
-    precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")
-    componentes = pd.DataFrame({
-        "pct_pobreza": pobreza_depto["pct_pobres"],
-        "pct_precariedad": precariedad_depto["pct_precariedad"],
-        "estrato_promedio": estrato_depto["estrato_promedio"],
-    }).dropna()
-    indice = analysis.indice_desarrollo_territorial(componentes, invertir=["pct_pobreza", "pct_precariedad"])
-    assert indice["indice"].between(0, 1).all()
-    assert visualization.plot_indice_desarrollo_territorial(indice) is not None
-    print(f"Índice territorial: OK ({len(indice)} departamentos)")
+    if n_carencias > 0:
+        pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")
+        estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")
+        precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")
+        componentes = pd.DataFrame({
+            "pct_pobreza": pobreza_depto["pct_pobres"],
+            "pct_precariedad": precariedad_depto["pct_precariedad"],
+            "estrato_promedio": estrato_depto["estrato_promedio"],
+        }).dropna()
+        indice = analysis.indice_desarrollo_territorial(componentes, invertir=["pct_pobreza", "pct_precariedad"])
+        assert indice["indice"].between(0, 1).all()
+        assert visualization.plot_indice_desarrollo_territorial(indice) is not None
+        print(f"Índice territorial: OK ({len(indice)} departamentos)")
+    else:
+        print("Índice territorial: sin verificar — módulo de condiciones de vivienda no disponible este año")
 
     # --- Brecha Digital / Hogares: filtro a Montevideo + variables decodificadas ---
     hogares_mdeo = preprocessing.prepare_hogares_montevideo(hogares)
@@ -148,11 +166,15 @@ def validar_anio(anio: str) -> None:
     diferencia_tipos = analysis.diferencia_entre_categorias(resumen_tipos, "tipo_hogar", cat_a, cat_b, "pct_hogares")
     assert -100 <= diferencia_tipos <= 100
 
-    carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)
-    assert carencias_frecuentes["pct_hogares"].between(0, 100).all() and len(carencias_frecuentes) == n_carencias
+    if n_carencias > 0:
+        carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)
+        assert carencias_frecuentes["pct_hogares"].between(0, 100).all() and len(carencias_frecuentes) == n_carencias
+        detalle_carencias = " / carencias más frecuentes: OK"
+    else:
+        detalle_carencias = " — carencias más frecuentes: sin verificar (módulo de vivienda no disponible este año)"
     print(
-        "Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar / "
-        "carencias más frecuentes: OK"
+        "Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar"
+        + detalle_carencias
     )
 
     # --- Brecha Digital por cohorte/jefatura/índice de acceso, Hacinamiento,
@@ -279,7 +301,8 @@ def validar_notebook_builder(anio: str) -> None:
     disponibles = config.datos_disponibles(anio)
     catalogo = verificacion_catalogo.numeros_del_catalogo()
     no_disponibles_empleo = set(verificacion_catalogo.metricas_empleo_no_disponibles(anio))
-    metricas = sorted(n for n in catalogo if n not in no_disponibles_empleo)
+    no_disponibles_hogares = set(verificacion_catalogo.metricas_hogares_no_disponibles(anio))
+    metricas = sorted(n for n in catalogo if n not in no_disponibles_empleo | no_disponibles_hogares)
     if not disponibles["fies"]:
         metricas = [n for n in metricas if n not in range(22, 29)]
     if not disponibles["empleo"]:

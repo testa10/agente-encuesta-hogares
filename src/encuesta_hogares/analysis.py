@@ -123,6 +123,35 @@ def brecha_digital_por_nivel_economico(df_extendido: pd.DataFrame) -> pd.DataFra
     return _brecha_digital_por(df_extendido, "nivel_economico")
 
 
+def _condiciones_vivienda_disponibles(hogares_condiciones: pd.DataFrame) -> list[str]:
+    """Columnas de CONDICIONES_VIVIENDA_COLUMNS que de verdad están en
+    `hogares_condiciones` - varía de año a año (12 en 2019, 4 desde 2024).
+
+    Encontrado con datos reales de 2023: ese año no tiene NINGUNA de las
+    variables del módulo C5 (no es que cambiaron de nombre - el módulo no
+    se relevó ese año, verificado contra el archivo real completo, no una
+    suposición). Sin este chequeo, las tres funciones de precariedad
+    calculaban silenciosamente "0% de hogares con carencia" - `df[[]]`
+    (una selección de cero columnas) hace que `.any(axis=1)` dé `False`
+    para todas las filas, un resultado que parece válido pero no significa
+    nada: no es que ningún hogar tenga carencias, es que no se preguntó.
+    Ese número entraba después al índice de desarrollo territorial como si
+    fuera un dato real. Se prefiere fallar fuerte y explícito (que quien
+    llama decida cómo avisar que el módulo no está disponible ese año -
+    ver `verificacion_catalogo.aviso_metricas_no_disponibles`) a devolver
+    un número que parece un cálculo real y no lo es.
+    """
+    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    if not condiciones_cols:
+        raise ValueError(
+            "Ninguna columna del módulo de condiciones de vivienda (C5) está disponible - "
+            "ese año el INE no relevó este módulo. No calcules precariedad estructural ni el "
+            "índice territorial con ese componente para este año; avisá explícitamente que no "
+            "está disponible en vez de mostrar un 0% que no representa nada real."
+        )
+    return condiciones_cols
+
+
 def precariedad_estructural(hogares_condiciones: pd.DataFrame) -> dict:
     """% ponderado de hogares con al menos una carencia estructural (de las
     variables de CONDICIONES_VIVIENDA_COLUMNS disponibles este año — 12 en
@@ -142,7 +171,7 @@ def precariedad_estructural(hogares_condiciones: pd.DataFrame) -> dict:
     dimensión — el % de hogares en esa situación sí se pondera por
     muestreo, como cualquier otra estadística de Hogares.
     """
-    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    condiciones_cols = _condiciones_vivienda_disponibles(hogares_condiciones)
     df = hogares_condiciones.assign(_tiene_carencia=hogares_condiciones[condiciones_cols].any(axis=1))
     total = len(df)
     con_carencia = int(df["_tiene_carencia"].sum())
@@ -158,7 +187,7 @@ def precariedad_estructural_por(hogares_condiciones: pd.DataFrame, columna_grupo
     criterio que `precariedad_estructural`), agrupado por una columna
     cualquiera (nivel económico, departamento).
     """
-    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    condiciones_cols = _condiciones_vivienda_disponibles(hogares_condiciones)
     df = hogares_condiciones.copy()
     df["_tiene_carencia"] = df[condiciones_cols].any(axis=1)
     resumen = pct_ponderado_por(df, columna_grupo, "_tiene_carencia", "ponderador_hogar")
@@ -171,7 +200,7 @@ def carencias_estructurales_mas_frecuentes(hogares_condiciones: pd.DataFrame) ->
     las más comunes, no solo si hay o no al menos una (eso ya lo responde
     `precariedad_estructural`).
     """
-    condiciones_cols = [c for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_condiciones.columns]
+    condiciones_cols = _condiciones_vivienda_disponibles(hogares_condiciones)
     filas = [
         {"carencia_codigo": col, "pct_hogares": pct_ponderado(hogares_condiciones, col)}
         for col in condiciones_cols
