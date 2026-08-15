@@ -14,14 +14,26 @@
 //
 // Este hook no reemplaza esas reglas - las complementa mirando si la
 // palabra "git" aparece en una posición que NO es una invocación directa de
-// comando (después de `&&`, `;`, `|`, o al principio del comando, con o sin
-// `./`/`cmd /c` adelante). Si "git" aparece en cualquier otro lugar del
-// comando, se asume indirecto y se bloquea. El agente encuesta-hogares no
-// tiene ninguna razón legítima para invocar git ni directa ni
-// indirectamente (ver CLAUDE.md, "El agente encuesta-hogares sigue sin
-// permiso de usar git"); la sesión principal sí publica con git en su forma
-// directa de siempre (`git add`/`git commit`/`git push`, encadenados con
-// `&&` desde `cd`), que este hook deja pasar sin tocar.
+// comando (después de `&&`, `;`, `|`, un salto de línea, o al principio del
+// comando, con o sin `./`/`cmd /c` adelante). Si "git" aparece en cualquier
+// otro lugar del comando, se asume indirecto y se bloquea. El agente
+// encuesta-hogares no tiene ninguna razón legítima para invocar git ni
+// directa ni indirectamente (ver CLAUDE.md, "El agente encuesta-hogares
+// sigue sin permiso de usar git"); la sesión principal sí publica con git en
+// su forma directa de siempre (`git add`/`git commit`/`git push`,
+// encadenados con `&&` desde `cd`), que este hook deja pasar sin tocar.
+//
+// Dos falsos positivos reales encontrados probando el hook a mano (no en
+// una corrida real, pero con el mismo método: invocarlo de verdad con
+// Node): (1) un comando de varias líneas con `git status` en la segunda
+// línea se bloqueaba, porque `^` sin flag `m` solo ancla al principio del
+// string completo, no de cada línea - un salto de línea no estaba en la
+// lista de separadores válidos. (2) un nombre de archivo que simplemente
+// contiene la palabra "git" (ej. `git-log-notes.txt`) se bloqueaba, porque
+// `\bgit\b` trata el guion como límite de palabra igual que un espacio.
+// Cambiado el límite de "contieneGit" para excluir también guion y guion
+// bajo (no solo caracteres alfanuméricos), y agregado `\n` a los
+// separadores de "invocacionDirecta".
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
 process.stdin.on("end", () => {
@@ -40,11 +52,14 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
-  // git en posición de comando: al principio, o después de && ; | - con o
+  // git en posición de comando: al principio, o después de && ; | \n - con o
   // sin ./, .\, cmd /c, cmd //c adelante.
   const invocacionDirecta =
-    /(^|&&|;|\|)\s*(\.[\\/]|cmd\s+\/{1,2}c\s+)?git(\.exe)?(\s|$)/i;
-  const contieneGit = /\bgit\b/i;
+    /(^|&&|;|\||\n)\s*(\.[\\/]|cmd\s+\/{1,2}c\s+)?git(\.exe)?(\s|$)/i;
+  // Límite propio en vez de \b: \b trata "-"/"_" como límite de palabra
+  // igual que un espacio, así que "git-log-notes.txt" contendría un \bgit\b
+  // aunque no sea la palabra "git" en absoluto, solo un nombre de archivo.
+  const contieneGit = /(?<![\w-])git(?![\w-])/i;
 
   if (invocacionDirecta.test(command)) {
     process.exit(0);
