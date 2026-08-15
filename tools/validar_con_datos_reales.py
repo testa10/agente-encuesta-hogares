@@ -40,10 +40,28 @@ verificar en vez de saltearla en silencio.
 
 Si no hay ningún año en data/, termina con un aviso claro en vez de
 fallar — no es un error, es el estado normal de un clone limpio.
+
+**Una corrida reporta TODAS las fallas, no solo la primera.** Antes esto
+usaba `assert` sueltos, así que la primera falla abortaba todo: al cargar
+un año nuevo eso obligaba a un ciclo de corregir → volver a correr →
+descubrir la siguiente, un problema por corrida y varios minutos cada
+una. Con los datos de 2023 hicieron falta cuatro corridas completas para
+descubrir cuatro problemas que ya estaban todos ahí desde la primera. Los
+`assert` siguen igual (son la forma más clara de escribir cada chequeo),
+pero ahora cada bloque corre dentro de `Recolector.bloque()`, que anota la
+falla y sigue. Al final se imprime la lista completa y el script sale con
+código 1 si hubo alguna.
+
+Los bloques que dependen de otro que falló se marcan como OMITIDOS y no
+como fallas, para que el informe final no se llene de consecuencias de un
+mismo problema. FIES, Empleo y Seguridad son fuentes de datos separadas y
+se revisan siempre, incluso si todo lo demás falló — es justo donde más
+suele cambiar el formato del INE de un año a otro.
 """
 
 import sys
 import warnings
+from contextlib import contextmanager
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -65,6 +83,71 @@ from encuesta_hogares import (  # noqa: E402
 )
 
 
+class _Omitido(Exception):
+    """Un bloque no se pudo correr porque algo de lo que depende falló
+    antes. No es una falla nueva — es una consecuencia de otra."""
+
+
+class Recolector:
+    """Junta todas las fallas de una corrida en vez de cortar en la primera.
+
+    Nace del problema de fondo que tenía este script: usaba `assert`
+    sueltos, así que la primera falla abortaba todo. Al agregar un año
+    nuevo eso obligaba a un ciclo de corregir → correr de nuevo →
+    descubrir la siguiente → corregir, una falla por corrida. Con los
+    datos de 2023 hicieron falta cuatro corridas completas del pipeline
+    (varios minutos cada una) para descubrir cuatro problemas que ya
+    estaban todos ahí desde la primera.
+
+    Ahora cada bloque se registra y la corrida sigue: una sola pasada
+    enumera todo lo que le pasa a un año nuevo. Los bloques que dependen
+    de otro que falló se marcan como OMITIDOS y no como fallas, para no
+    inflar el informe final con consecuencias de un mismo problema.
+    """
+
+    def __init__(self) -> None:
+        self.fallas: list[tuple[str, str]] = []
+        self.omitidos: list[tuple[str, str]] = []
+
+    @contextmanager
+    def bloque(self, etiqueta: str):
+        try:
+            yield
+        except _Omitido as e:
+            self.omitidos.append((etiqueta, str(e)))
+            print(f"[OMITIDO] {etiqueta} — {e}")
+        except Exception as e:
+            self.fallas.append((etiqueta, f"{type(e).__name__}: {e}"))
+            print(f"[FALLA] {etiqueta} — {type(e).__name__}: {e}")
+
+    @staticmethod
+    def requiere(**valores) -> None:
+        """Corta el bloque si algo de lo que necesita quedó sin calcular
+        por una falla anterior."""
+        faltan = [nombre for nombre, valor in valores.items() if valor is None]
+        if faltan:
+            raise _Omitido(f"depende de {', '.join(faltan)}, que no se pudo calcular")
+
+    def informe_final(self, anios: list[str]) -> int:
+        print(f"\n\n{'=' * 60}")
+        if not self.fallas:
+            print(f"[OK] VALIDACIÓN COMPLETA: {', '.join(anios)}")
+            if self.omitidos:
+                print(f"({len(self.omitidos)} bloque(s) omitidos por falta de datos de ese año, sin fallas)")
+            return 0
+
+        print(f"[FALLÓ] {len(self.fallas)} problema(s) encontrados — la lista completa, no solo el primero:")
+        print("=" * 60)
+        for etiqueta, detalle in self.fallas:
+            print(f"\n  • {etiqueta}\n    {detalle}")
+        if self.omitidos:
+            print(f"\n{len(self.omitidos)} bloque(s) quedaron sin verificar por depender de los anteriores:")
+            for etiqueta, motivo in self.omitidos:
+                print(f"  - {etiqueta}: {motivo}")
+        print(f"\n{'=' * 60}\nAños revisados: {', '.join(anios)}")
+        return 1
+
+
 def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     carpeta = config.DATA_DIR / anio
     if config.hogares_csv_file(anio).exists():
@@ -74,11 +157,21 @@ def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return data_loader.load_hogares(h_path), data_loader.load_personas(p_path)
 
 
-def validar_anio(anio: str) -> None:
+def validar_anio(anio: str, rec: Recolector) -> None:
     print(f"\n{'=' * 60}\nAÑO {anio}\n{'=' * 60}")
-    hogares, personas = _cargar_hogares_y_personas(anio)
-    print(f"Hogares (nacional): {len(hogares)} — departamentos: {hogares['departamento'].nunique()}")
-    assert hogares["departamento"].nunique() > 1, "se esperaban varios departamentos en la base nacional"
+
+    # Se inicializan en None para que un bloque que falle no deje a los
+    # siguientes con un NameError (que se registraría como una falla
+    # nueva, tapando la de verdad): `rec.requiere(...)` los revisa y marca
+    # el bloque dependiente como OMITIDO en vez de FALLA.
+    hogares = personas = hogares_cond = None
+    hogares_mdeo = hogares_ext = penetracion_barrio = tipo_hogar = None
+    n_carencias = None
+
+    with rec.bloque(f"{anio} · Carga de Hogares/Personas"):
+        hogares, personas = _cargar_hogares_y_personas(anio)
+        print(f"Hogares (nacional): {len(hogares)} — departamentos: {hogares['departamento'].nunique()}")
+        assert hogares["departamento"].nunique() > 1, "se esperaban varios departamentos en la base nacional"
 
     # --- Vivienda: la cantidad de carencias cambia de año a año, y algunos
     # años (2023, verificado contra los datos reales) no tienen ninguna -
@@ -87,15 +180,17 @@ def validar_anio(anio: str) -> None:
     # analysis._condiciones_vivienda_disponibles) en vez de devolver un
     # "0% con carencia" que parecería un cálculo real y no lo es - acá se
     # respeta esa señal en vez de forzar el cálculo.
-    hogares_cond = preprocessing.decode_condiciones_vivienda(hogares)
-    n_carencias = sum(1 for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_cond.columns)
-    print(f"Carencias de vivienda disponibles: {n_carencias}")
-    if n_carencias > 0:
-        resultado = analysis.precariedad_estructural(hogares_cond)
-        assert 0 <= resultado["pct_con_carencia"] <= 100
-        assert visualization.plot_precariedad_estructural(resultado) is not None
-    else:
-        print("Precariedad estructural: sin verificar — módulo de condiciones de vivienda no disponible este año")
+    with rec.bloque(f"{anio} · Vivienda (precariedad estructural)"):
+        rec.requiere(hogares=hogares)
+        hogares_cond = preprocessing.decode_condiciones_vivienda(hogares)
+        n_carencias = sum(1 for c in config.CONDICIONES_VIVIENDA_COLUMNS.values() if c in hogares_cond.columns)
+        print(f"Carencias de vivienda disponibles: {n_carencias}")
+        if n_carencias > 0:
+            resultado = analysis.precariedad_estructural(hogares_cond)
+            assert 0 <= resultado["pct_con_carencia"] <= 100
+            assert visualization.plot_precariedad_estructural(resultado) is not None
+        else:
+            print("Precariedad estructural: sin verificar — módulo de condiciones de vivienda no disponible este año")
 
     # --- Territorio: índice compuesto sobre la base nacional (no Montevideo).
     # El dueño del proyecto eligió "avisar explícitamente que un año sin
@@ -105,112 +200,144 @@ def validar_anio(anio: str) -> None:
     # solo con pobreza+estrato (quedó abierto) - se optó acá por lo más
     # conservador (marcarlo entero) para no mezclar, bajo el mismo nombre
     # de métrica, un índice de 3 componentes con uno de 2 sin que se note.
-    hogares_cond["pobre"] = hogares_cond["pobre"] == 1.0
-    if n_carencias > 0:
-        pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")
-        estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")
-        precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")
-        componentes = pd.DataFrame({
-            "pct_pobreza": pobreza_depto["pct_pobres"],
-            "pct_precariedad": precariedad_depto["pct_precariedad"],
-            "estrato_promedio": estrato_depto["estrato_promedio"],
-        }).dropna()
-        indice = analysis.indice_desarrollo_territorial(componentes, invertir=["pct_pobreza", "pct_precariedad"])
-        assert indice["indice"].between(0, 1).all()
-        assert visualization.plot_indice_desarrollo_territorial(indice) is not None
-        print(f"Índice territorial: OK ({len(indice)} departamentos)")
-    else:
-        print("Índice territorial: sin verificar — módulo de condiciones de vivienda no disponible este año")
+    with rec.bloque(f"{anio} · Índice de desarrollo territorial"):
+        rec.requiere(hogares=hogares, hogares_cond=hogares_cond)
+        hogares_cond["pobre"] = hogares_cond["pobre"] == 1.0
+        if n_carencias > 0:
+            pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")
+            estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")
+            precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")
+            componentes = pd.DataFrame({
+                "pct_pobreza": pobreza_depto["pct_pobres"],
+                "pct_precariedad": precariedad_depto["pct_precariedad"],
+                "estrato_promedio": estrato_depto["estrato_promedio"],
+            }).dropna()
+            indice = analysis.indice_desarrollo_territorial(componentes, invertir=["pct_pobreza", "pct_precariedad"])
+            assert indice["indice"].between(0, 1).all()
+            assert visualization.plot_indice_desarrollo_territorial(indice) is not None
+            print(f"Índice territorial: OK ({len(indice)} departamentos)")
+        else:
+            print("Índice territorial: sin verificar — módulo de condiciones de vivienda no disponible este año")
 
     # --- Brecha Digital / Hogares: filtro a Montevideo + variables decodificadas ---
-    hogares_mdeo = preprocessing.prepare_hogares_montevideo(hogares)
-    hogares_ext = preprocessing.prepare_hogares_extendido(hogares_mdeo)
-    resumen_conectividad = analysis.resumen_conectividad(hogares_ext)
-    assert resumen_conectividad.total_hogares > 0
-    assert 0 <= resumen_conectividad.pct_con_cable <= 100
-    print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_cable}% con cable (ponderado)")
+    with rec.bloque(f"{anio} · Brecha digital y pobreza (Montevideo)"):
+        rec.requiere(hogares=hogares)
+        hogares_mdeo = preprocessing.prepare_hogares_montevideo(hogares)
+        hogares_ext = preprocessing.prepare_hogares_extendido(hogares_mdeo)
+        resumen_conectividad = analysis.resumen_conectividad(hogares_ext)
+        assert resumen_conectividad.total_hogares > 0
+        assert 0 <= resumen_conectividad.pct_con_cable <= 100
+        print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_cable}% con cable (ponderado)")
 
-    pobres = analysis.pct_pobres_indigentes(hogares_ext)
-    assert 0 <= pobres["pct_pobres"] <= 100
-    print(f"Pobreza (ponderada): {pobres['pct_pobres']}% — sin ponderar sería {round(hogares_ext['pobre'].mean() * 100, 2)}%")
+        pobres = analysis.pct_pobres_indigentes(hogares_ext)
+        assert 0 <= pobres["pct_pobres"] <= 100
+        print(f"Pobreza (ponderada): {pobres['pct_pobres']}% — sin ponderar sería {round(hogares_ext['pobre'].mean() * 100, 2)}%")
 
-    brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
-    assert visualization.plot_brecha_digital(brecha) is not None
+        brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
+        assert visualization.plot_brecha_digital(brecha) is not None
 
-    penetracion_barrio = preprocessing.compute_penetracion_por_barrio(hogares_mdeo)
-    assert penetracion_barrio["pct_abonados"].between(0, 100).all()
-    print(f"Penetración por barrio: OK ({len(penetracion_barrio)} barrios, ponderado)")
+        penetracion_barrio = preprocessing.compute_penetracion_por_barrio(hogares_mdeo)
+        assert penetracion_barrio["pct_abonados"].between(0, 100).all()
+        print(f"Penetración por barrio: OK ({len(penetracion_barrio)} barrios, ponderado)")
 
-    # --- Métrica 3: sin función de análisis propia hasta la corrida que agregó este manifiesto ---
-    hogares_ext["calidad_conexion"] = preprocessing.clasificar_calidad_conexion(hogares_ext)
-    calidad = analysis.calidad_conexion_por(hogares_ext, "nivel_economico")
-    assert calidad.sum(axis=1).round(0).between(99, 101).all()
-    assert visualization.plot_calidad_conexion_por(calidad, "nivel económico") is not None
-    print("Calidad de conexión por nivel económico: OK (ponderado)")
+        # --- Métrica 3: sin función de análisis propia hasta la corrida que agregó este manifiesto ---
+        hogares_ext["calidad_conexion"] = preprocessing.clasificar_calidad_conexion(hogares_ext)
+        calidad = analysis.calidad_conexion_por(hogares_ext, "nivel_economico")
+        assert calidad.sum(axis=1).round(0).between(99, 101).all()
+        assert visualization.plot_calidad_conexion_por(calidad, "nivel económico") is not None
+        print("Calidad de conexión por nivel económico: OK (ponderado)")
 
     # --- Hogares: composición vía Personas, requiere el merge completo ---
-    tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
-    resumen_tipos = analysis.tipos_hogar_resumen(tipo_hogar)
-    assert abs(resumen_tipos["pct_hogares"].sum() - 100.0) < 0.5
-    jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)
-    assert 0 <= jefatura["pct_jefatura_femenina"] <= 100
-    print(f"Tipos de hogar: OK ({len(resumen_tipos)} categorías) — jefatura femenina: {jefatura['pct_jefatura_femenina']}%")
+    with rec.bloque(f"{anio} · Composición de hogares"):
+        rec.requiere(hogares=hogares, personas=personas, penetracion_barrio=penetracion_barrio)
+        tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
+        resumen_tipos = analysis.tipos_hogar_resumen(tipo_hogar)
+        assert abs(resumen_tipos["pct_hogares"].sum() - 100.0) < 0.5
+        jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)
+        assert 0 <= jefatura["pct_jefatura_femenina"] <= 100
+        print(f"Tipos de hogar: OK ({len(resumen_tipos)} categorías) — jefatura femenina: {jefatura['pct_jefatura_femenina']}%")
 
-    barrios_resumen = analysis.clasificacion_barrios_resumen(penetracion_barrio)
-    assert barrios_resumen["cantidad_barrios"].sum() == len(penetracion_barrio)
+        barrios_resumen = analysis.clasificacion_barrios_resumen(penetracion_barrio)
+        assert barrios_resumen["cantidad_barrios"].sum() == len(penetracion_barrio)
 
-    unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)
-    assert 0 <= unipersonales_mayores["pct_unipersonales_mayores"] <= 100
+        unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)
+        assert 0 <= unipersonales_mayores["pct_unipersonales_mayores"] <= 100
 
-    cat_a, cat_b = resumen_tipos["tipo_hogar"].iloc[0], resumen_tipos["tipo_hogar"].iloc[-1]
-    diferencia_tipos = analysis.diferencia_entre_categorias(resumen_tipos, "tipo_hogar", cat_a, cat_b, "pct_hogares")
-    assert -100 <= diferencia_tipos <= 100
+        cat_a, cat_b = resumen_tipos["tipo_hogar"].iloc[0], resumen_tipos["tipo_hogar"].iloc[-1]
+        diferencia_tipos = analysis.diferencia_entre_categorias(resumen_tipos, "tipo_hogar", cat_a, cat_b, "pct_hogares")
+        assert -100 <= diferencia_tipos <= 100
+        print("Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar: OK")
 
-    if n_carencias > 0:
-        carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)
-        assert carencias_frecuentes["pct_hogares"].between(0, 100).all() and len(carencias_frecuentes) == n_carencias
-        detalle_carencias = " / carencias más frecuentes: OK"
-    else:
-        detalle_carencias = " — carencias más frecuentes: sin verificar (módulo de vivienda no disponible este año)"
-    print(
-        "Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar"
-        + detalle_carencias
-    )
+    with rec.bloque(f"{anio} · Carencias de vivienda más frecuentes"):
+        rec.requiere(hogares_cond=hogares_cond)
+        if n_carencias > 0:
+            carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)
+            assert carencias_frecuentes["pct_hogares"].between(0, 100).all() and len(carencias_frecuentes) == n_carencias
+            print("Carencias más frecuentes: OK")
+        else:
+            print("Carencias más frecuentes: sin verificar — módulo de vivienda no disponible este año")
 
     # --- Brecha Digital por cohorte/jefatura/índice de acceso, Hacinamiento,
     # Razón de dependencia: necesitan columnas derivadas que se arman acá
     # mismo, siguiendo el mismo criterio que ya usa el notebook real.
-    hogares_ext_con_jefe = hogares_ext.merge(
-        tipo_hogar[["id_hogar", "jefe_sexo", "jefe_edad"]], on="id_hogar", how="left"
-    )
-    hogares_ext_con_jefe["cohorte"] = preprocessing.compute_cohorte_generacional(hogares_ext_con_jefe, int(anio))
-    hogares_ext_con_jefe["indice_acceso_digital"] = preprocessing.compute_indice_acceso_digital(hogares_ext_con_jefe)
+    with rec.bloque(f"{anio} · Brecha digital por cohorte / jefatura / índice de acceso"):
+        rec.requiere(hogares_ext=hogares_ext, tipo_hogar=tipo_hogar)
+        hogares_ext_con_jefe = hogares_ext.merge(
+            tipo_hogar[["id_hogar", "jefe_sexo", "jefe_edad"]], on="id_hogar", how="left"
+        )
+        hogares_ext_con_jefe["cohorte"] = preprocessing.compute_cohorte_generacional(hogares_ext_con_jefe, int(anio))
+        hogares_ext_con_jefe["indice_acceso_digital"] = preprocessing.compute_indice_acceso_digital(hogares_ext_con_jefe)
 
-    brecha_cohorte = analysis.brecha_digital_por_cohorte(hogares_ext_con_jefe)
-    assert brecha_cohorte["pct_penetracion"].between(0, 100).all()
-    brecha_jefatura = analysis.brecha_digital_por_jefatura(hogares_ext_con_jefe)
-    assert brecha_jefatura["pct_penetracion"].between(0, 100).all()
-    indice_por_nivel = analysis.indice_acceso_digital_por(hogares_ext_con_jefe, "nivel_economico")
-    assert indice_por_nivel["indice_promedio"].between(0, 4).all()
-    if "tiene_tablet_ibirapita" in hogares_ext_con_jefe.columns:
-        tablet_por_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")
-        assert tablet_por_nivel["pct_con_tablet"].between(0, 100).all()
-    print("Brecha digital por cohorte / jefatura / índice de acceso digital: OK (ponderado)")
+        brecha_cohorte = analysis.brecha_digital_por_cohorte(hogares_ext_con_jefe)
+        assert brecha_cohorte["pct_penetracion"].between(0, 100).all()
+        brecha_jefatura = analysis.brecha_digital_por_jefatura(hogares_ext_con_jefe)
+        assert brecha_jefatura["pct_penetracion"].between(0, 100).all()
+        indice_por_nivel = analysis.indice_acceso_digital_por(hogares_ext_con_jefe, "nivel_economico")
+        assert indice_por_nivel["indice_promedio"].between(0, 4).all()
+        if "tiene_tablet_ibirapita" in hogares_ext_con_jefe.columns:
+            tablet_por_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")
+            assert tablet_por_nivel["pct_con_tablet"].between(0, 100).all()
+        print("Brecha digital por cohorte / jefatura / índice de acceso digital: OK (ponderado)")
 
-    hogares_mdeo_hacinamiento = preprocessing.compute_hacinamiento(hogares_mdeo)
-    hacinamiento_por_nivel = analysis.pct_hacinamiento_por(hogares_mdeo_hacinamiento, "nivel_economico")
-    assert hacinamiento_por_nivel["pct_hacinamiento"].between(0, 100).all()
-    print("Hacinamiento por nivel económico: OK")
+    with rec.bloque(f"{anio} · Hacinamiento"):
+        rec.requiere(hogares_mdeo=hogares_mdeo)
+        hogares_mdeo_hacinamiento = preprocessing.compute_hacinamiento(hogares_mdeo)
+        hacinamiento_por_nivel = analysis.pct_hacinamiento_por(hogares_mdeo_hacinamiento, "nivel_economico")
+        assert hacinamiento_por_nivel["pct_hacinamiento"].between(0, 100).all()
+        print("Hacinamiento por nivel económico: OK")
 
-    personas_con_depto = preprocessing.merge_personas(hogares, personas)
-    dependencia_por_depto = analysis.razon_dependencia_por(personas_con_depto, "departamento")
-    assert dependencia_por_depto["razon_dependencia"].dropna().ge(0).all()
-    print(f"Razón de dependencia demográfica por departamento: OK ({len(dependencia_por_depto)} departamentos)")
+    with rec.bloque(f"{anio} · Razón de dependencia demográfica"):
+        rec.requiere(hogares=hogares, personas=personas)
+        personas_con_depto = preprocessing.merge_personas(hogares, personas)
+        dependencia_por_depto = analysis.razon_dependencia_por(personas_con_depto, "departamento")
+        assert dependencia_por_depto["razon_dependencia"].dropna().ge(0).all()
+        print(f"Razón de dependencia demográfica por departamento: OK ({len(dependencia_por_depto)} departamentos)")
 
+    # FIES, Empleo y Seguridad son fuentes de datos separadas: no dependen
+    # de nada de lo anterior, así que se revisan siempre — incluso si todo
+    # lo de arriba falló. Es justo donde más suele cambiar el INE de un año
+    # a otro, y donde más importa enterarse en la misma corrida.
     disponibles = config.datos_disponibles(anio)
     print(f"Datos opcionales disponibles: {disponibles}")
 
     if disponibles["fies"]:
+        _validar_fies(anio, rec)
+
+    if disponibles["empleo"]:
+        _validar_empleo(anio, rec)
+
+    if disponibles["seguridad"]:
+        _validar_seguridad(anio, rec)
+
+    fallas_del_anio = [e for e, _ in rec.fallas if e.startswith(f"{anio} ·")]
+    if not fallas_del_anio:
+        print(f"\n[OK] Año {anio}: validación completa sin errores")
+    else:
+        print(f"\n[FALLÓ] Año {anio}: {len(fallas_del_anio)} problema(s) — se sigue con el resto igual")
+
+
+def _validar_fies(anio: str, rec: Recolector) -> None:
+    with rec.bloque(f"{anio} · FIES (seguridad alimentaria)"):
         fies = data_loader.load_fies(config.fies_file(anio))
         fies_clasificado = preprocessing.prepare_fies(fies)
         prevalencia = analysis.prevalencia_inseguridad_alimentaria(fies_clasificado)
@@ -221,7 +348,9 @@ def validar_anio(anio: str) -> None:
         assert inseguridad_por_region["pct_inseguridad"].between(0, 100).all()
         print(f"FIES por región: OK ({len(inseguridad_por_region)} regiones)")
 
-    if disponibles["empleo"]:
+
+def _validar_empleo(anio: str, rec: Recolector) -> None:
+    with rec.bloque(f"{anio} · Empleo"):
         empleo = preprocessing.prepare_empleo(data_loader.load_empleo(anio))
         assert empleo["mes"].nunique() == 12, "el panel de empleo tiene que traer los 12 meses"
         tasas = analysis.tasas_actividad_empleo_desempleo(empleo)
@@ -254,7 +383,9 @@ def validar_anio(anio: str) -> None:
         else:
             print("Situación ocupacional por sector y sexo: sin verificar — columna no disponible este año")
 
-    if disponibles["seguridad"]:
+
+def _validar_seguridad(anio: str, rec: Recolector) -> None:
+    with rec.bloque(f"{anio} · Seguridad y victimización"):
         victimizacion = data_loader.load_victimizacion(anio)
         largo = preprocessing.melt_delitos(preprocessing.prepare_victimizacion(victimizacion))
         assert len(largo) > 0
@@ -275,10 +406,8 @@ def validar_anio(anio: str) -> None:
         assert diferencia_comunicacion_denuncia.abs().le(100).all()
         print(f"Comunicación a la policía vs. denuncia formal, por tipo de delito: OK ({len(comunicacion_por_delito)} tipos)")
 
-    print(f"\n[OK] Año {anio}: validación completa sin errores")
 
-
-def validar_notebook_builder(anio: str) -> None:
+def validar_notebook_builder(anio: str, rec: Recolector) -> None:
     """Corre DE VERDAD el código que genera `notebook_builder.py` para
     todas las métricas del catálogo disponibles este año (no una
     reimplementación a mano de la misma lógica, como el resto de este
@@ -298,6 +427,11 @@ def validar_notebook_builder(anio: str) -> None:
     para eso acá.
     """
     print(f"\n--- notebook_builder: ejecutando las plantillas del catálogo para {anio} ---")
+    with rec.bloque(f"{anio} · notebook_builder (plantillas del catálogo)"):
+        _correr_plantillas_del_catalogo(anio)
+
+
+def _correr_plantillas_del_catalogo(anio: str) -> None:
     disponibles = config.datos_disponibles(anio)
     catalogo = verificacion_catalogo.numeros_del_catalogo()
     no_disponibles_empleo = set(verificacion_catalogo.metricas_empleo_no_disponibles(anio))
@@ -349,14 +483,15 @@ def main() -> int:
         print("Este script solo tiene sentido correrlo una vez que haya al menos un año descargado.")
         return 0
 
-    for anio in anios:
-        validar_anio(anio)
+    rec = Recolector()
 
     for anio in anios:
-        validar_notebook_builder(anio)
+        validar_anio(anio, rec)
 
-    print(f"\n\n[OK] VALIDACIÓN COMPLETA: {', '.join(anios)}")
-    return 0
+    for anio in anios:
+        validar_notebook_builder(anio, rec)
+
+    return rec.informe_final(anios)
 
 
 if __name__ == "__main__":
