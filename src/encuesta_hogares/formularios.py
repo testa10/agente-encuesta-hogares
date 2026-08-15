@@ -22,7 +22,7 @@ import threading
 import traceback
 from pathlib import Path
 
-from . import bitacora, config
+from . import bitacora, cierre, config
 
 
 def _nombre_desde_html(html: str) -> str:
@@ -339,7 +339,18 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
         # salir_del_flujo=True hace que ese mismo chequeo, ya presente
         # después de cada formulario, también cubra este caso sin
         # necesitar ningún cambio en el resto del flujo.
+        cierre.cerrar_consola(motivo="timeout_formulario")
         return {"salir_del_flujo": True, "motivo": "timeout"}
+
+    # Salir sin terminar el informe: acá se termina la conversación (ver
+    # .claude/agents/encuesta-hogares.md), así que también se cierra la
+    # consola. Se hace acá y no en las instrucciones del agente a
+    # propósito: es el mismo criterio que los hooks del proyecto — una
+    # regla que depende de que el modelo se acuerde de cumplirla en cada
+    # corrida no se cumple siempre, y esta en particular es la que dejaba
+    # una ventana abierta en la cara de alguien que ya se quiso ir.
+    if resultado.get("salir_del_flujo"):
+        cierre.cerrar_consola(motivo="salir_del_flujo")
 
     return resultado
 
@@ -430,7 +441,15 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
         # final) - el equivalente seguro es tratarlo como si la persona
         # hubiera elegido terminar, que es exactamente lo que ya sabe
         # manejar el paso 8 del agente.
+        cierre.cerrar_consola(motivo="timeout_finalizacion")
         return {"accion": "terminar", "motivo": "timeout"}
+
+    # "terminar" es el final real del flujo — el usuario ya tiene su
+    # informe y apretó "Listo, gracias". "nuevo_informe" NO cierra nada:
+    # ahí el agente reinicia desde el paso 1 en la misma conversación, así
+    # que la consola tiene que seguir viva.
+    if resultado.get("accion") == "terminar":
+        cierre.cerrar_consola(motivo="terminar")
 
     return resultado
 

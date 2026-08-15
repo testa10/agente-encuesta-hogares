@@ -1073,7 +1073,14 @@ archivo.
 `{"accion": "nuevo_informe"}`, y hay que ramificar según esa respuesta:**
 
 - `"terminar"`: acá termina el flujo — no hace falta ningún otro aviso de
-  chat después.
+  chat después. **Y tampoco intentes hacer nada más: apenas la persona
+  elige esta opción, el propio proyecto cierra la sesión de Claude Code
+  para que la ventana de consola se cierre sola** (ver
+  `src/encuesta_hogares/cierre.py`), así que cualquier cosa que quieras
+  hacer después de esta llamada no llega a ocurrir. Todo lo que tenga que
+  quedar registrado —bitácora, `bitacora.sugerir_catalogo(...)`— tiene que
+  estar hecho **antes** de llamar a `mostrar_finalizacion()`. Lo mismo
+  vale para cualquier formulario que devuelva `salir_del_flujo`.
 - `"nuevo_informe"`: la persona quiere generar otro informe (mismo año u
   otro) sin cerrar la ventana ni volver a hacer doble clic en
   `abrir_agente.bat`. Reiniciar el flujo desde cero, empezando otra vez

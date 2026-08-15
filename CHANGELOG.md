@@ -10,6 +10,34 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.8.1] — 2026-08-15
+
+### Corregido
+
+- **La ventana de consola ahora se cierra sola al terminar.** Ni terminar
+  el informe y apretar "Listo, gracias", ni apretar "Salir sin terminar
+  el informe", cerraban la consola que abre `abrir_agente.bat`: quedaba
+  viva de fondo indefinidamente. No era un fallo intermitente sino de
+  diseño — `abrir_agente.bat` invocaba `claude "..."` en modo
+  interactivo, y una sesión interactiva de Claude Code **no termina nunca
+  por sí sola** (confirmado contra la documentación oficial de la CLI: no
+  existe ninguna forma nativa de que termine al final de un turno). Como
+  `claude` nunca retornaba, las últimas líneas del `.bat` no se
+  ejecutaban jamás.
+
+  Ya se había intentado resolver con `claude -p` y se revirtió porque
+  rompía el flujo. La solución ahora no depende de que Claude Code
+  termine solo: `src/encuesta_hogares/cierre.py` cierra la sesión desde
+  adentro cuando el flujo termina de verdad, y el `.bat` retoma el
+  control y cierra su ventana con normalidad. Solo actúa si fue
+  `abrir_agente.bat` quien lanzó la sesión, así que una sesión de
+  `claude` abierta a mano (mantenimiento, o el "uso manual" del README) y
+  la suite de tests nunca se cierran solas por accidente.
+
+  "Crear un nuevo informe" **no** cierra nada — ahí el agente reinicia
+  desde el paso 1 en la misma conversación (hay un test dedicado a que
+  eso no se rompa).
+
 ## [0.8.0] — 2026-08-15
 
 ### Agregado
