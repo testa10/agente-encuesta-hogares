@@ -26,6 +26,30 @@ const path = require("path");
 
 const DOCS_PERMITIDOS_ANTES_DEL_PASO_1 = ["metodologia.md", "flujo_de_trabajo.md", "convenciones_de_graficas.md"];
 
+// El marcador de "ya se mostro la bienvenida" es uno por sesion y hasta
+// ahora no se borraba nunca: quedaba un archivo suelto en la carpeta
+// temporal por cada corrida, para siempre. Se limpian los de mas de un
+// dia (una sesion no dura tanto, asi que ninguno de esos sigue en uso).
+const UN_DIA_EN_MS = 24 * 60 * 60 * 1000;
+
+function limpiarMarcadoresViejos() {
+  try {
+    const limite = Date.now() - UN_DIA_EN_MS;
+    for (const nombre of fs.readdirSync(os.tmpdir())) {
+      if (!nombre.startsWith("encuesta-hogares-bienvenida-") || !nombre.endsWith(".marker")) continue;
+      const ruta = path.join(os.tmpdir(), nombre);
+      try {
+        if (fs.statSync(ruta).mtimeMs < limite) fs.unlinkSync(ruta);
+      } catch {
+        // Otro proceso lo borro primero, o no se puede leer - seguir.
+      }
+    }
+  } catch {
+    // Limpiar archivos temporales nunca puede impedir que el hook cumpla
+    // su funcion real, que es dejar pasar o bloquear la herramienta.
+  }
+}
+
 function comandoMuestraLaBienvenida(command) {
   if (command.includes("plantilla_bienvenida")) {
     return true;
@@ -65,6 +89,7 @@ process.stdin.on("end", () => {
   const toolInput = input.tool_input || {};
 
   if (toolName === "Bash" && typeof toolInput.command === "string" && comandoMuestraLaBienvenida(toolInput.command)) {
+    limpiarMarcadoresViejos();
     fs.writeFileSync(marker, "");
     process.exit(0);
   }

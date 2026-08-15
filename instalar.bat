@@ -76,16 +76,31 @@ if not exist ".claude" mkdir ".claude"
 REM --- 4. Preparar el generador de PDF (descarga Chromium una sola vez) ---
 echo [4/4] Preparando el generador de informes PDF, puede tardar unos minutos la primera vez...
 "!PYEXE!" -m playwright install chromium
+REM Sin este chequeo, si la descarga de Chromium fallaba (red, proxy,
+REM antivirus) el instalador igual decia "Listo, ya esta todo instalado" y
+REM el problema recien aparecia mucho despues, al generar el PDF en medio
+REM de una corrida real.
+if errorlevel 1 (
+    echo.
+    echo No se pudo preparar el generador de informes PDF. Revisa tu
+    echo conexion a internet y volve a correr este instalador.
+    if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause
+    exit /b 1
+)
 
 echo.
 echo ================================================
 echo   Listo. Ya esta todo instalado.
 echo ================================================
 echo.
-echo Para usar el agente:
-echo   1. Abri una terminal en esta carpeta, o segui usando esta
-echo      misma ventana.
-echo   2. Escribi: claude
-echo   3. Pedile el analisis que necesites, en tus palabras.
+REM Antes esto mandaba a abrir una terminal y escribir `claude`, que es
+REM justo lo contrario a todo el diseno del proyecto (el usuario no
+REM deberia ver nunca la terminal) y ademas contradecia al README, que
+REM manda a abrir_agente.bat.
+echo Para usar el agente, cerra esta ventana y hace doble clic en
+echo el archivo "abrir_agente.bat", que esta en esta misma carpeta.
+echo.
+echo No hace falta escribir ningun comando: el agente te va a ir
+echo preguntando todo con formularios que se abren en el navegador.
 echo.
 if not defined ENCUESTA_HOGARES_NONINTERACTIVE pause

@@ -18,6 +18,14 @@ notebooks/*.pdf
 # distinta en cada computadora, nunca se comparte entre usuarios.
 .claude/python_path.txt
 
+# Permisos locales que Claude Code va agregando en cada maquina segun lo
+# que se apruebe ahi - no son parte de la configuracion compartida del
+# proyecto (esa es .claude/settings.json, que si se versiona). Hasta ahora
+# este archivo se ignoraba solo por el gitignore GLOBAL del dueno del
+# proyecto, asi que en cualquier otra computadora, o en un clone limpio,
+# no estaba ignorado y se podia commitear sin querer.
+.claude/settings.local.json
+
 # Material de referencia personal (con copyright de terceros) que Claude usa
 # como guía interna - nunca se redistribuye, se queda solo en esta máquina.
 .claude/referencias_privadas/

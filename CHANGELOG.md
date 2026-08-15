@@ -10,6 +10,63 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.8.2] — 2026-08-15
+
+### Cambiado
+
+- **`tools/validar_con_datos_reales.py` ahora reporta todas las fallas de
+  una corrida, no solo la primera.** Usaba `assert` sueltos, así que la
+  primera falla abortaba todo: al cargar un año nuevo eso obligaba a un
+  ciclo de corregir → volver a correr → descubrir la siguiente, un
+  problema por corrida y varios minutos cada una. Con los datos de 2023
+  hicieron falta cuatro corridas completas para descubrir cuatro
+  problemas que ya estaban todos ahí desde la primera. Los `assert`
+  siguen igual; lo que cambia es que cada bloque corre dentro de un
+  `Recolector` que anota la falla y sigue. Al final imprime la lista
+  completa y sale con código 1 si hubo alguna.
+
+  Los bloques que dependen de otro que falló se marcan como OMITIDOS y no
+  como fallas, para que el informe no se llene de consecuencias de un
+  mismo problema. FIES, Empleo y Seguridad se revisan siempre, incluso si
+  todo lo demás falló — es justo donde más suele cambiar el formato del
+  INE de un año a otro.
+
+- `jupyter` pasa de dependencia de desarrollo a dependencia normal: el
+  paso 5 ejecuta el notebook con `jupyter nbconvert --execute`, así que
+  hace falta para cualquier corrida. Funcionaba de casualidad porque
+  `instalar.bat` instala `.[dev]`; quien instalara solo el paquete base
+  quedaba sin poder generar un informe.
+
+- `instalar.bat` ya no termina diciendo que abras una terminal y escribas
+  `claude` —contrario a todo el diseño del proyecto, y a lo que dice el
+  README— sino que manda a hacer doble clic en `abrir_agente.bat`.
+
+### Corregido
+
+- **El servidor local de formularios ahora solo acepta respuestas de su
+  propia página.** `do_POST` aceptaba cualquier POST sin mirar de dónde
+  venía y respondía con `Access-Control-Allow-Origin: *`: cualquier
+  página abierta en el navegador podía barrer los puertos de localhost
+  desde JavaScript y contestar el formulario en nombre de la persona
+  (elegir el año, marcar métricas, o cerrarle el flujo). Ahora se valida
+  el `Origin` y se sacó el permiso de CORS, que nunca hizo falta.
+- Un `Content-Length` inválido en un pedido al servidor de formularios
+  tiraba un `ValueError` sin manejar dentro del hilo del servidor; ahora
+  responde 400 y sigue atendiendo. Se agregó además un tope de tamaño al
+  cuerpo del pedido.
+- `instalar.bat` no verificaba si fallaba la descarga de Chromium: decía
+  "Listo, ya está todo instalado" igual, y el problema recién aparecía al
+  generar el PDF en medio de una corrida real.
+- `.claude/settings.local.json` se ignoraba solo por el gitignore global
+  del dueño del proyecto, no por el del repositorio: en cualquier otra
+  computadora, o en un clone limpio, no estaba ignorado y se podía
+  commitear sin querer.
+- La bitácora crecía sin límite. Ahora rota al llegar a 2 MB y conserva
+  una tanda anterior.
+- Los marcadores del hook `gate-primer-paso` quedaban en la carpeta
+  temporal para siempre, uno por sesión; ahora se limpian los de más de
+  un día.
+
 ## [0.8.1] — 2026-08-15
 
 ### Corregido

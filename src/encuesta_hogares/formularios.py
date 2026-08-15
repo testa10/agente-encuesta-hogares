@@ -25,6 +25,66 @@ from pathlib import Path
 from . import bitacora, cierre, config
 
 
+def _origen_es_propio(handler) -> bool:
+    """¿La respuesta que llega viene de la página que sirve este mismo
+    servidor, o de otro sitio?
+
+    El servidor escucha en 127.0.0.1 con un puerto al azar, pero eso solo
+    no alcanza: cualquier página web abierta en el navegador de la persona
+    puede probar puertos de localhost y mandar una respuesta al formulario
+    en su nombre (elegir un año, marcar métricas, o directamente cerrarle
+    el flujo). El rango de puertos efímeros es lo bastante chico como para
+    barrerlo desde JavaScript en segundos.
+
+    El navegador manda `Origin` en todo POST, así que alcanza con exigir
+    que sea el nuestro. Si no viene `Origin` (un cliente que no es un
+    navegador, ej. los tests), se acepta: el riesgo que se está cerrando
+    es específicamente el de una página de otro sitio.
+    """
+    origen = handler.headers.get("Origin")
+    if origen is None:
+        return True
+    puerto = handler.server.server_address[1]
+    return origen in (f"http://127.0.0.1:{puerto}", f"http://localhost:{puerto}")
+
+
+def _rechazar_origen_ajeno(handler) -> bool:
+    """Corta la respuesta con 403 si vino de otro sitio. Devuelve True si
+    ya se respondió y quien llama tiene que abandonar el pedido."""
+    if _origen_es_propio(handler):
+        return False
+    bitacora.registrar("formulario_origen_rechazado", origen=handler.headers.get("Origin"))
+    handler.send_response(403)
+    handler.send_header("Content-Length", "0")
+    handler.end_headers()
+    return True
+
+
+# Las respuestas de estos formularios son unos pocos cientos de bytes (un
+# año, una lista de números de métrica). Un tope generoso evita que un
+# `Content-Length` enorme —malformado o malicioso— haga que el proceso
+# intente reservar esa memoria de una.
+_MAXIMO_CUERPO_EN_BYTES = 1_000_000
+
+
+def _leer_cuerpo(handler) -> bytes | None:
+    """Lee el cuerpo del POST validando su tamaño. Devuelve None (y ya
+    respondió) si el pedido no sirve: antes, un `Content-Length` que no
+    fuera un número tiraba un ValueError sin manejar dentro del hilo del
+    servidor."""
+    crudo = handler.headers.get("Content-Length", "0")
+    try:
+        largo = int(crudo)
+    except (TypeError, ValueError):
+        largo = -1
+    if largo < 0 or largo > _MAXIMO_CUERPO_EN_BYTES:
+        handler.send_response(400)
+        handler.send_header("Content-Length", "0")
+        handler.end_headers()
+        return None
+    return handler.rfile.read(largo)
+
+
 def _nombre_desde_html(html: str) -> str:
     """Extrae el texto del primer <h1> del HTML para identificar el
     formulario en la bitácora, sin depender de que cada llamada a
@@ -280,14 +340,16 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
             self.wfile.write(html_bytes)
 
         def do_POST(self):
-            largo = int(self.headers.get("Content-Length", 0))
-            cuerpo = self.rfile.read(largo)
+            if _rechazar_origen_ajeno(self):
+                return
+            cuerpo = _leer_cuerpo(self)
+            if cuerpo is None:
+                return
             resultado.update(json.loads(cuerpo))
             respuesta = b'{"ok": true}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(respuesta)))
-            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(respuesta)
             evento.set()
@@ -400,14 +462,16 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
             self.wfile.write(datos)
 
         def do_POST(self):
-            largo = int(self.headers.get("Content-Length", 0))
-            cuerpo = self.rfile.read(largo)
+            if _rechazar_origen_ajeno(self):
+                return
+            cuerpo = _leer_cuerpo(self)
+            if cuerpo is None:
+                return
             resultado.update(json.loads(cuerpo))
             respuesta = b'{"ok": true}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(respuesta)))
-            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(respuesta)
             evento.set()

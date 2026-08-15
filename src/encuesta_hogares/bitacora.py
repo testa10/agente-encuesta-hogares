@@ -36,6 +36,24 @@ from . import config
 
 LOG_PATH = config.PROJECT_ROOT / "logs" / "bitacora.jsonl"
 
+# La bitácora se escribe en cada formulario y en cada paso pesado, así que
+# crece indefinidamente en una instalación que se use seguido. Al llegar a
+# este tamaño se guarda como ".1" y se arranca de nuevo: se conserva una
+# sola tanda anterior, que alcanza para diagnosticar (lo que importa es lo
+# reciente) sin que el archivo crezca para siempre en la computadora de
+# alguien que nunca lo va a mirar.
+_TAMANIO_MAXIMO_EN_BYTES = 2_000_000
+
+
+def _rotar_si_hace_falta() -> None:
+    try:
+        if LOG_PATH.exists() and LOG_PATH.stat().st_size >= _TAMANIO_MAXIMO_EN_BYTES:
+            anterior = LOG_PATH.with_suffix(LOG_PATH.suffix + ".1")
+            anterior.unlink(missing_ok=True)
+            LOG_PATH.rename(anterior)
+    except OSError:
+        pass
+
 
 def registrar(tipo: str, **detalle) -> None:
     """Agrega una línea al log. Nunca deja escapar una excepción: un fallo
@@ -44,6 +62,7 @@ def registrar(tipo: str, **detalle) -> None:
     bitácora es de apoyo, nunca puede ser la causa de un problema nuevo."""
     try:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _rotar_si_hace_falta()
         linea = {
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "tipo": tipo,
