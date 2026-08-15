@@ -11,8 +11,11 @@
 // `jupyter nbconvert --execute`, sobre el notebook real, y bloquea si
 // encuentra el patron - en vez de descubrirlo recien en el informe final
 // entregado al usuario.
-const fs = require("fs");
-const path = require("path");
+//
+// La deteccion de "esto es un nbconvert --execute sobre tal notebook" vive
+// en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
+// notebook) - ver ese archivo para el bug real que motivo separarla.
+const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
 
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
@@ -31,32 +34,16 @@ process.stdin.on("end", () => {
   if (toolName !== "Bash" || typeof comando !== "string") {
     process.exit(0);
   }
-  if (!comando.includes("nbconvert") || !comando.includes("--execute")) {
-    process.exit(0);
-  }
 
-  const match = comando.match(/["']?([^"'\s]+\.ipynb)["']?/);
-  if (!match) {
-    // No se pudo identificar el archivo del comando - no bloqueamos a
-    // ciegas, mejor dejar pasar que romper un comando legitimo por un
-    // parseo de texto que no cubre algun formato nuevo.
+  const resultado = resolverNotebookEjecutado(comando);
+  if (!resultado) {
+    // No se pudo identificar un notebook ejecutandose de verdad (ni en el
+    // comando ni en un .py referenciado) - no bloqueamos a ciegas, mejor
+    // dejar pasar que romper un comando legitimo por un parseo de texto
+    // que no cubre algun formato nuevo.
     process.exit(0);
   }
-
-  let rutaNotebook = match[1];
-  if (!path.isAbsolute(rutaNotebook)) {
-    rutaNotebook = path.join(process.cwd(), rutaNotebook);
-  }
-  if (!fs.existsSync(rutaNotebook)) {
-    process.exit(0);
-  }
-
-  let nb;
-  try {
-    nb = JSON.parse(fs.readFileSync(rutaNotebook, "utf-8"));
-  } catch {
-    process.exit(0);
-  }
+  const { ruta: rutaNotebook, nb } = resultado;
 
   const violaciones = [];
   (nb.cells || []).forEach((cell, i) => {

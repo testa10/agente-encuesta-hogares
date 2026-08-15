@@ -6,8 +6,11 @@
 // devolvió algo que nunca se llegó a mostrar - un informe con una gráfica
 // "invisible" es un fallo real, distinto del de duplicación, y hasta ahora
 // solo se detectaba si alguien lo notaba a ojo revisando las ~48 celdas.
-const fs = require("fs");
-const path = require("path");
+//
+// La deteccion de "esto es un nbconvert --execute sobre tal notebook" vive
+// en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
+// notebook) - ver ese archivo para el bug real que motivo separarla.
+const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
 
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
@@ -26,29 +29,15 @@ process.stdin.on("end", () => {
   if (toolName !== "Bash" || typeof comando !== "string") {
     process.exit(0);
   }
-  if (!comando.includes("nbconvert") || !comando.includes("--execute")) {
-    process.exit(0);
-  }
 
-  const match = comando.match(/["']?([^"'\s]+\.ipynb)["']?/);
-  if (!match) {
+  // PostToolUse: para acá el nbconvert --inplace ya terminó de correr, así
+  // que resolverNotebookEjecutado ya lee el contenido actualizado del
+  // notebook (no hace falta releerlo aparte).
+  const resultado = resolverNotebookEjecutado(comando);
+  if (!resultado) {
     process.exit(0);
   }
-
-  let rutaNotebook = match[1];
-  if (!path.isAbsolute(rutaNotebook)) {
-    rutaNotebook = path.join(process.cwd(), rutaNotebook);
-  }
-  if (!fs.existsSync(rutaNotebook)) {
-    process.exit(0);
-  }
-
-  let nb;
-  try {
-    nb = JSON.parse(fs.readFileSync(rutaNotebook, "utf-8"));
-  } catch {
-    process.exit(0);
-  }
+  const { ruta: rutaNotebook, nb } = resultado;
 
   const celdasSinOutput = [];
   (nb.cells || []).forEach((cell, i) => {

@@ -18,8 +18,11 @@
 // Panorama general, Distribución por barrio, Composición de hogares,
 // Resumen analítico final) — esas no están numeradas como métrica y tienen
 // su propio criterio, ya cubierto en otras partes de la metodología.
-const fs = require("fs");
-const path = require("path");
+//
+// La deteccion de "esto es un nbconvert --execute sobre tal notebook" vive
+// en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
+// notebook) - ver ese archivo para el bug real que motivo separarla.
+const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
 
 const AUTORES_CONOCIDOS = [
   "Cleveland",
@@ -66,29 +69,12 @@ process.stdin.on("end", () => {
   if (toolName !== "Bash" || typeof comando !== "string") {
     process.exit(0);
   }
-  if (!comando.includes("nbconvert") || !comando.includes("--execute")) {
-    process.exit(0);
-  }
 
-  const match = comando.match(/["']?([^"'\s]+\.ipynb)["']?/);
-  if (!match) {
+  const resultado = resolverNotebookEjecutado(comando);
+  if (!resultado) {
     process.exit(0);
   }
-
-  let rutaNotebook = match[1];
-  if (!path.isAbsolute(rutaNotebook)) {
-    rutaNotebook = path.join(process.cwd(), rutaNotebook);
-  }
-  if (!fs.existsSync(rutaNotebook)) {
-    process.exit(0);
-  }
-
-  let nb;
-  try {
-    nb = JSON.parse(fs.readFileSync(rutaNotebook, "utf-8"));
-  } catch {
-    process.exit(0);
-  }
+  const { ruta: rutaNotebook, nb } = resultado;
 
   const cells = nb.cells || [];
   const encabezadoMetrica = /^#{2,4}\s*M[ée]trica\s+(\d+)/;
