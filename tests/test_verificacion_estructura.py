@@ -56,6 +56,25 @@ def test_verificar_hogares_personas_csv_ok_cuando_estan_todas(tmp_path, monkeypa
     assert all(r.ok for r in resultados)
 
 
+def test_verificar_hogares_personas_no_marca_falta_la_metodologia_vieja_de_pobreza(tmp_path, monkeypatch):
+    # Caso real: 2023 trae pobre06/indig06/YSVL (canasta 2006) pero no
+    # pobre17/indig17/YDA_SVL (canasta 2017) - data_loader.py ya sabe usar
+    # la variante vieja cuando es la única presente (ver
+    # config.PREFERENCIA_METODOLOGIA_HOGARES), así que las tres columnas
+    # "nuevas" no deberían contar como faltantes.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2030"
+    carpeta.mkdir()
+    columnas = [c for c in config.HOGARES_COLUMNS_CSV if c not in ("pobre17", "indig17", "YDA_SVL")]
+    (carpeta / "ECH_2030.csv").write_text(",".join(columnas) + "\n")
+
+    resultados = ve.verificar_hogares_personas(2030)
+
+    hogares = next(r for r in resultados if r.nombre == "Hogares (CSV combinado)")
+    assert hogares.faltantes == []
+    assert hogares.ok is True
+
+
 def test_verificar_empleo_detecta_mes_con_columnas_distintas(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     carpeta = tmp_path / "2030"
@@ -73,6 +92,44 @@ def test_verificar_empleo_detecta_mes_con_columnas_distintas(tmp_path, monkeypat
     assert "SECTOR_F" in inconsistencias[0].faltantes
 
 
-def test_verificar_anio_devuelve_vacio_sin_archivos(tmp_path, monkeypatch):
+def test_verificar_anio_avisa_si_no_hay_ningun_archivo(tmp_path, monkeypatch):
+    # Antes devolvía [] en silencio - Hogares/Personas, a diferencia de
+    # FIES/Empleo/Victimización, no es opcional: un año sin esto no tiene
+    # nada que analizar, así que la ausencia total tiene que ser un
+    # resultado explícito con ok=False, no una lista vacía indistinguible
+    # de "no había nada más que reportar".
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
-    assert ve.verificar_anio(2030) == []
+
+    resultados = ve.verificar_anio(2030)
+
+    assert len(resultados) == 1
+    assert resultados[0].nombre == "Hogares/Personas"
+    assert resultados[0].ok is False
+
+
+def test_hogares_csv_file_reconoce_implantacion_antes_del_anio(tmp_path, monkeypatch):
+    # Caso real: el archivo combinado de 2023 vino como
+    # "ECH_implantacion_2023.csv" (orden de palabras invertido respecto al
+    # patrón "ECH_{año}_implantacion.csv" que ya reconocía esta función
+    # para 2025) - sin este patrón adicional, el archivo real quedaba
+    # invisible para el código aunque estuviera en disco.
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2023"
+    carpeta.mkdir()
+    esperado = carpeta / "ECH_implantacion_2023.csv"
+    esperado.write_text("ID,nom_dpto\n")
+
+    assert config.hogares_csv_file(2023) == esperado
+
+
+def test_verificar_hogares_personas_encuentra_implantacion_antes_del_anio(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    carpeta = tmp_path / "2023"
+    carpeta.mkdir()
+    todas_las_columnas = set(config.HOGARES_COLUMNS_CSV) | set(config.PERSONAS_COLUMNS_CSV)
+    (carpeta / "ECH_implantacion_2023.csv").write_text(",".join(todas_las_columnas) + "\n")
+
+    resultados = ve.verificar_hogares_personas(2023)
+
+    assert resultados, "tiene que encontrar el archivo con el orden de palabras invertido"
+    assert all(r.ok for r in resultados)

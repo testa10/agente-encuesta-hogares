@@ -240,17 +240,29 @@ def hogares_csv_file(anio: int | str) -> Path:
     El nombre cambió entre años: hasta 2024 es exactamente `ECH_{año}.csv`;
     desde 2025 el INE lo publica como `ECH_{año}_implantacion.csv` —
     verificado contra los archivos reales que bajó el usuario, no una
-    suposición. Se prueba el patrón "implantación" primero y se usa si
-    existe en disco; si no, se cae al patrón simple (exista o no
-    todavía) — así un año recién creado, sin descargar, sigue mostrando
-    un nombre de archivo esperado en vez de romper. `datos_disponibles()`
-    reutiliza esta misma función como fuente única de verdad, para que
-    los dos no puedan quedar desincronizados.
+    suposición. Se prueban los patrones "implantación" primero (en ese
+    orden) y se usa el que exista en disco; si ninguno existe, se cae al
+    patrón simple (exista o no todavía) — así un año recién creado, sin
+    descargar, sigue mostrando un nombre de archivo esperado en vez de
+    romper. `datos_disponibles()` reutiliza esta misma función como
+    fuente única de verdad, para que los dos no puedan quedar
+    desincronizados.
+
+    El archivo real de 2023 vino con el orden de palabras invertido —
+    `ECH_implantacion_2023.csv`, no `ECH_2023_implantacion.csv` — mismo
+    tipo de inconsistencia de nombres del INE que ya obliga a
+    `empleo_files()` a reconocer `ECH_MM_AA.csv` y `ECH_MM_AAAA.csv`
+    dentro del mismo año. Sin esto, el archivo quedaba invisible para el
+    código: `hogares_csv_file(2023)` devolvía una ruta que no existe, y
+    como para 2023 tampoco hay `H_*.sav`/`P_*.sav`, el año entero parecía
+    no tener datos de Hogares/Personas (la base de todo el análisis
+    estándar) pese a que el archivo estaba ahí con el nombre real.
     """
     carpeta = DATA_DIR / str(anio)
-    patron_implantacion = carpeta / f"ECH_{anio}_implantacion.csv"
-    if patron_implantacion.exists():
-        return patron_implantacion
+    for nombre in (f"ECH_{anio}_implantacion.csv", f"ECH_implantacion_{anio}.csv"):
+        candidato = carpeta / nombre
+        if candidato.exists():
+            return candidato
     return carpeta / f"ECH_{anio}.csv"
 
 TIPO_ABONADO_LABELS = {1.0: "Con cable", 2.0: "Sin cable"}
