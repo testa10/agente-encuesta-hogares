@@ -10,6 +10,25 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.8.0] — 2026-08-15
+
+### Agregado
+
+- **Comparar entre años, métrica por métrica, no todo el catálogo de
+  una vez.** Antes, un solo checkbox global aplicaba la comparación a
+  *todas* las métricas elegidas del catálogo; ahora cada métrica tiene su
+  propia casilla "comparar esta métrica entre años". Nace de una
+  pregunta real: elegir 3 métricas y querer comparar solo una de ellas no
+  era posible. `formularios.plantilla_catalogo()` agrega
+  `metricas_comparadas` a la respuesta (subconjunto de `metricas`, ya
+  filtrado a números que también estén ahí); `comparar_anios` sigue
+  siendo un único conjunto de años, compartido por las métricas que se
+  comparen.
+- El formulario del catálogo ya no deja confirmar la selección con
+  `metricas` vacía y sin ninguna propuesta libre — antes, esa
+  combinación (posible sobre todo si se tildaba "comparar" sin elegir
+  ninguna métrica) quedaba librada a que el agente la interpretara bien.
+
 ## [0.7.0] — 2026-08-15
 
 ### Agregado

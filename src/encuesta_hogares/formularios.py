@@ -90,10 +90,17 @@ ol { line-height: 1.9; font-size: 15px; padding-left: 22px; }
   letter-spacing: 0.03em; border-bottom: 2px solid #eef1f4;
   padding-bottom: 6px; margin-bottom: 10px;
 }
-.metrica { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; cursor: pointer; }
+.metrica { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0 2px; cursor: pointer; }
 .metrica input { margin-top: 4px; width: 18px; height: 18px; flex: none; cursor: pointer; }
 .metrica .texto { font-size: 14px; line-height: 1.5; }
 .metrica .explicacion { color: var(--gris); }
+.metrica-fila { border-bottom: 1px solid #f0f2f4; }
+.metrica-fila:last-child { border-bottom: none; }
+.comparar-metrica {
+  display: flex; align-items: center; gap: 6px; margin-left: 28px;
+  padding: 0 0 8px; font-size: 12px; color: var(--gris); cursor: pointer;
+}
+.comparar-metrica input { width: 14px; height: 14px; cursor: pointer; }
 .otra { background: #f6f8fa; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }
 .opcion {
   display: block; border: 2px solid #d0d7de; border-radius: 10px;
@@ -700,13 +707,23 @@ def plantilla_catalogo(
     categoría ni aparece: no es una opción marcable que quede vacía,
     directamente no existe en el formulario.
 
-    **También trae la opción de comparar las métricas elegidas con otros
+    **También trae la opción de comparar métricas puntuales con otros
     años** (`comparar_anios` en la respuesta — lista de enteros, vacía si
     no se pidió comparación; ej. `[2019, 2024, 2025]`). Nace de una
     sugerencia real registrada en la bitácora: antes había que escribirlo
     a mano en "otra métrica" cada vez; ahora es una opción de primera
     clase del catálogo, y admite cualquier cantidad de años (no solo
     uno). Ver .claude/agents/encuesta-hogares.md.
+
+    **La comparación es por métrica, no todo o nada**: además de
+    `comparar_anios` (los años, compartidos), la respuesta trae
+    `metricas_comparadas` — el subconjunto de `metricas` que la persona
+    marcó específicamente para comparar (lista de enteros, vacía si
+    ninguna). Nace de una pregunta real: antes, tildar "comparar" aplicaba
+    a *todas* las métricas elegidas en el catálogo, sin poder elegir solo
+    alguna. El propio formulario ya filtra `metricas_comparadas` a
+    números que también estén en `metricas` — no hace falta re-validar
+    esa parte.
     """
     bloques = []
     barra = '<div class="barra-acciones"><button type="button" onclick="marcarTodas(true)">Seleccionar todas</button><button type="button" onclick="marcarTodas(false)">Ninguna</button></div>'
@@ -727,8 +744,12 @@ def plantilla_catalogo(
         categorias.append(_CATEGORIA_SEGURIDAD)
     for titulo, metricas in categorias:
         items = "\n".join(
+            f'<div class="metrica-fila">'
             f'<label class="metrica"><input type="checkbox" name="m" value="{num}">'
             f'<span class="texto"><b>{nombre}</b> — <span class="explicacion">{explicacion}</span></span></label>'
+            f'<label class="comparar-metrica" style="display:none;">'
+            f'<input type="checkbox" name="comparar_m" value="{num}"> comparar esta métrica entre años'
+            f'</label></div>'
             for num, nombre, explicacion in metricas
         )
         bloques.append(f'<div class="categoria"><h2>{titulo}</h2>{items}</div>')
@@ -750,7 +771,7 @@ def plantilla_catalogo(
     <div class="comparar">
       <label class="metrica" style="margin-top:1rem;">
         <input type="checkbox" id="comparar_check">
-        <span class="texto"><b>¿Comparar estas métricas con otros años?</b> — <span class="explicacion">se agrega, para cada métrica elegida, una gráfica que la compara entre todos los años que indiques (necesitás tener los datos de cada uno de esos años).</span></span>
+        <span class="texto"><b>¿Comparar alguna métrica con otros años?</b> — <span class="explicacion">elegí los años acá abajo, y después marcá, en cada métrica que te interese, la casilla "comparar esta métrica entre años" — no hace falta que sean todas.</span></span>
       </label>
       <div id="comparar_anios_wrap" style="display:none; margin-top:0.5rem;">
         <label>¿Con qué años? (separados por coma)</label>
@@ -772,6 +793,14 @@ function marcarTodas(valor) {{
 }}
 document.getElementById('comparar_check').addEventListener('change', (e) => {{
   document.getElementById('comparar_anios_wrap').style.display = e.target.checked ? 'block' : 'none';
+  // Los checkboxes "comparar esta métrica entre años" (uno por fila) solo
+  // se muestran una vez que se activó la comparación en general - antes
+  // de eso, no tiene sentido decidir métrica por métrica algo que ni
+  // siquiera está encendido.
+  document.querySelectorAll('.comparar-metrica').forEach(el => {{
+    el.style.display = e.target.checked ? 'flex' : 'none';
+    if (!e.target.checked) el.querySelector('input').checked = false;
+  }});
 }});
 document.getElementById('form').addEventListener('submit', async (e) => {{
   e.preventDefault();
@@ -799,8 +828,21 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
         .map(t => parseInt(t)))]
       .sort((a, b) => a - b)
     : [];
+  // Solo cuentan las métricas que además están en la lista principal -
+  // si alguien tildó "comparar" en una fila y después destildó esa misma
+  // métrica (o usó "Ninguna"), la casilla de comparar puede quedar
+  // marcada pero oculta; filtrar acá evita mandar un número de
+  // comparación para una métrica que ni siquiera va en el informe.
+  const metricas_comparadas = compararCheck
+    ? Array.from(document.querySelectorAll('input[name=comparar_m]:checked'))
+        .map(cb => parseInt(cb.value))
+        .filter(num => metricas.includes(num))
+    : [];
   await fetch('/', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},
-    body: JSON.stringify({{metricas: metricas, otra_metrica: otra, comparar_anios: comparar_anios}})}});
+    body: JSON.stringify({{
+      metricas: metricas, otra_metrica: otra,
+      comparar_anios: comparar_anios, metricas_comparadas: metricas_comparadas,
+    }})}});
   mostrarListo();
 }});
 </script></body></html>"""

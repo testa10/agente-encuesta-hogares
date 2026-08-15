@@ -116,6 +116,28 @@ def test_plantilla_catalogo_incluye_opcion_de_comparar_con_otros_anios():
     assert "2019, 2024, 2025" in html
 
 
+def test_plantilla_catalogo_la_comparacion_es_por_metrica_no_todo_o_nada():
+    # Pregunta real: elegir 3 métricas y tildar "comparar" no tiene que
+    # aplicar automáticamente a las 3 - cada métrica trae su propia
+    # casilla de comparación, independiente de las demás.
+    html = plantilla_catalogo(incluir_hogares=True)
+    assert 'name="comparar_m"' in html
+    assert "comparar esta métrica entre años" in html
+    assert "metricas_comparadas: metricas_comparadas" in html
+    # el filtro de seguridad: solo cuentan las comparaciones de métricas
+    # que también están tildadas en la lista principal
+    assert "filter(num => metricas.includes(num))" in html
+
+
+def test_plantilla_catalogo_metricas_no_estan_tildadas_para_comparar_por_defecto():
+    html = plantilla_catalogo(incluir_hogares=True)
+    # la casilla de comparar de cada métrica arranca oculta (recién se
+    # muestra si se activa "comparar" en general) y ningún checkbox del
+    # formulario viene premarcado.
+    assert 'class="comparar-metrica" style="display:none;"' in html
+    assert "checked>" not in html
+
+
 def test_plantilla_catalogo_no_deja_confirmar_sin_metricas_ni_propuesta():
     # Nace de una pregunta real: ¿qué pasa si se marca "comparar entre
     # años" sin elegir ninguna métrica? Antes, nada lo impedía - quedaba

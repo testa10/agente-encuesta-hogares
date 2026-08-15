@@ -416,39 +416,47 @@ cada uno `True` solo si esa clave está en la lista `areas` que devolvió el
 paso 3.5. Un bloque que la persona no eligió ahí **ni aparece** en el
 catálogo: no es una categoría marcable que quede vacía, directamente no
 existe en el formulario. El catálogo también trae, siempre, el campo para
-proponer una métrica propia y la opción de comparar todo lo elegido con
-otros años (cualquier cantidad, no solo uno). Guardar los tres datos de
-la respuesta (`metricas`, `otra_metrica`, `comparar_anios` — esta última
-ya es una lista de enteros, el formulario se encarga de separarla y
-filtrar cualquier texto que no sea un año de 4 dígitos). Hacen falta en
-los próximos pasos. Ya no se pregunta preferencia de PDF acá: el informe
-siempre se entrega en los dos formatos (ver paso 8).
+proponer una métrica propia y la opción de comparar con otros años —
+**métrica por métrica, no todo el catálogo elegido de una vez**: cada
+fila del catálogo tiene su propia casilla "comparar esta métrica entre
+años", independiente de las demás. Guardar los cuatro datos de la
+respuesta:
+- `metricas`: números elegidos del catálogo.
+- `otra_metrica`: la propuesta libre (vacía si no escribió nada).
+- `comparar_anios`: los años para comparar (lista de enteros, compartida
+  por todas las métricas que se comparen — el formulario ya la separa y
+  filtra cualquier texto que no sea un año de 4 dígitos).
+- `metricas_comparadas`: subconjunto de `metricas` que la persona marcó
+  específicamente para comparar (ya viene filtrado por el formulario a
+  números que también estén en `metricas`).
 
-**`comparar_anios` nunca significa "comparar todo el catálogo" — se
-aplica únicamente a las métricas que estén en `metricas` (o a la
-propuesta de `otra_metrica`, si el usuario escribió una).** El propio
-formulario ya impide confirmar con `metricas` vacía y `otra_metrica`
-vacía al mismo tiempo, así que en la práctica esta combinación no
-debería llegar — pero si alguna vez llegara igual (ej. JavaScript
-deshabilitado en el navegador), tratarla como una selección vacía: no
-generar ningún informe, mostrar de nuevo el catálogo con un mensaje
-corto por chat pidiendo elegir al menos una métrica.
+Hacen falta los cuatro en los próximos pasos. Ya no se pregunta
+preferencia de PDF acá: el informe siempre se entrega en los dos
+formatos (ver paso 8).
 
-**Si `comparar_anios` viene con al menos un año**: antes de seguir,
-validar cada uno de esos años con el mismo procedimiento del paso 3
-(existencia y estructura de los datos en `data/{año}/`) — el año elegido
-en el paso 1 ya está validado, no hace falta repetirlo. Si alguno de los
-años de `comparar_anios` no tiene datos o falla la validación, sacarlo de
-la lista y avisarle a la persona por chat en una frase simple (ej. "No
+**El propio formulario ya impide confirmar con `metricas` vacía y
+`otra_metrica` vacía al mismo tiempo**, así que en la práctica no debería
+llegar una respuesta sin ninguna métrica — pero si alguna vez llegara
+igual (ej. JavaScript deshabilitado en el navegador), tratarla como una
+selección vacía: no generar ningún informe, mostrar de nuevo el catálogo
+con un mensaje corto por chat pidiendo elegir al menos una métrica.
+
+**Si `metricas_comparadas` viene con al menos un número**: antes de
+seguir, validar cada año de `comparar_anios` con el mismo procedimiento
+del paso 3 (existencia y estructura de los datos en `data/{año}/`) — el
+año elegido en el paso 1 ya está validado, no hace falta repetirlo. Si
+alguno de esos años no tiene datos o falla la validación, sacarlo de la
+lista y avisarle a la persona por chat en una frase simple (ej. "No
 encontré datos de 2022, así que la comparación va a incluir solo 2019,
 2024 y 2025") — nunca bloquear el informe completo por esto, ni mostrar
 otro formulario para resolverlo. Si ningún año de la lista valida, seguir
-el resto del flujo como si `comparar_anios` hubiera llegado vacía (sin
-comparación).
+el resto del flujo como si `metricas_comparadas` hubiera llegado vacía
+(sin comparación para ninguna métrica).
 
-**Con los años que sí validaron (el del paso 1 + los de `comparar_anios`
-que pasaron la validación), construir la comparación según cuántos años
-queden en total** — este criterio ya está documentado con su fundamento
+**Con los años que sí validaron (el del paso 1 + los que pasaron la
+validación), construir la comparación de cada métrica en
+`metricas_comparadas` según cuántos años queden en total** — este
+criterio ya está documentado con su fundamento
 en `docs/CONVENCIONES_DE_GRAFICAS.md` ("Comparar cualquier métrica del
 catálogo entre varios años" y la entrada de líneas con eje numérico
 real); acá el resumen operativo:
