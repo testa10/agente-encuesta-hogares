@@ -43,6 +43,47 @@ Si encuentra diferencias contra `origin/main`, revisarlas —puede ser
 trabajo real del agente sin publicar (commitearlo y hacer `git push`) o
 simplemente que esta copia está atrasada respecto a lo último subido.
 
+### Qué es y qué no es la lista de permisos
+
+**`.claude/settings.json` es una lista de conveniencia, no una frontera de
+seguridad.** Conviene tenerlo claro antes de apoyarse en ella para
+razonar sobre qué puede o no puede hacer el agente.
+
+Lo que sí hace: evitar que a alguien sin conocimientos técnicos le
+aparezcan prompts de aprobación de terminal en medio del flujo —que es
+justamente lo que todo el diseño de formularios existe para evitar.
+
+Lo que **no** hace: acotar lo que el agente puede ejecutar.
+`Bash(run_python.bat *)` deja correr cualquier archivo `.py` o cualquier
+`-c "..."`, y `Write` no tiene restricción de ruta. Sumados, equivalen a
+ejecución de código arbitrario ya aprobada. **Y es a propósito**: el paso
+5 consiste exactamente en escribir un `.py` y correrlo. Una lista de
+permisos que impidiera eso impediría el flujo entero.
+
+Tampoco tiene sentido "arreglarlo" restringiendo `Write` a rutas del
+proyecto: los archivos de scratch van, por regla explícita del agente, a
+la carpeta de scratchpad que provee Claude Code —fuera del repositorio, y
+con una ruta distinta en cada sesión, imposible de anotar en un
+`settings.json` estático—. Una regla así rompería el flujo documentado sin
+agregar seguridad real.
+
+Lo que de verdad acota el riesgo en este proyecto es otra cosa, y conviene
+no confundirlo con la lista de permisos:
+
+- Corre localmente, en la computadora de la persona, sobre sus propios
+  datos ya descargados. No hay servicio de terceros ni cuenta de por
+  medio (ver el docstring de `formularios.py`).
+- La única salida a internet permitida es `WebFetch` al dominio del INE.
+- git está denegado de forma directa (`Bash(git *)`) e indirecta
+  (`.claude/hooks/gate-no-git-indirecto.cjs`, que cubre el caso de
+  invocarlo desde adentro de otro intérprete).
+- El servidor de formularios solo acepta respuestas de su propia página
+  (ver `formularios._origen_es_propio`).
+
+Si alguna vez hiciera falta una frontera real —por ejemplo, si el agente
+pasara a correr sobre datos o pedidos que no son de la propia persona—,
+el camino no es la lista de permisos: es sandboxear el proceso entero.
+
 **Un usuario real nunca va a tener `.git` en su copia.** La instalación
 rápida del README (pensada para gente sin conocimientos técnicos) baja
 el proyecto con el botón "Download ZIP" de GitHub, que nunca incluye

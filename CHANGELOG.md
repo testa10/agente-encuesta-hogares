@@ -41,6 +41,18 @@ changelog arranca en la versión donde se formalizó el versionado.
   `claude` —contrario a todo el diseño del proyecto, y a lo que dice el
   README— sino que manda a hacer doble clic en `abrir_agente.bat`.
 
+### Documentación
+
+- `CLAUDE.md` explica ahora qué es y qué no es `.claude/settings.json`:
+  una lista de conveniencia para que no aparezcan prompts de aprobación,
+  **no** una frontera de seguridad. `Bash(run_python.bat *)` más `Write`
+  sin restricción de ruta equivalen a ejecución de código arbitrario ya
+  aprobada — y es a propósito, porque el paso 5 consiste exactamente en
+  escribir un `.py` y correrlo. Queda escrito también por qué restringir
+  `Write` a rutas del proyecto rompería el flujo (los archivos de scratch
+  van al scratchpad de Claude Code, fuera del repositorio) y qué es lo
+  que de verdad acota el riesgo.
+
 ### Corregido
 
 - **El servidor local de formularios ahora solo acepta respuestas de su
