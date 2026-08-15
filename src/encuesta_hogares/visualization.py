@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
 
-from .analysis import FILTROS_SUSCRIPCION, ResumenConectividad, filtrar_segmento
+from .analysis import ResumenConectividad
 
 
 def plot_dumbbell(categorias: list, valores_a: list, valores_b: list, nombre_a: str, nombre_b: str, titulo: str, xlabel: str = "%"):
@@ -49,8 +49,10 @@ def plot_dumbbell(categorias: list, valores_a: list, valores_b: list, nombre_a: 
         title_x=0.5,
         xaxis_title=xlabel,
         yaxis_title="",
-        # Mismo motivo que en plot_penetracion_por_barrio: un scatter no
-        # arranca en cero solo, hay que fijarlo a mano.
+        # Un scatter autoescala al rango de los datos y exagera visualmente
+        # las diferencias: el eje de un valor (acá, %) tiene que arrancar en
+        # cero, y hay que fijarlo a mano porque Plotly no lo hace solo (a
+        # diferencia de las barras).
         xaxis_range=[0, max(max(valores_a), max(valores_b)) * 1.15],
         width=850,
         height=altura,
@@ -59,20 +61,24 @@ def plot_dumbbell(categorias: list, valores_a: list, valores_b: list, nombre_a: 
 
 
 # ============================================================================
-# Análisis principal: penetración de TV cable por barrio y nivel económico
+# Panorama general de conectividad
 # ============================================================================
 
 def plot_distribucion_conectividad(resumen: ResumenConectividad):
+    """Barras: % de hogares de Montevideo con y sin conexión a internet.
+
+    Hasta la 0.9.0 esto graficaba TV cable — ver `analysis.resumen_conectividad`.
+    """
     data = {
-        "Tipo de Hogar": ["Con Cable", "Sin Cable"],
-        "Porcentaje": [resumen.pct_con_cable, resumen.pct_sin_cable],
+        "Tipo de Hogar": ["Con internet", "Sin internet"],
+        "Porcentaje": [resumen.pct_con_internet, resumen.pct_sin_internet],
     }
     fig = px.bar(
         data,
         y="Tipo de Hogar",
         x="Porcentaje",
         orientation="h",
-        title="Distribución de hogares de Montevideo",
+        title="Conexión a internet en los hogares de Montevideo",
         width=800,
         height=400,
         color_discrete_sequence=px.colors.qualitative.Pastel,
@@ -80,136 +86,6 @@ def plot_distribucion_conectividad(resumen: ResumenConectividad):
     fig.update_traces(width=0.5, text=data["Porcentaje"], textposition="auto")
     fig.update_layout(yaxis={"categoryorder": "total ascending"}, title_x=0.5, title_y=0.85)
     return fig
-
-
-def plot_penetracion_por_barrio(penetracion_por_barrio: pd.DataFrame):
-    # "barrio" puede venir como código numérico (años sin nombre de barrio,
-    # ver HOGARES_COLUMNS_CSV en config.py) o como texto (2019). Si se deja
-    # numérico, Plotly arma un eje continuo y "categoryorder" no hace nada
-    # -- pasándolo a texto, el eje queda categórico y el orden por
-    # suscripción sí se aplica, aunque el barrio se identifique por número.
-    df_plot = penetracion_por_barrio.copy()
-    df_plot["barrio"] = df_plot["barrio"].astype(str)
-
-    fig = px.scatter(
-        df_plot,
-        x="barrio",
-        y="pct_abonados",
-        color="nivel_suscripcion",
-        title="Porcentaje de abonados a TV cable por barrio",
-    )
-    fig.update_layout(
-        xaxis_title="Barrio",
-        yaxis_title="Porcentaje (%)",
-        xaxis={"categoryorder": "total descending", "tickangle": -60, "tickfont": {"size": 9}},
-        # El eje de un valor (acá, %) siempre tiene que arrancar en cero y no
-        # recortarse -- a diferencia de las barras, que Plotly ya ancla en
-        # cero solas, un scatter autoescala al rango de los datos y exagera
-        # visualmente las diferencias si no se fija el rango a mano.
-        yaxis_range=[0, penetracion_por_barrio["pct_abonados"].max() * 1.1],
-        width=1190,
-        height=620,
-        margin=dict(b=160),
-        title_x=0.5,
-        title_y=0.95,
-    )
-
-    promedio = penetracion_por_barrio["pct_abonados"].mean()
-    fig.add_shape(
-        type="line", x0=0.1, x1=1, y0=promedio, y1=promedio, xref="paper", yref="y",
-        line=dict(color="gray", dash="dash"),
-    )
-    fig.add_annotation(
-        x=0, y=promedio, xref="paper", yref="y", text=f"Promedio: {promedio:.2f}%",
-        showarrow=False, font=dict(color="gray"),
-    )
-    return fig
-
-
-def plot_clasificacion_barrios(resumen: pd.DataFrame):
-    """Barras: cantidad de barrios en cada nivel de suscripción. Es un
-    conteo de categorías (no una distribución continua), por eso barras y
-    no boxplot/violin — ver docs/CONVENCIONES_DE_GRAFICAS.md.
-    """
-    fig = px.bar(
-        resumen, x="nivel_suscripcion", y="cantidad_barrios",
-        title="Clasificación de barrios por nivel de suscripción",
-        text="cantidad_barrios",
-        color_discrete_sequence=["#5a7fa6"],
-    )
-    fig.update_traces(textposition="outside")
-    fig.update_layout(
-        xaxis_title="Nivel de suscripción", yaxis_title="Cantidad de barrios",
-        width=700, height=450, title_x=0.5, showlegend=False,
-    )
-    return fig
-
-
-def _plot_grid_por_filtros(df: pd.DataFrame, get_serie, titulo: str, ylabel: str, value_fmt: str):
-    """Grilla 2x2 genérica: un subplot de barras por cada segmento de FILTROS_SUSCRIPCION.
-
-    `get_serie(segmento_df)` debe devolver una pd.Series (índice=categoría, valor=magnitud a graficar).
-    """
-    sns.set_style("whitegrid")
-    fig, axes = plt.subplots(2, 2, figsize=(14, 11))
-    fig.suptitle(titulo, fontsize=15, y=0.98)
-    axes = axes.flatten()
-
-    for ax, filtro in zip(axes, FILTROS_SUSCRIPCION):
-        segmento = filtrar_segmento(df, filtro)
-        serie = get_serie(segmento)
-
-        sns.barplot(x=serie.index, y=serie.values, hue=serie.index, palette="viridis", ax=ax, dodge=False, legend=False)
-        for i, valor in enumerate(serie.values):
-            ax.text(i, valor + serie.max() * 0.02, value_fmt.format(valor), color="black", ha="center", fontsize=9)
-
-        ax.set_title(filtro["titulo"], fontsize=11, pad=10)
-        ax.set_xlabel("")
-        ax.set_ylabel(ylabel, fontsize=10)
-        ax.set_ylim(0, serie.max() * 1.2)
-        ax.tick_params(axis="x", labelsize=9, rotation=10)
-
-    fig.subplots_adjust(hspace=0.45, wspace=0.25, top=0.90)
-    return fig
-
-
-def plot_composicion_edades(df: pd.DataFrame, promedio_edad_por_grupo):
-    """Grilla de barras: edad promedio por tramo etario, dentro de cada
-    segmento de suscripción/abonado (ver FILTROS_SUSCRIPCION).
-
-    Un promedio graficado como barra, sin mostrar la dispersión alrededor,
-    es en general el patrón de "dynamite plot" que Weissgerber et al.
-    (2015, PLOS Biology) desaconsejan para datos continuos — puede ocultar
-    que dos grupos con la misma barra tienen formas de distribución muy
-    distintas. Acá el riesgo es bajo porque `edad_grupo` ya es un tramo
-    etario angosto (ver config.py): el promedio dentro de un tramo ya
-    acotado no puede variar mucho más que el ancho del tramo mismo, así
-    que la barra no está ocultando una dispersión relevante.
-    """
-    return _plot_grid_por_filtros(
-        df,
-        get_serie=promedio_edad_por_grupo,
-        titulo="Composición de los hogares con y sin cable por promedio de edades",
-        ylabel="Promedio edades",
-        value_fmt="{:.1f}",
-    )
-
-
-def plot_composicion_sexo(df: pd.DataFrame, porcentaje_por_sexo, total_personas: int):
-    """Grilla de barras: % de personas por sexo, dentro de cada segmento de
-    suscripción/abonado (ver FILTROS_SUSCRIPCION). Es una proporción, no
-    un promedio de una variable continua — a diferencia de
-    `plot_composicion_edades`, no aplica la reserva de Weissgerber et al.
-    sobre "dynamite plots", porque no hay una distribución subyacente que
-    la barra esté ocultando.
-    """
-    return _plot_grid_por_filtros(
-        df,
-        get_serie=lambda segmento: porcentaje_por_sexo(segmento, total_personas),
-        titulo="Composición de los hogares con y sin cable según sexo",
-        ylabel="Promedio personas (%)",
-        value_fmt="{:.2f}%",
-    )
 
 
 # ============================================================================
@@ -517,7 +393,20 @@ def plot_composicion_categorica(tabla_pct: pd.DataFrame, titulo: str, xlabel: st
 
 
 def plot_indice_acceso_digital_por(resumen: pd.DataFrame, criterio: str):
-    """Barras: promedio del índice de acceso digital (0 a 4), según un criterio cualquiera."""
+    """Barras: promedio del índice de acceso digital (0 a 3), según un
+    criterio cualquiera.
+
+    Graficar un promedio como barra, sin mostrar la dispersión alrededor,
+    es el patrón de "dynamite plot" que Weissgerber et al. (2015, PLOS
+    Biology) desaconsejan para datos continuos: dos grupos con la misma
+    barra pueden tener distribuciones muy distintas. Acá el riesgo es
+    acotado porque el índice toma solo cuatro valores posibles (0, 1, 2 o
+    3 tecnologías — ver `preprocessing.compute_indice_acceso_digital`), no
+    es una variable continua con cola larga; aun así el promedio esconde
+    cuántos hogares están exactamente en 0, que es el dato más relevante
+    de una brecha digital. Conviene acompañarlo de la métrica de
+    penetración por tecnología (1) antes de sacar conclusiones.
+    """
     columna_x = resumen.columns[0]
     fig = px.bar(
         resumen, x=columna_x, y="indice_promedio",
@@ -526,8 +415,8 @@ def plot_indice_acceso_digital_por(resumen: pd.DataFrame, criterio: str):
     )
     fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
     fig.update_layout(
-        xaxis_title=criterio.capitalize(), yaxis_title="Índice promedio (0 a 4)",
-        yaxis_range=[0, 4.5],
+        xaxis_title=criterio.capitalize(), yaxis_title="Índice promedio (0 a 3)",
+        yaxis_range=[0, 3.5],
         width=800, height=500, title_x=0.5, showlegend=False,
     )
     return fig

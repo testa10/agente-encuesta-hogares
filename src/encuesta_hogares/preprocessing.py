@@ -56,49 +56,9 @@ def prepare_hogares_montevideo(hogares: pd.DataFrame) -> pd.DataFrame:
     return hogares_mdeo
 
 
-def compute_penetracion_por_barrio(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
-    """% PONDERADO (por `ponderador_hogar`) de hogares con cable por barrio,
-    y su nivel de suscripción (por cuartiles). `total_hogares` sí queda sin
-    ponderar a propósito — es el tamaño de muestra real detrás de cada
-    barrio, no un valor representativo de población (mismo criterio que
-    `analysis.resumen_conectividad`).
-    """
-    df = hogares_mdeo.copy()
-    df["_abonado_pond"] = df["ponderador_hogar"].where(df["tipo_abonado"] == 1.0, 0.0)
-    resumen = (
-        df.groupby("barrio")
-        .agg(
-            total_hogares=("id_hogar", "count"),
-            _total_pond=("ponderador_hogar", "sum"),
-            _abonado_pond=("_abonado_pond", "sum"),
-        )
-        .reset_index()
-    )
-    resumen["pct_abonados"] = (resumen["_abonado_pond"] / resumen["_total_pond"] * 100).round(2)
-    resumen = resumen.drop(columns=["_total_pond", "_abonado_pond"]).sort_values("pct_abonados", ascending=False)
-
-    resumen["nivel_suscripcion"] = pd.qcut(
-        resumen["pct_abonados"], q=4, labels=config.NIVEL_SUSCRIPCION_LABELS
-    )
-    return resumen
-
-
-def merge_penetracion(hogares_mdeo: pd.DataFrame, penetracion_por_barrio: pd.DataFrame) -> pd.DataFrame:
-    """Agrega el nivel de suscripción del barrio a cada hogar — lo sigue
-    necesitando la sección "Composición de los hogares con y sin cable"
-    del panorama de Brecha Digital (FILTROS_SUSCRIPCION filtra por
-    nivel_suscripcion además de tipo_abonado), aunque la métrica puntual
-    que antes también la usaba (9, "Relación entre el barrio y el nivel
-    económico") se sacó del catálogo — ver CHANGELOG.md."""
-    return hogares_mdeo.merge(
-        penetracion_por_barrio[["barrio", "nivel_suscripcion"]], on="barrio", how="left"
-    )
-
-
 def merge_personas(hogares_resumen: pd.DataFrame, personas: pd.DataFrame) -> pd.DataFrame:
     """Agrega datos de las personas del hogar (edad, sexo, ingresos) a la tabla de hogares."""
     combinado = hogares_resumen.merge(personas, on="id_hogar", how="left").sort_values("id_hogar")
-    combinado["tipo_abonado"] = combinado["tipo_abonado"].map(config.TIPO_ABONADO_LABELS)
     combinado["edad_grupo"] = classify_edad_grupo(combinado["edad"])
     combinado["sexo_grupo"] = classify_sexo(combinado["sexo"])
     return combinado
@@ -136,7 +96,6 @@ def prepare_hogares_extendido(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     """
     df = hogares_mdeo.copy()
 
-    df["tiene_cable"] = df["tipo_abonado"] == 1.0
     for col in ["tiene_internet", "internet_fija", "internet_movil", "tiene_pc", "tiene_streaming"]:
         df[col] = decode_si_no(df[col])
     if "tiene_tablet_ibirapita" in df.columns:
@@ -160,7 +119,7 @@ def compute_tiene_celular_hogar(personas: pd.DataFrame) -> pd.DataFrame:
     """Determina, por hogar, si al menos una persona tiene teléfono celular.
 
     `tiene_celular_persona` es una variable a nivel de persona, no de hogar
-    como `tipo_abonado` o `tiene_streaming` — por eso se agrega con `.any()`
+    como `tiene_internet` o `tiene_streaming` — por eso se agrega con `.any()`
     por `id_hogar` antes de poder cruzarla con datos del hogar.
     """
     personas = personas.copy()
@@ -343,7 +302,7 @@ def compute_cohorte_generacional(hogares_con_jefe: pd.DataFrame, anio: int) -> p
     """Aproxima la cohorte generacional del HOGAR a partir de la edad del
     jefe/a (`jefe_edad`, ver clasificar_tipo_hogar) y el año de la encuesta
     — no de cada integrante, porque las variables de tecnología de este
-    proyecto (cable/internet/PC/streaming) son del hogar, no de cada
+    proyecto (internet/PC/streaming) son del hogar, no de cada
     persona: la única variable de tenencia individual (celular, e60) se
     discontinuó en el cuestionario 2024, así que basar esto en edad
     individual rompería para ese año (ver nota de "ruido de 2019" en
@@ -368,10 +327,16 @@ def clasificar_calidad_conexion(df_extendido: pd.DataFrame) -> pd.Series:
 
 
 def compute_indice_acceso_digital(df_extendido: pd.DataFrame) -> pd.Series:
-    """Suma 0-4 de tenencia de cada tecnología (cable, internet, PC,
-    streaming) — un puntaje compuesto simple de acceso digital del hogar,
-    en vez de mirar cada tecnología por separado. Inspirado en el enfoque
-    de "canasta digital básica" de CEPAL (desarrollodigital.cepal.org).
+    """Suma 0-3 de tenencia de cada tecnología (internet, PC, streaming) —
+    un puntaje compuesto simple de acceso digital del hogar, en vez de
+    mirar cada tecnología por separado. Inspirado en el enfoque de
+    "canasta digital básica" de CEPAL (desarrollodigital.cepal.org).
+
+    El índice iba de 0 a 4 hasta la versión 0.9.0, cuando se sacó TV cable
+    del proyecto (ver `config.TECNOLOGIAS_LABELS`): tener TV cable no dice
+    nada sobre el acceso digital de un hogar, y lo inflaba con una
+    tecnología que no es de conectividad. Los valores de este índice **no
+    son comparables** con los de un informe generado antes de ese cambio.
 
     Las columnas ya decodificadas (`decode_si_no`) quedan en dtype
     `object` (True/False/NaN), no numérico — sumarlas tal cual falla o da

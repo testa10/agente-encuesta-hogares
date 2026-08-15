@@ -117,7 +117,6 @@ with bitacora.medir("carga_de_datos"):
     hogares_cond["pobre"] = hogares_cond["pobre"] == 1.0
     hogares_cond["nivel_economico"] = preprocessing.classify_nivel_economico(hogares_cond["estrato_tipo"])
     hogares_ext = preprocessing.prepare_hogares_extendido(hogares_mdeo)
-    penetracion_barrio = preprocessing.compute_penetracion_por_barrio(hogares_mdeo)
     hogares_ext["calidad_conexion"] = preprocessing.clasificar_calidad_conexion(hogares_ext)
     tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
     hogares_ext_con_jefe = hogares_ext.merge(
@@ -273,29 +272,21 @@ def _m6() -> Celda:
 
 def _m7() -> Celda:
     codigo = (
-        "barrios_resumen = analysis.clasificacion_barrios_resumen(penetracion_barrio)\n"
-        "fig = viz.plot_clasificacion_barrios(barrios_resumen)\nfig.show()"
+        "pobreza = analysis.pct_pobres_indigentes(hogares_ext)\n"
+        "fig = viz.plot_pct_pobres_indigentes(pobreza)\nfig.show()"
     )
-    return Celda(_markdown(7, "barras"), codigo)
+    return Celda(_markdown(7, "barras_h"), codigo)
 
 
 def _m8() -> Celda:
     codigo = (
-        "pobreza = analysis.pct_pobres_indigentes(hogares_ext)\n"
-        "fig = viz.plot_pct_pobres_indigentes(pobreza)\nfig.show()"
+        "jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)\n"
+        "fig = viz.plot_tasa_jefatura_femenina(jefatura)\nfig.show()"
     )
     return Celda(_markdown(8, "barras_h"), codigo)
 
 
 def _m9() -> Celda:
-    codigo = (
-        "jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)\n"
-        "fig = viz.plot_tasa_jefatura_femenina(jefatura)\nfig.show()"
-    )
-    return Celda(_markdown(9, "barras_h"), codigo)
-
-
-def _m10() -> Celda:
     codigo = (
         'chicos_hacinamiento_nivel = analysis.grupos_con_muestra_chica(hogares_mdeo_hacinamiento, "nivel_economico")\n'
         "if len(chicos_hacinamiento_nivel):\n"
@@ -305,18 +296,18 @@ def _m10() -> Celda:
         'hacinamiento_nivel = analysis.pct_hacinamiento_por(hogares_mdeo_hacinamiento, "nivel_economico")\n'
         'fig = viz.plot_hacinamiento_por(hacinamiento_nivel, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(10, "barras"), codigo)
+    return Celda(_markdown(9, "barras"), codigo)
 
 
-def _m11() -> Celda:
+def _m10() -> Celda:
     codigo = (
         "tipos_hogar_resumen = analysis.tipos_hogar_resumen(tipo_hogar)\n"
         "fig = viz.plot_tipos_hogar(tipos_hogar_resumen)\nfig.show()"
     )
-    return Celda(_markdown(11, "barras_h"), codigo)
+    return Celda(_markdown(10, "barras_h"), codigo)
 
 
-def _m12() -> Celda:
+def _m11() -> Celda:
     codigo = (
         'chicos_depto_dependencia = analysis.grupos_con_muestra_chica(personas_con_depto, "departamento")\n'
         "if len(chicos_depto_dependencia):\n"
@@ -326,15 +317,15 @@ def _m12() -> Celda:
         'dependencia_depto = analysis.razon_dependencia_por(personas_con_depto, "departamento")\n'
         'fig = viz.plot_razon_dependencia_por(dependencia_depto, "departamento")\nfig.show()'
     )
-    return Celda(_markdown(12, "barras_h"), codigo)
+    return Celda(_markdown(11, "barras_h"), codigo)
 
 
-def _m13() -> Celda:
+def _m12() -> Celda:
     codigo = (
         "unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)\n"
         "fig = viz.plot_pct_unipersonales_mayores(unipersonales_mayores)\nfig.show()"
     )
-    return Celda(_markdown(13, "barras_h"), codigo)
+    return Celda(_markdown(12, "barras_h"), codigo)
 
 
 _COMPONENTES_TERRITORIO = (
@@ -350,17 +341,17 @@ _COMPONENTES_TERRITORIO = (
 )
 
 
-def _m14() -> Celda:
+def _m13() -> Celda:
     codigo = _COMPONENTES_TERRITORIO + "\nfig = viz.plot_indice_desarrollo_territorial(indice_territorial)\nfig.show()"
-    return Celda(_markdown(14, "barras_h"), codigo)
+    return Celda(_markdown(13, "barras_h"), codigo)
+
+
+def _m14() -> Celda:
+    codigo = _COMPONENTES_TERRITORIO + "\nfig = viz.plot_perfil_territorial(indice_territorial)"
+    return Celda(_markdown(14, "heatmap"), codigo)
 
 
 def _m15() -> Celda:
-    codigo = _COMPONENTES_TERRITORIO + "\nfig = viz.plot_perfil_territorial(indice_territorial)"
-    return Celda(_markdown(15, "heatmap"), codigo)
-
-
-def _m16() -> Celda:
     codigo = (
         _COMPONENTES_TERRITORIO + "\n"
         'mejor_depto = indice_territorial.index[0]\n'
@@ -376,34 +367,34 @@ def _m16() -> Celda:
         '    titulo="Brecha territorial: mejor vs. peor departamento", xlabel="Índice (0 a 1)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(16, "dumbbell"), codigo)
+    return Celda(_markdown(15, "dumbbell"), codigo)
+
+
+def _m16() -> Celda:
+    codigo = (
+        "precariedad = analysis.precariedad_estructural(hogares_cond)\n"
+        "fig = viz.plot_precariedad_estructural(precariedad)\nfig.show()"
+    )
+    return Celda(_markdown(16, "barras_h"), codigo)
 
 
 def _m17() -> Celda:
     codigo = (
-        "precariedad = analysis.precariedad_estructural(hogares_cond)\n"
-        "fig = viz.plot_precariedad_estructural(precariedad)\nfig.show()"
+        'precariedad_nivel = analysis.precariedad_estructural_por(hogares_cond, "nivel_economico")\n'
+        'fig = viz.plot_precariedad_estructural_por(precariedad_nivel, "nivel económico")\nfig.show()'
     )
     return Celda(_markdown(17, "barras_h"), codigo)
 
 
 def _m18() -> Celda:
     codigo = (
-        'precariedad_nivel = analysis.precariedad_estructural_por(hogares_cond, "nivel_economico")\n'
-        'fig = viz.plot_precariedad_estructural_por(precariedad_nivel, "nivel económico")\nfig.show()'
+        'precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento")\n'
+        'fig = viz.plot_precariedad_estructural_por(precariedad_depto, "departamento")\nfig.show()'
     )
     return Celda(_markdown(18, "barras_h"), codigo)
 
 
 def _m19() -> Celda:
-    codigo = (
-        'precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento")\n'
-        'fig = viz.plot_precariedad_estructural_por(precariedad_depto, "departamento")\nfig.show()'
-    )
-    return Celda(_markdown(19, "barras_h"), codigo)
-
-
-def _m20() -> Celda:
     codigo = (
         'precariedad_nivel = analysis.precariedad_estructural_por(hogares_cond, "nivel_economico")\n'
         'brecha_precariedad = analysis.diferencia_entre_categorias(\n'
@@ -419,26 +410,26 @@ def _m20() -> Celda:
         '    titulo="Precariedad estructural: nivel económico bajo vs. alto", xlabel="% de hogares con carencia",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(20, "dumbbell"), codigo)
+    return Celda(_markdown(19, "dumbbell"), codigo)
 
 
-def _m21() -> Celda:
+def _m20() -> Celda:
     codigo = (
         "carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)\n"
         "fig = viz.plot_carencias_estructurales_mas_frecuentes(carencias_frecuentes)\nfig.show()"
     )
-    return Celda(_markdown(21, "barras_h"), codigo)
+    return Celda(_markdown(20, "barras_h"), codigo)
 
 
-def _m22() -> Celda:
+def _m21() -> Celda:
     codigo = (
         "prevalencia_fies = analysis.prevalencia_inseguridad_alimentaria(fies_clasificado)\n"
         "fig = viz.plot_prevalencia_inseguridad_alimentaria(prevalencia_fies)\nfig.show()"
     )
-    return Celda(_markdown(22, "barras"), codigo)
+    return Celda(_markdown(21, "barras"), codigo)
 
 
-def _m23() -> Celda:
+def _m22() -> Celda:
     codigo = (
         'chicos_quintil = analysis.grupos_con_muestra_chica(fies_clasificado, "quintil_ingreso")\n'
         "if len(chicos_quintil):\n"
@@ -451,10 +442,10 @@ def _m23() -> Celda:
         '    titulo="Inseguridad alimentaria moderada o severa por quintil de ingreso", xlabel="Quintil de ingreso",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(23, "barras"), codigo)
+    return Celda(_markdown(22, "barras"), codigo)
 
 
-def _m24() -> Celda:
+def _m23() -> Celda:
     codigo = (
         'inseguridad_region = analysis.inseguridad_alimentaria_por(fies_clasificado, "region")\n'
         "fig = viz.plot_inseguridad_alimentaria_por(\n"
@@ -462,10 +453,10 @@ def _m24() -> Celda:
         '    titulo="Inseguridad alimentaria moderada o severa por región", xlabel="Región",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(24, "barras"), codigo)
+    return Celda(_markdown(23, "barras"), codigo)
 
 
-def _m25() -> Celda:
+def _m24() -> Celda:
     codigo = (
         'inseguridad_quintil = analysis.inseguridad_alimentaria_por(fies_clasificado, "quintil_ingreso")\n'
         "diferencia_quintiles = analysis.diferencia_entre_categorias(\n"
@@ -481,10 +472,10 @@ def _m25() -> Celda:
         '    titulo="Inseguridad alimentaria: quintil más pobre vs. más rico", xlabel="% de hogares (ponderado)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(25, "dumbbell"), codigo)
+    return Celda(_markdown(24, "dumbbell"), codigo)
 
 
-def _m26() -> Celda:
+def _m25() -> Celda:
     codigo = (
         "inseguridad_severa_quintil = analysis.inseguridad_alimentaria_por(\n"
         '    fies_clasificado, "quintil_ingreso", columna_clasificacion="inseguridad_severa"\n'
@@ -494,10 +485,10 @@ def _m26() -> Celda:
         '    titulo="Inseguridad alimentaria severa por quintil de ingreso", xlabel="Quintil de ingreso",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(26, "barras"), codigo)
+    return Celda(_markdown(25, "barras"), codigo)
 
 
-def _m27() -> Celda:
+def _m26() -> Celda:
     codigo = (
         "fies_con_menores18 = fies_clasificado.assign(\n"
         '    tiene_menores_18=fies_clasificado["tiene_menores_18"].map(\n'
@@ -510,10 +501,10 @@ def _m27() -> Celda:
         '    titulo="Inseguridad alimentaria en hogares con y sin menores de 18 años", xlabel="",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(27, "barras"), codigo)
+    return Celda(_markdown(26, "barras"), codigo)
 
 
-def _m28() -> Celda:
+def _m27() -> Celda:
     codigo = (
         "fies_con_menores6 = fies_clasificado.assign(\n"
         '    tiene_menores_6=fies_clasificado["tiene_menores_6"].map(\n'
@@ -526,18 +517,18 @@ def _m28() -> Celda:
         '    titulo="Inseguridad alimentaria en hogares con y sin niños de 0 a 5 años", xlabel="",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(28, "barras"), codigo)
+    return Celda(_markdown(27, "barras"), codigo)
 
 
-def _m29() -> Celda:
+def _m28() -> Celda:
     codigo = (
         "tasas_nacionales = analysis.tasas_actividad_empleo_desempleo(empleo_prep)\n"
         "fig = viz.plot_tasas_actividad_empleo_desempleo(tasas_nacionales)\nfig.show()"
     )
-    return Celda(_markdown(29, "barras"), codigo)
+    return Celda(_markdown(28, "barras"), codigo)
 
 
-def _m30() -> Celda:
+def _m29() -> Celda:
     codigo = (
         'tasas_sexo = analysis.tasas_actividad_empleo_desempleo_por(empleo_prep, "sexo_grupo")\n'
         'brecha_genero = analysis.brecha_por_grupo(tasas_sexo, "sexo_grupo", "1-Hombre", "2-Mujer")\n'
@@ -545,13 +536,22 @@ def _m30() -> Celda:
         'fig = viz.plot_tasas_por_grupo(tasas_sexo, "sexo_grupo", "Tasas de actividad, empleo y desempleo por sexo")\n'
         "fig.show()"
     )
-    return Celda(_markdown(30, "barras"), codigo)
+    return Celda(_markdown(29, "barras"), codigo)
+
+
+def _m30() -> Celda:
+    codigo = (
+        'desempleo_depto = analysis.tasa_mensual_promedio_por(activos, "departamento", "es_desocupado")\n'
+        'fig = viz.plot_tasa_mensual_promedio_por(desempleo_depto, "departamento", "Tasa de desempleo por departamento")\n'
+        "fig.show()"
+    )
+    return Celda(_markdown(30, "barras_h"), codigo)
 
 
 def _m31() -> Celda:
     codigo = (
-        'desempleo_depto = analysis.tasa_mensual_promedio_por(activos, "departamento", "es_desocupado")\n'
-        'fig = viz.plot_tasa_mensual_promedio_por(desempleo_depto, "departamento", "Tasa de desempleo por departamento")\n'
+        'informalidad_sexo = analysis.tasa_mensual_promedio_por(ocupados, "sexo_grupo", "es_informal")\n'
+        'fig = viz.plot_tasa_mensual_promedio_por(informalidad_sexo, "sexo_grupo", "Informalidad laboral por sexo")\n'
         "fig.show()"
     )
     return Celda(_markdown(31, "barras_h"), codigo)
@@ -559,8 +559,8 @@ def _m31() -> Celda:
 
 def _m32() -> Celda:
     codigo = (
-        'informalidad_sexo = analysis.tasa_mensual_promedio_por(ocupados, "sexo_grupo", "es_informal")\n'
-        'fig = viz.plot_tasa_mensual_promedio_por(informalidad_sexo, "sexo_grupo", "Informalidad laboral por sexo")\n'
+        'informalidad_educacion = analysis.tasa_mensual_promedio_por(ocupados, "nivel_educativo", "es_informal")\n'
+        'fig = viz.plot_tasa_mensual_promedio_por(informalidad_educacion, "nivel_educativo", "Informalidad laboral por nivel educativo")\n'
         "fig.show()"
     )
     return Celda(_markdown(32, "barras_h"), codigo)
@@ -568,23 +568,14 @@ def _m32() -> Celda:
 
 def _m33() -> Celda:
     codigo = (
-        'informalidad_educacion = analysis.tasa_mensual_promedio_por(ocupados, "nivel_educativo", "es_informal")\n'
-        'fig = viz.plot_tasa_mensual_promedio_por(informalidad_educacion, "nivel_educativo", "Informalidad laboral por nivel educativo")\n'
+        'subempleo_sexo = analysis.tasa_mensual_promedio_por(ocupados, "sexo_grupo", "es_subempleo")\n'
+        'fig = viz.plot_tasa_mensual_promedio_por(subempleo_sexo, "sexo_grupo", "Subempleo por sexo")\n'
         "fig.show()"
     )
     return Celda(_markdown(33, "barras_h"), codigo)
 
 
 def _m34() -> Celda:
-    codigo = (
-        'subempleo_sexo = analysis.tasa_mensual_promedio_por(ocupados, "sexo_grupo", "es_subempleo")\n'
-        'fig = viz.plot_tasa_mensual_promedio_por(subempleo_sexo, "sexo_grupo", "Subempleo por sexo")\n'
-        "fig.show()"
-    )
-    return Celda(_markdown(34, "barras_h"), codigo)
-
-
-def _m35() -> Celda:
     codigo = (
         'tasas_edad_laboral = analysis.tasas_actividad_empleo_desempleo_por(empleo_prep, "grupo_edad_laboral")\n'
         'brecha_edad = analysis.brecha_por_grupo(tasas_edad_laboral, "grupo_edad_laboral", "Joven (14-24)", "Resto")\n'
@@ -594,10 +585,10 @@ def _m35() -> Celda:
         '    "Tasas de actividad, empleo y desempleo: jóvenes vs. resto",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(35, "barras"), codigo)
+    return Celda(_markdown(34, "barras"), codigo)
 
 
-def _m36() -> Celda:
+def _m35() -> Celda:
     codigo = (
         'situacion_por_sector = analysis.composicion_categorica_por_mes_promedio(\n'
         '    ocupados, "sector_formalidad", "situacion_ocupacional"\n'
@@ -607,10 +598,10 @@ def _m36() -> Celda:
         '    titulo="Situación ocupacional dentro de cada sector (formal / informal)", xlabel="Sector",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(36, "barras_100"), codigo)
+    return Celda(_markdown(35, "barras_100"), codigo)
 
 
-def _m37() -> Celda:
+def _m36() -> Celda:
     codigo = (
         'prevalencia_delito = analysis.pct_ponderado_por(\n'
         '    victimizacion_largo, "tipo_delito", "victimizado", "ponderador_victimizacion"\n'
@@ -620,10 +611,10 @@ def _m37() -> Celda:
         '    titulo="Prevalencia de victimización por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(37, "barras"), codigo)
+    return Celda(_markdown(36, "barras"), codigo)
 
 
-def _m38() -> Celda:
+def _m37() -> Celda:
     codigo = (
         'victimizacion_sexo = analysis.pct_ponderado_por(\n'
         '    victimizacion_prep, "sexo_grupo", "victimizado_algun_delito", "ponderador_victimizacion"\n'
@@ -633,10 +624,10 @@ def _m38() -> Celda:
         '    titulo="Victimización general por sexo", xlabel="Sexo",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(38, "barras"), codigo)
+    return Celda(_markdown(37, "barras"), codigo)
 
 
-def _m39() -> Celda:
+def _m38() -> Celda:
     codigo = (
         'victimizacion_depto = analysis.pct_ponderado_por(\n'
         '    victimizacion_prep, "departamento", "victimizado_algun_delito", "ponderador_victimizacion"\n'
@@ -646,10 +637,10 @@ def _m39() -> Celda:
         '    titulo="Victimización general por departamento", xlabel="Departamento",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(39, "barras"), codigo)
+    return Celda(_markdown(38, "barras"), codigo)
 
 
-def _m40() -> Celda:
+def _m39() -> Celda:
     codigo = (
         'comunicacion_delito = analysis.pct_ponderado_por(\n'
         '    victimizados, "tipo_delito", "comunicacion_policia", "ponderador_victimizacion"\n'
@@ -659,10 +650,10 @@ def _m40() -> Celda:
         '    titulo="Tasa de comunicación a la policía por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(40, "barras"), codigo)
+    return Celda(_markdown(39, "barras"), codigo)
 
 
-def _m41() -> Celda:
+def _m40() -> Celda:
     codigo = (
         'denuncia_delito = analysis.pct_ponderado_por(\n'
         '    victimizados, "tipo_delito", "denuncia_formal", "ponderador_victimizacion"\n'
@@ -672,10 +663,10 @@ def _m41() -> Celda:
         '    titulo="Tasa de denuncia formal por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(41, "barras"), codigo)
+    return Celda(_markdown(40, "barras"), codigo)
 
 
-def _m42() -> Celda:
+def _m41() -> Celda:
     codigo = (
         'comunicacion_delito = analysis.pct_ponderado_por(\n'
         '    victimizados, "tipo_delito", "comunicacion_policia", "ponderador_victimizacion"\n'
@@ -695,10 +686,10 @@ def _m42() -> Celda:
         '    titulo="Comunicación informal vs. denuncia formal, por tipo de delito", xlabel="% de víctimas (ponderado)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(42, "dumbbell"), codigo)
+    return Celda(_markdown(41, "dumbbell"), codigo)
 
 
-def _m43() -> Celda:
+def _m42() -> Celda:
     codigo = (
         "tipos_con_violencia = [info[\"nombre\"] for info in config.TIPOS_DELITO.values() if info[\"violencia\"]]\n"
         'victimizados_violencia = victimizados[victimizados["tipo_delito"].isin(tipos_con_violencia)]\n'
@@ -710,18 +701,18 @@ def _m43() -> Celda:
         '    titulo="Casos con violencia por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(43, "barras"), codigo)
+    return Celda(_markdown(42, "barras"), codigo)
 
 
 # ============================================================================
 # Registro y orquestación
 # ============================================================================
 
-GENERADORES: dict[int, Callable[[], Celda]] = {n: globals()[f"_m{n}"] for n in range(1, 44)}
+GENERADORES: dict[int, Callable[[], Celda]] = {n: globals()[f"_m{n}"] for n in range(1, 43)}
 
 
 def construir_celdas_metrica(numero: int) -> Celda:
-    """Punto de entrada para una métrica del catálogo (1-43), año base
+    """Punto de entrada para una métrica del catálogo (1-42), año base
     únicamente. Si la persona pidió comparar esta métrica entre años, eso
     se resuelve en código libre (paso 5, criterio ya documentado en
     docs/CONVENCIONES_DE_GRAFICAS.md), no acá."""
@@ -730,39 +721,38 @@ def construir_celdas_metrica(numero: int) -> Celda:
 
 # ============================================================================
 # Panorama general de Brecha Digital: siempre se muestra si se eligió ese
-# bloque, sin importar qué métricas puntuales del 1 al 7 se hayan marcado
+# bloque, sin importar qué métricas puntuales del 1 al 6 se hayan marcado
 # — ver paso 5 en .claude/agents/encuesta-hogares.md. No tiene número de
 # catálogo propio.
 # ============================================================================
 
 def celdas_intro_brecha_digital() -> list[Celda]:
+    """Apertura del bloque de Brecha Digital: una sola celda con el
+    panorama de conectividad.
+
+    Hasta la 0.9.0 esto traía tres secciones heredadas del análisis
+    original de 2019 —"Panorama general" contando hogares con y sin TV
+    cable, "Distribución por barrio" con el % de abonados al cable, y
+    "Composición de los hogares con y sin cable"— que aparecían en TODO
+    informe que incluyera el bloque, sin importar qué métricas hubiera
+    elegido la persona. Por vivir acá y no en el catálogo, sobrevivieron a
+    la limpieza de métricas de cable de la 0.6.0 y llegaron a un informe
+    real. Se eliminaron junto con la dimensión barrio completa (decisión
+    del dueño del proyecto), y el panorama que queda mide internet, que es
+    lo que la sección siempre dijo medir.
+    """
     panorama = Celda(
         markdown="## Panorama general de conectividad en Montevideo",
         codigo=(
-            "resumen_conectividad_mdeo = analysis.resumen_conectividad(hogares_mdeo)\n"
-            'print(f"Hogares con TV cable: {resumen_conectividad_mdeo.hogares_con_cable:,} '
-            '({resumen_conectividad_mdeo.pct_con_cable}%)")\n'
-            'print(f"Hogares sin TV cable: {resumen_conectividad_mdeo.hogares_sin_cable:,} '
-            '({resumen_conectividad_mdeo.pct_sin_cable}%)")\n\n'
+            "resumen_conectividad_mdeo = analysis.resumen_conectividad(hogares_ext)\n"
+            'print(f"Hogares con internet: {resumen_conectividad_mdeo.hogares_con_internet:,} '
+            '({resumen_conectividad_mdeo.pct_con_internet}%)")\n'
+            'print(f"Hogares sin internet: {resumen_conectividad_mdeo.hogares_sin_internet:,} '
+            '({resumen_conectividad_mdeo.pct_sin_internet}%)")\n\n'
             "fig = viz.plot_distribucion_conectividad(resumen_conectividad_mdeo)\nfig.show()"
         ),
     )
-    distribucion_barrio = Celda(
-        markdown="### Distribución por barrio",
-        codigo="fig = viz.plot_penetracion_por_barrio(penetracion_barrio)\nfig.show()",
-    )
-    composicion = Celda(
-        markdown="### Composición de los hogares con y sin cable",
-        codigo=(
-            "hogares_resumen_barrio = preprocessing.merge_penetracion(hogares_mdeo, penetracion_barrio)\n"
-            "combinado = preprocessing.merge_personas(hogares_resumen_barrio, personas)\n\n"
-            "fig = viz.plot_composicion_edades(combinado, analysis.promedio_edad_por_grupo)"
-            "\n\n"
-            "total_personas = len(combinado)\n"
-            "fig = viz.plot_composicion_sexo(combinado, analysis.porcentaje_por_sexo, total_personas)"
-        ),
-    )
-    return [panorama, distribucion_barrio, composicion]
+    return [panorama]
 
 
 # ============================================================================

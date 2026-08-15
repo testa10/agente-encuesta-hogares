@@ -46,8 +46,12 @@ def servidor(monkeypatch, tmp_path):
     resultado: dict = {}
 
     def correr():
-        resultado.update(formularios.mostrar_formulario("<html><title>T</title></html>", timeout=10))
+        resultado.update(formularios.mostrar_formulario("<html><title>T</title></html>", timeout=120))
 
+    # timeout=120 y no 10: los tests contestan al instante, pero con la
+    # suite completa corriendo en paralelo el hilo puede tardar en llegar
+    # a responder y un timeout corto hacía fallar el test de forma
+    # intermitente (el formulario se daba por vencido antes del POST).
     hilo = threading.Thread(target=correr, daemon=True)
     hilo.start()
     for _ in range(200):

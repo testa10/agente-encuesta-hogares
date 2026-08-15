@@ -8,14 +8,12 @@ from encuesta_hogares.analysis import (
     brecha_por_grupo,
     calidad_conexion_por,
     carencias_estructurales_mas_frecuentes,
-    clasificacion_barrios_resumen,
     combinar_por_anio,
     composicion_categorica_por_mes_promedio,
     composicion_categorica_ponderada_por,
     diferencia_entre_categorias,
     diferencia_entre_tablas,
     estrato_promedio_por,
-    filtrar_segmento,
     grupos_con_muestra_chica,
     indice_acceso_digital_por,
     indice_desarrollo_territorial,
@@ -29,11 +27,9 @@ from encuesta_hogares.analysis import (
     pct_ponderado,
     pct_ponderado_por,
     pct_unipersonales_mayores,
-    porcentaje_por_sexo,
     precariedad_estructural,
     precariedad_estructural_por,
     prevalencia_inseguridad_alimentaria,
-    promedio_edad_por_grupo,
     proporcion_ponderada,
     razon_dependencia_demografica,
     razon_dependencia_por,
@@ -47,23 +43,24 @@ from encuesta_hogares.analysis import (
 )
 
 
-def test_resumen_conectividad():
-    # pesos no uniformes a propósito: prueba que pct_con_cable pondera de
-    # verdad, no que solo cuenta filas (eso ya lo cubren total_hogares/
-    # hogares_con_cable, que siguen siendo conteos de muestra sin ponderar).
+def test_resumen_conectividad_mide_internet_y_pondera():
+    # Hasta la 0.9.0 esta función medía TV cable. Pesos no uniformes a
+    # propósito: prueba que el porcentaje pondera de verdad, no que solo
+    # cuenta filas (eso ya lo cubren total_hogares/hogares_con_internet,
+    # que siguen siendo conteos de muestra sin ponderar).
     hogares = pd.DataFrame(
         {
-            "tipo_abonado": [1.0, 1.0, 2.0, 2.0, 2.0],
+            "tiene_internet": [True, True, False, False, False],
             "ponderador_hogar": [10.0, 10.0, 10.0, 10.0, 60.0],
         }
     )
     resumen = resumen_conectividad(hogares)
     assert resumen.total_hogares == 5
-    assert resumen.hogares_con_cable == 2
-    assert resumen.hogares_sin_cable == 3
+    assert resumen.hogares_con_internet == 2
+    assert resumen.hogares_sin_internet == 3
     # ponderado: 20 de 100 -> 20%, no el 40% que daría sin ponderar
-    assert resumen.pct_con_cable == 20.0
-    assert resumen.pct_sin_cable == 80.0
+    assert resumen.pct_con_internet == 20.0
+    assert resumen.pct_sin_internet == 80.0
 
 
 def test_pct_ponderado():
@@ -108,49 +105,6 @@ def test_grupos_con_muestra_chica_vacio_si_todos_superan_el_umbral():
     df = pd.DataFrame({"grupo": ["A"] * 40 + ["B"] * 35})
     resultado = grupos_con_muestra_chica(df, "grupo", n_minimo=30)
     assert resultado.empty
-
-
-def test_promedio_edad_por_grupo():
-    segmento = pd.DataFrame(
-        {"edad_grupo": ["A", "A", "B"], "edad": [20.0, 40.0, 60.0], "ponderador_hogar": [30.0, 10.0, 10.0]}
-    )
-    resumen = promedio_edad_por_grupo(segmento)
-    # A ponderado: (20*30 + 40*10)/40 = 25, no 30 (promedio simple)
-    assert resumen.loc["A"] == 25.0
-    assert resumen.loc["B"] == 60.0
-
-
-def test_porcentaje_por_sexo():
-    segmento = pd.DataFrame({"sexo_grupo": ["1-Hombre", "2-Mujer"], "ponderador_hogar": [30.0, 10.0]})
-    resumen = porcentaje_por_sexo(segmento, total_personas_ponderado=200.0)
-    assert resumen.loc["1-Hombre"] == 15.0
-    assert resumen.loc["2-Mujer"] == 5.0
-
-
-def test_clasificacion_barrios_resumen_cuenta_por_nivel_y_ordena_ordinal():
-    penetracion_por_barrio = pd.DataFrame(
-        {
-            "barrio": ["1", "2", "3", "4"],
-            "nivel_suscripcion": ["4-Alta", "1-Baja", "1-Baja", "3-Media-Alta"],
-        }
-    )
-    resumen = clasificacion_barrios_resumen(penetracion_por_barrio)
-    assert list(resumen["nivel_suscripcion"]) == ["1-Baja", "2-Media-Baja", "3-Media-Alta", "4-Alta"]
-    assert resumen.set_index("nivel_suscripcion").loc["1-Baja", "cantidad_barrios"] == 2
-    assert resumen.set_index("nivel_suscripcion").loc["2-Media-Baja", "cantidad_barrios"] == 0
-
-
-def test_filtrar_segmento():
-    df = pd.DataFrame(
-        {
-            "tipo_abonado": ["Con cable", "Con cable", "Sin cable"],
-            "nivel_suscripcion": ["4-Alta", "1-Baja", "4-Alta"],
-        }
-    )
-    filtro = {"tipo_abonado": "Con cable", "niveles": {"4-Alta", "3-Media-Alta"}}
-    resultado = filtrar_segmento(df, filtro)
-    assert len(resultado) == 1
-    assert resultado.iloc[0]["nivel_suscripcion"] == "4-Alta"
 
 
 def test_composicion_categorica_ponderada_por_pondera_y_suma_100_por_grupo():
@@ -612,15 +566,14 @@ def test_brecha_digital_por_cohorte():
     df = pd.DataFrame(
         {
             "cohorte": ["Millennials (1981-1996)", "Millennials (1981-1996)", "Baby boomers (1946-1964)"],
-            "tiene_cable": [True, False, True],
-            "tiene_internet": [True, True, False],
+            "tiene_internet": [True, False, False],
             "tiene_pc": [True, True, False],
             "tiene_streaming": [True, False, False],
             "ponderador_hogar": [10.0, 10.0, 10.0],
         }
     )
     resumen = brecha_digital_por_cohorte(df)
-    fila = resumen[(resumen["cohorte"] == "Millennials (1981-1996)") & (resumen["tecnologia"] == "TV Cable")]
+    fila = resumen[(resumen["cohorte"] == "Millennials (1981-1996)") & (resumen["tecnologia"] == "Internet")]
     assert fila["pct_penetracion"].iloc[0] == 50.0
 
 
@@ -628,15 +581,14 @@ def test_brecha_digital_por_jefatura():
     df = pd.DataFrame(
         {
             "jefe_sexo": ["1-Hombre", "1-Hombre", "2-Mujer"],
-            "tiene_cable": [True, False, True],
-            "tiene_internet": [True, True, True],
+            "tiene_internet": [True, False, True],
             "tiene_pc": [True, True, True],
             "tiene_streaming": [False, False, True],
             "ponderador_hogar": [10.0, 10.0, 10.0],
         }
     )
     resumen = brecha_digital_por_jefatura(df)
-    fila = resumen[(resumen["jefe_sexo"] == "1-Hombre") & (resumen["tecnologia"] == "TV Cable")]
+    fila = resumen[(resumen["jefe_sexo"] == "1-Hombre") & (resumen["tecnologia"] == "Internet")]
     assert fila["pct_penetracion"].iloc[0] == 50.0
 
 

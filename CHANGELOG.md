@@ -10,6 +10,55 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.9.0] — 2026-08-15
+
+### Eliminado
+
+- **TV cable sale del proyecto por completo.** Era el eje del análisis
+  original de 2019 y quedó como herencia cuando el foco pasó a ser la
+  brecha digital: tener o no TV cable no dice nada sobre si un hogar está
+  conectado. Decisión del dueño del proyecto, encontrada en una corrida
+  real donde el informe entregado seguía abriendo con "Hogares con TV
+  cable: 3.686 (40,13%)".
+
+  **Por qué sobrevivió a la limpieza de la 0.6.0:** esa versión sacó
+  cuatro métricas de cable **del catálogo** —la lista que elige el
+  usuario—, pero las secciones que seguían apareciendo no eran métricas
+  del catálogo sino *infraestructura fija* del informe
+  (`notebook_builder.celdas_intro_brecha_digital`), que se agregaba
+  automáticamente cada vez que se elegía el bloque "Brecha Digital", sin
+  importar qué métricas se marcaran. Vivían en otra capa, así que limpiar
+  el catálogo nunca las tocó.
+
+  Se eliminan las tres secciones fijas ("Panorama general" con hogares con
+  y sin cable, "Distribución por barrio" con el % de abonados, y
+  "Composición de los hogares con y sin cable") y, con ellas, **la
+  dimensión barrio completa**: los barrios se clasificaban en cuatro
+  niveles según su % de cable, así que sin cable esa clasificación no
+  tenía sobre qué construirse. Se van `resumen_conectividad` (en su forma
+  vieja), `compute_penetracion_por_barrio`, `merge_penetracion`,
+  `clasificacion_barrios_resumen`, `FILTROS_SUSCRIPCION`,
+  `filtrar_segmento`, `promedio_edad_por_grupo`, `porcentaje_por_sexo`,
+  sus cuatro gráficas, y las columnas `tipo_abonado`/`tiene_cable` de
+  `config.py`.
+
+- **Métrica 7 del catálogo** ("Clasificación de barrios por nivel de
+  suscripción"). El catálogo pasa de 43 a **42 métricas, renumeradas del 1
+  al 42 sin huecos** — misma convención que la 0.6.0. Si comparás con un
+  informe generado antes de este cambio, los números de métrica de 7 en
+  adelante están corridos en uno.
+
+### Cambiado
+
+- **El "Panorama general de conectividad" ahora mide internet**, que es lo
+  que la sección siempre dijo medir: hogares con y sin conexión, en vez de
+  con y sin TV cable.
+- **La métrica 1** (brecha digital por nivel económico) compara ahora
+  internet, computadora y streaming — tres tecnologías en vez de cuatro.
+- **El índice de acceso digital pasa de 0-4 a 0-3.** Sus valores **no son
+  comparables** con los de un informe anterior: antes sumaba TV cable como
+  una de las cuatro tecnologías.
+
 ## [0.8.2] — 2026-08-15
 
 ### Cambiado

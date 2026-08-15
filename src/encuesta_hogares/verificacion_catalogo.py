@@ -59,49 +59,48 @@ MANIFEST: dict[int, dict] = {
     4: {"funciones": ["analysis.brecha_digital_por_jefatura"], "visualizacion": "visualization.plot_brecha_digital_por_jefatura"},
     5: {"funciones": ["analysis.indice_acceso_digital_por"], "visualizacion": "visualization.plot_indice_acceso_digital_por"},
     6: {"funciones": ["analysis.adopcion_tablet_ibirapita_por"], "visualizacion": "visualization.plot_adopcion_tablet_ibirapita"},
-    7: {"funciones": ["analysis.clasificacion_barrios_resumen"], "visualizacion": "visualization.plot_clasificacion_barrios"},
     # 2 · Hogares
-    8: {"funciones": ["analysis.pct_pobres_indigentes"], "visualizacion": "visualization.plot_pct_pobres_indigentes"},
-    9: {"funciones": ["analysis.tasa_jefatura_femenina"], "visualizacion": "visualization.plot_tasa_jefatura_femenina"},
-    10: {"funciones": ["analysis.pct_hacinamiento_por", "preprocessing.compute_hacinamiento"], "visualizacion": "visualization.plot_hacinamiento_por"},
-    11: {"funciones": ["analysis.tipos_hogar_resumen"], "visualizacion": "visualization.plot_tipos_hogar"},
-    12: {"funciones": ["analysis.razon_dependencia_por"], "visualizacion": "visualization.plot_razon_dependencia_por"},
-    13: {"funciones": ["analysis.pct_unipersonales_mayores"], "visualizacion": "visualization.plot_pct_unipersonales_mayores"},
+    7: {"funciones": ["analysis.pct_pobres_indigentes"], "visualizacion": "visualization.plot_pct_pobres_indigentes"},
+    8: {"funciones": ["analysis.tasa_jefatura_femenina"], "visualizacion": "visualization.plot_tasa_jefatura_femenina"},
+    9: {"funciones": ["analysis.pct_hacinamiento_por", "preprocessing.compute_hacinamiento"], "visualizacion": "visualization.plot_hacinamiento_por"},
+    10: {"funciones": ["analysis.tipos_hogar_resumen"], "visualizacion": "visualization.plot_tipos_hogar"},
+    11: {"funciones": ["analysis.razon_dependencia_por"], "visualizacion": "visualization.plot_razon_dependencia_por"},
+    12: {"funciones": ["analysis.pct_unipersonales_mayores"], "visualizacion": "visualization.plot_pct_unipersonales_mayores"},
     # 3 · Territorio
-    14: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_indice_desarrollo_territorial"},
-    15: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_perfil_territorial"},
-    16: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    13: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_indice_desarrollo_territorial"},
+    14: {"funciones": ["analysis.indice_desarrollo_territorial"], "visualizacion": "visualization.plot_perfil_territorial"},
+    15: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
     # 4 · Vivienda
-    17: {"funciones": ["analysis.precariedad_estructural"], "visualizacion": "visualization.plot_precariedad_estructural"},
+    16: {"funciones": ["analysis.precariedad_estructural"], "visualizacion": "visualization.plot_precariedad_estructural"},
+    17: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
     18: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
-    19: {"funciones": ["analysis.precariedad_estructural_por"], "visualizacion": "visualization.plot_precariedad_estructural_por"},
-    20: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
-    21: {"funciones": ["analysis.carencias_estructurales_mas_frecuentes"], "visualizacion": "visualization.plot_carencias_estructurales_mas_frecuentes"},
+    19: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    20: {"funciones": ["analysis.carencias_estructurales_mas_frecuentes"], "visualizacion": "visualization.plot_carencias_estructurales_mas_frecuentes"},
     # 5 · Seguridad alimentaria (FIES)
-    22: {"funciones": ["analysis.prevalencia_inseguridad_alimentaria"], "visualizacion": "visualization.plot_prevalencia_inseguridad_alimentaria"},
+    21: {"funciones": ["analysis.prevalencia_inseguridad_alimentaria"], "visualizacion": "visualization.plot_prevalencia_inseguridad_alimentaria"},
+    22: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     23: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    24: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    25: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    24: {"funciones": ["analysis.diferencia_entre_categorias"], "visualizacion": "visualization.plot_dumbbell"},
+    25: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     26: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     27: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
-    28: {"funciones": ["analysis.inseguridad_alimentaria_por"], "visualizacion": "visualization.plot_inseguridad_alimentaria_por"},
     # 6 · Empleo
-    29: {"funciones": ["analysis.tasas_actividad_empleo_desempleo"], "visualizacion": "visualization.plot_tasas_actividad_empleo_desempleo"},
-    30: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
+    28: {"funciones": ["analysis.tasas_actividad_empleo_desempleo"], "visualizacion": "visualization.plot_tasas_actividad_empleo_desempleo"},
+    29: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
+    30: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
     31: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
     32: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
     33: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    34: {"funciones": ["analysis.tasa_mensual_promedio_por"], "visualizacion": "visualization.plot_tasa_mensual_promedio_por"},
-    35: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
-    36: {"funciones": ["analysis.composicion_categorica_por_mes_promedio"], "visualizacion": "visualization.plot_composicion_categorica"},
+    34: {"funciones": ["analysis.tasas_actividad_empleo_desempleo_por", "analysis.brecha_por_grupo"], "visualizacion": "visualization.plot_tasas_por_grupo"},
+    35: {"funciones": ["analysis.composicion_categorica_por_mes_promedio"], "visualizacion": "visualization.plot_composicion_categorica"},
     # 7 · Seguridad y victimización
+    36: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     37: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     38: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     39: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     40: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    41: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    42: {"funciones": ["analysis.diferencia_entre_tablas"], "visualizacion": "visualization.plot_dumbbell"},
-    43: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
+    41: {"funciones": ["analysis.diferencia_entre_tablas"], "visualizacion": "visualization.plot_dumbbell"},
+    42: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
 }
 
 
@@ -222,9 +221,9 @@ def referencias_rotas() -> list[ReferenciaRota]:
 # — ver preprocessing.prepare_empleo); situación ocupacional (40) por
 # ahora solo tiene un camino conocido.
 COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
+    31: [["INFORMAL"], ["f82"]],
     32: [["INFORMAL"], ["f82"]],
-    33: [["INFORMAL"], ["f82"]],
-    36: [["SIT_OCUP", "SECTOR_F"]],
+    35: [["SIT_OCUP", "SECTOR_F"]],
     # Territorio + Vivienda (14-21): TODA la sección depende, directa o
     # indirectamente, de analysis.precariedad_estructural/_por (y
     # carencias_estructurales_mas_frecuentes en 21) - ver
@@ -247,6 +246,7 @@ COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
     # eligió avisar explícitamente en vez de recalcular el índice
     # territorial con menos componentes (ver la nota en
     # tools/validar_con_datos_reales.py).
+    13: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
     14: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
     15: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
     16: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
@@ -254,15 +254,14 @@ COLUMNAS_REQUERIDAS: dict[int, list[list[str]]] = {
     18: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
     19: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
     20: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
-    21: [[c] for c in config.CONDICIONES_VIVIENDA_COLUMNS_CSV],
 }
 
 # Qué números de COLUMNAS_REQUERIDAS le corresponde chequear a cada fuente
 # de datos (Empleo vs. Hogares) - sin esto, `metricas_empleo_no_disponibles`
 # marcaría las métricas de Vivienda como "no disponibles" solo porque el
 # archivo de Empleo (obviamente) no tiene columnas de vivienda, y viceversa.
-_METRICAS_EMPLEO = {32, 33, 36}
-_METRICAS_HOGARES = {14, 15, 16, 17, 18, 19, 20, 21}
+_METRICAS_EMPLEO = {31, 32, 35}
+_METRICAS_HOGARES = {13, 14, 15, 16, 17, 18, 19, 20}
 
 
 def metricas_no_disponibles(columnas_presentes: set[str], numeros: set[int] | None = None) -> dict[int, list[str]]:

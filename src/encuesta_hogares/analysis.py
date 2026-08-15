@@ -6,98 +6,42 @@ import pandas as pd
 
 from . import config
 
-# Segmentos combinando tipo de abonado y nivel de suscripción del barrio,
-# reutilizados tanto para el análisis por edad como por sexo.
-FILTROS_SUSCRIPCION = [
-    {
-        "titulo": "Con Cable - Barrio de Alta/Media-Alta Suscripción",
-        "tipo_abonado": "Con cable",
-        "niveles": {"4-Alta", "3-Media-Alta"},
-    },
-    {
-        "titulo": "Con Cable - Barrio de Baja/Media-Baja Suscripción",
-        "tipo_abonado": "Con cable",
-        "niveles": {"1-Baja", "2-Media-Baja"},
-    },
-    {
-        "titulo": "Sin Cable - Barrio de Alta/Media-Alta Suscripción",
-        "tipo_abonado": "Sin cable",
-        "niveles": {"4-Alta", "3-Media-Alta"},
-    },
-    {
-        "titulo": "Sin Cable - Barrio de Baja/Media-Baja Suscripción",
-        "tipo_abonado": "Sin cable",
-        "niveles": {"1-Baja", "2-Media-Baja"},
-    },
-]
-
-
 @dataclass
 class ResumenConectividad:
     total_hogares: int
-    hogares_con_cable: int
-    hogares_sin_cable: int
-    pct_con_cable: float
-    pct_sin_cable: float
+    hogares_con_internet: int
+    hogares_sin_internet: int
+    pct_con_internet: float
+    pct_sin_internet: float
 
 
-def resumen_conectividad(hogares_mdeo: pd.DataFrame) -> ResumenConectividad:
+def resumen_conectividad(hogares_ext: pd.DataFrame) -> ResumenConectividad:
     """Totales (tamaño de muestra, sin ponderar — para transparencia sobre
     cuántos casos hay detrás de cada número) y porcentajes (ponderados por
     `ponderador_hogar`, representativos de la población) de hogares con/sin
-    TV cable en Montevideo.
+    conexión a internet en Montevideo.
+
+    Hasta la versión 0.9.0 esta función medía TV cable, no conectividad:
+    era el eje del análisis original de 2019 y quedó como herencia cuando
+    el foco del proyecto pasó a ser la brecha digital. Tener o no TV cable
+    no dice nada sobre si un hogar está conectado — se reemplazó por
+    `tiene_internet`, que es lo que la sección dice medir.
+
+    `hogares_ext` tiene que venir de
+    `preprocessing.prepare_hogares_extendido` (que es donde `tiene_internet`
+    se decodifica de 1/2/99 a booleano).
     """
-    total = len(hogares_mdeo)
-    con_cable_bool = hogares_mdeo["tipo_abonado"] == 1.0
-    con_cable = int(con_cable_bool.sum())
-    pct_con = pct_ponderado(hogares_mdeo.assign(_con_cable=con_cable_bool), "_con_cable")
+    total = len(hogares_ext)
+    con_internet_bool = hogares_ext["tiene_internet"].fillna(False)
+    con_internet = int(con_internet_bool.sum())
+    pct_con = pct_ponderado(hogares_ext.assign(_con_internet=con_internet_bool), "_con_internet")
     return ResumenConectividad(
         total_hogares=total,
-        hogares_con_cable=con_cable,
-        hogares_sin_cable=total - con_cable,
-        pct_con_cable=pct_con,
-        pct_sin_cable=round(100 - pct_con, 2),
+        hogares_con_internet=con_internet,
+        hogares_sin_internet=total - con_internet,
+        pct_con_internet=pct_con,
+        pct_sin_internet=round(100 - pct_con, 2),
     )
-
-
-def filtrar_segmento(df: pd.DataFrame, filtro: dict) -> pd.DataFrame:
-    """Filtra el dataframe combinado según un segmento de FILTROS_SUSCRIPCION."""
-    return df[(df["tipo_abonado"] == filtro["tipo_abonado"]) & (df["nivel_suscripcion"].isin(filtro["niveles"]))]
-
-
-def clasificacion_barrios_resumen(penetracion_por_barrio: pd.DataFrame) -> pd.DataFrame:
-    """Cantidad de barrios en cada nivel de suscripción (ver
-    preprocessing.compute_penetracion_por_barrio, que arma los cuatro
-    niveles con cuartiles de `pct_abonados`). Se ordena por
-    config.NIVEL_SUSCRIPCION_LABELS, no por cantidad — es una escala
-    ordinal (de menor a mayor suscripción), no un ranking.
-    """
-    resumen = (
-        penetracion_por_barrio["nivel_suscripcion"]
-        .value_counts()
-        .reindex(config.NIVEL_SUSCRIPCION_LABELS, fill_value=0)
-        .rename("cantidad_barrios")
-        .rename_axis("nivel_suscripcion")
-        .reset_index()
-    )
-    return resumen
-
-
-def promedio_edad_por_grupo(segmento: pd.DataFrame) -> pd.Series:
-    """Edad promedio ponderada por tramo etario, dentro de un segmento ya
-    filtrado. `segmento` tiene que traer `ponderador_hogar` (llega solo si
-    viene de `preprocessing.merge_personas`, que lo hereda del lado de
-    Hogares).
-    """
-    return media_ponderada_por(segmento, "edad_grupo", "edad").set_index("edad_grupo")["media"].round(0)
-
-
-def porcentaje_por_sexo(segmento: pd.DataFrame, total_personas_ponderado: float) -> pd.Series:
-    """% ponderado de personas por sexo (sobre el total general YA
-    ponderado, ej. `personas["ponderador_hogar"].sum()`), dentro de un
-    segmento ya filtrado.
-    """
-    return (segmento.groupby("sexo_grupo", observed=True)["ponderador_hogar"].sum() / total_personas_ponderado * 100).round(2)
 
 
 # ============================================================================
@@ -105,7 +49,7 @@ def porcentaje_por_sexo(segmento: pd.DataFrame, total_personas_ponderado: float)
 # ============================================================================
 
 def _brecha_digital_por(df_extendido: pd.DataFrame, columna_grupo: str) -> pd.DataFrame:
-    """% ponderado de penetración de cada tecnología (cable, internet, PC,
+    """% ponderado de penetración de cada tecnología (internet, PC,
     streaming), por una columna de grupo cualquiera — compartida por
     `brecha_digital_por_nivel_economico`, `_por_cohorte` y `_por_jefatura`.
     """
@@ -119,7 +63,7 @@ def _brecha_digital_por(df_extendido: pd.DataFrame, columna_grupo: str) -> pd.Da
 
 
 def brecha_digital_por_nivel_economico(df_extendido: pd.DataFrame) -> pd.DataFrame:
-    """% ponderado de penetración de cada tecnología (cable, internet, PC, streaming), por nivel económico."""
+    """% ponderado de penetración de cada tecnología (internet, PC, streaming), por nivel económico."""
     return _brecha_digital_por(df_extendido, "nivel_economico")
 
 

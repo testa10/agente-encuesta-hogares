@@ -69,7 +69,14 @@ def test_construir_celdas_notebook_agrega_panorama_solo_si_se_eligio_brecha_digi
         anio_base=2025, metricas=[8], incluir_brecha_digital=True,
         incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
     )
-    assert len(con_brecha) == len(sin_brecha) + 3  # panorama + distribución por barrio + composición
+    # Una sola celda de panorama. Eran tres hasta la 0.9.0 ("Panorama
+    # general" contando hogares con y sin TV cable, "Distribución por
+    # barrio" con el % de abonados, y "Composición de los hogares con y
+    # sin cable"): aparecían en todo informe que incluyera el bloque, sin
+    # importar las métricas elegidas, y por vivir acá y no en el catálogo
+    # sobrevivieron a la limpieza de métricas de cable de la 0.6.0 hasta
+    # llegar a un informe real.
+    assert len(con_brecha) == len(sin_brecha) + 1
 
 
 def test_construir_celdas_notebook_agrega_celdas_de_empleo_y_seguridad_solo_si_se_eligieron():

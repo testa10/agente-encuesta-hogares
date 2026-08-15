@@ -165,7 +165,7 @@ def validar_anio(anio: str, rec: Recolector) -> None:
     # nueva, tapando la de verdad): `rec.requiere(...)` los revisa y marca
     # el bloque dependiente como OMITIDO en vez de FALLA.
     hogares = personas = hogares_cond = None
-    hogares_mdeo = hogares_ext = penetracion_barrio = tipo_hogar = None
+    hogares_mdeo = hogares_ext = tipo_hogar = None
     n_carencias = None
 
     with rec.bloque(f"{anio} · Carga de Hogares/Personas"):
@@ -226,8 +226,8 @@ def validar_anio(anio: str, rec: Recolector) -> None:
         hogares_ext = preprocessing.prepare_hogares_extendido(hogares_mdeo)
         resumen_conectividad = analysis.resumen_conectividad(hogares_ext)
         assert resumen_conectividad.total_hogares > 0
-        assert 0 <= resumen_conectividad.pct_con_cable <= 100
-        print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_cable}% con cable (ponderado)")
+        assert 0 <= resumen_conectividad.pct_con_internet <= 100
+        print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_internet}% con internet (ponderado)")
 
         pobres = analysis.pct_pobres_indigentes(hogares_ext)
         assert 0 <= pobres["pct_pobres"] <= 100
@@ -235,10 +235,6 @@ def validar_anio(anio: str, rec: Recolector) -> None:
 
         brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
         assert visualization.plot_brecha_digital(brecha) is not None
-
-        penetracion_barrio = preprocessing.compute_penetracion_por_barrio(hogares_mdeo)
-        assert penetracion_barrio["pct_abonados"].between(0, 100).all()
-        print(f"Penetración por barrio: OK ({len(penetracion_barrio)} barrios, ponderado)")
 
         # --- Métrica 3: sin función de análisis propia hasta la corrida que agregó este manifiesto ---
         hogares_ext["calidad_conexion"] = preprocessing.clasificar_calidad_conexion(hogares_ext)
@@ -249,7 +245,7 @@ def validar_anio(anio: str, rec: Recolector) -> None:
 
     # --- Hogares: composición vía Personas, requiere el merge completo ---
     with rec.bloque(f"{anio} · Composición de hogares"):
-        rec.requiere(hogares=hogares, personas=personas, penetracion_barrio=penetracion_barrio)
+        rec.requiere(hogares=hogares, personas=personas)
         tipo_hogar = preprocessing.clasificar_tipo_hogar(personas, hogares)
         resumen_tipos = analysis.tipos_hogar_resumen(tipo_hogar)
         assert abs(resumen_tipos["pct_hogares"].sum() - 100.0) < 0.5
@@ -257,16 +253,13 @@ def validar_anio(anio: str, rec: Recolector) -> None:
         assert 0 <= jefatura["pct_jefatura_femenina"] <= 100
         print(f"Tipos de hogar: OK ({len(resumen_tipos)} categorías) — jefatura femenina: {jefatura['pct_jefatura_femenina']}%")
 
-        barrios_resumen = analysis.clasificacion_barrios_resumen(penetracion_barrio)
-        assert barrios_resumen["cantidad_barrios"].sum() == len(penetracion_barrio)
-
         unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)
         assert 0 <= unipersonales_mayores["pct_unipersonales_mayores"] <= 100
 
         cat_a, cat_b = resumen_tipos["tipo_hogar"].iloc[0], resumen_tipos["tipo_hogar"].iloc[-1]
         diferencia_tipos = analysis.diferencia_entre_categorias(resumen_tipos, "tipo_hogar", cat_a, cat_b, "pct_hogares")
         assert -100 <= diferencia_tipos <= 100
-        print("Barrios por nivel de suscripción / unipersonales mayores / diferencia entre tipos de hogar: OK")
+        print("Unipersonales mayores / diferencia entre tipos de hogar: OK")
 
     with rec.bloque(f"{anio} · Carencias de vivienda más frecuentes"):
         rec.requiere(hogares_cond=hogares_cond)
@@ -293,7 +286,7 @@ def validar_anio(anio: str, rec: Recolector) -> None:
         brecha_jefatura = analysis.brecha_digital_por_jefatura(hogares_ext_con_jefe)
         assert brecha_jefatura["pct_penetracion"].between(0, 100).all()
         indice_por_nivel = analysis.indice_acceso_digital_por(hogares_ext_con_jefe, "nivel_economico")
-        assert indice_por_nivel["indice_promedio"].between(0, 4).all()
+        assert indice_por_nivel["indice_promedio"].between(0, 3).all()
         if "tiene_tablet_ibirapita" in hogares_ext_con_jefe.columns:
             tablet_por_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")
             assert tablet_por_nivel["pct_con_tablet"].between(0, 100).all()
@@ -438,11 +431,11 @@ def _correr_plantillas_del_catalogo(anio: str) -> None:
     no_disponibles_hogares = set(verificacion_catalogo.metricas_hogares_no_disponibles(anio))
     metricas = sorted(n for n in catalogo if n not in no_disponibles_empleo | no_disponibles_hogares)
     if not disponibles["fies"]:
-        metricas = [n for n in metricas if n not in range(22, 29)]
+        metricas = [n for n in metricas if n not in range(21, 28)]
     if not disponibles["empleo"]:
-        metricas = [n for n in metricas if n not in range(29, 37)]
+        metricas = [n for n in metricas if n not in range(28, 36)]
     if not disponibles["seguridad"]:
-        metricas = [n for n in metricas if n not in range(37, 44)]
+        metricas = [n for n in metricas if n not in range(36, 43)]
 
     celdas = notebook_builder.construir_celdas_notebook(
         anio_base=int(anio),

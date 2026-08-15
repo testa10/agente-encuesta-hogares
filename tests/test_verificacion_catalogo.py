@@ -44,11 +44,11 @@ def test_toda_metrica_del_manifiesto_tiene_su_funcion_validada_con_datos_reales(
     )
 
 
-def test_numeros_del_catalogo_cubre_los_43_bloques_conocidos():
+def test_numeros_del_catalogo_cubre_los_42_bloques_conocidos():
     catalogo = vc.numeros_del_catalogo()
     assert min(catalogo) == 1
-    assert max(catalogo) == 43
-    assert len(catalogo) == 43
+    assert max(catalogo) == 42
+    assert len(catalogo) == 42
 
 
 def test_resolver_devuelve_none_para_una_referencia_inexistente():
@@ -71,8 +71,8 @@ def test_metricas_no_disponibles_acepta_cualquier_opcion_completa():
     # quedar disponibles (segunda opcion completa), no marcadas.
     columnas = {"ID", "nper", "mes", "POBPCOAC", "f82", "SUBEMPLEO", "W"}
     no_disponibles = vc.metricas_no_disponibles(columnas)
+    assert 31 not in no_disponibles
     assert 32 not in no_disponibles
-    assert 33 not in no_disponibles
 
 
 def test_metricas_no_disponibles_marca_metrica_sin_ninguna_opcion_completa():
@@ -80,8 +80,8 @@ def test_metricas_no_disponibles_marca_metrica_sin_ninguna_opcion_completa():
     # alternativo conocido para la metrica 36.
     columnas = {"ID", "nper", "mes", "POBPCOAC", "INFORMAL", "SUBEMPLEO", "W"}
     no_disponibles = vc.metricas_no_disponibles(columnas)
-    assert 32 not in no_disponibles
-    assert set(no_disponibles[36]) == {"SIT_OCUP", "SECTOR_F"}
+    assert 31 not in no_disponibles
+    assert set(no_disponibles[35]) == {"SIT_OCUP", "SECTOR_F"}
 
 
 def test_metricas_empleo_no_disponibles_lee_el_primer_archivo_existente(tmp_path, monkeypatch):
@@ -93,8 +93,8 @@ def test_metricas_empleo_no_disponibles_lee_el_primer_archivo_existente(tmp_path
 
     no_disponibles = vc.metricas_empleo_no_disponibles("2025")
 
-    assert 32 not in no_disponibles  # f82 esta en columnas_2025
-    assert set(no_disponibles[36]) == {"SIT_OCUP", "SECTOR_F"}
+    assert 31 not in no_disponibles  # f82 esta en columnas_2025
+    assert set(no_disponibles[35]) == {"SIT_OCUP", "SECTOR_F"}
 
 
 def test_metricas_empleo_no_disponibles_vacio_si_no_hay_archivos(tmp_path, monkeypatch):
@@ -112,7 +112,7 @@ def test_aviso_metricas_no_disponibles_redacta_mensaje_legible(tmp_path, monkeyp
     avisos = vc.aviso_metricas_no_disponibles("2025")
 
     assert len(avisos) == 1
-    assert "Métrica 36" in avisos[0]
+    assert "Métrica 35" in avisos[0]
     assert "SIT_OCUP" in avisos[0] and "SECTOR_F" in avisos[0]
 
 
@@ -130,7 +130,7 @@ def test_metricas_empleo_no_disponibles_no_marca_metricas_de_vivienda(tmp_path, 
 
     no_disponibles = vc.metricas_empleo_no_disponibles("2025")
 
-    assert not {14, 15, 16, 17, 18, 19, 20, 21} & set(no_disponibles)
+    assert not {13, 14, 15, 16, 17, 18, 19, 20} & set(no_disponibles)
 
 
 def test_metricas_hogares_no_disponibles_detecta_modulo_vivienda_ausente(tmp_path, monkeypatch):
@@ -144,9 +144,9 @@ def test_metricas_hogares_no_disponibles_detecta_modulo_vivienda_ausente(tmp_pat
 
     no_disponibles = vc.metricas_hogares_no_disponibles("2023")
 
-    assert set(no_disponibles) == {14, 15, 16, 17, 18, 19, 20, 21}
+    assert set(no_disponibles) == {13, 14, 15, 16, 17, 18, 19, 20}
     # metricas de Empleo no deberian aparecer al chequear un archivo de Hogares
-    assert 32 not in no_disponibles and 36 not in no_disponibles
+    assert 31 not in no_disponibles and 36 not in no_disponibles
 
 
 def test_metricas_hogares_no_disponibles_ok_si_hay_al_menos_una_columna(tmp_path, monkeypatch):
@@ -168,4 +168,4 @@ def test_aviso_metricas_no_disponibles_incluye_vivienda(tmp_path, monkeypatch):
     avisos = vc.aviso_metricas_no_disponibles("2023")
 
     numeros_avisados = {int(a.split(" ")[1]) for a in avisos}
-    assert {14, 15, 16, 17, 18, 19, 20, 21} <= numeros_avisados
+    assert {13, 14, 15, 16, 17, 18, 19, 20} <= numeros_avisados

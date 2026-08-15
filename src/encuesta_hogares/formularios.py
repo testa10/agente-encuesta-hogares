@@ -242,33 +242,32 @@ function salirDelFlujo() {
 # incluye por defecto, todos son opt-in (ver plantilla_areas).
 _CATEGORIAS_METRICAS = {
     "brecha_digital": ("1 · Brecha Digital", [
-        (1, "Brecha digital por nivel económico", "compara, en una sola gráfica, el acceso a TV cable, internet, computadora y streaming según el nivel económico del hogar."),
+        (1, "Brecha digital por nivel económico", "compara, en una sola gráfica, el acceso a internet, computadora y streaming según el nivel económico del hogar."),
         (2, "Brecha digital por cohorte generacional", "compara el acceso a cada tecnología entre generaciones (baby boomers, generación X, millennials, etc.), según la edad del jefe/a de hogar."),
         (3, "Calidad de la conexión a internet por nivel económico", "no es solo tener o no tener: compara sin conexión, solo por celular, o banda ancha fija, entre niveles económicos."),
         (4, "Brecha digital según jefatura de hogar", "compara el acceso a cada tecnología entre hogares con jefe hombre y jefa mujer."),
-        (5, "Índice de acceso digital por nivel económico", "un puntaje de 0 a 4 (cuántas de las cuatro tecnologías tiene el hogar), comparado entre niveles económicos."),
+        (5, "Índice de acceso digital por nivel económico", "un puntaje de 0 a 3 (cuántas de las tres tecnologías tiene el hogar), comparado entre niveles económicos."),
         (6, "Adopción de tablets del Plan Ibirapitá", "en hogares con jefe/a de 65 años o más, qué porcentaje tiene una tablet de este programa estatal de inclusión digital."),
-        (7, "Clasificación de barrios por nivel de suscripción", "agrupa los barrios en cuatro niveles, de menor a mayor suscripción."),
     ]),
     "hogares": ("2 · Hogares", [
-        (8, "Cuántos hogares son pobres o indigentes en Montevideo", "un resumen simple de contexto."),
-        (9, "Jefatura de hogar femenina", "qué porcentaje de hogares tiene una jefa mujer, y cómo se relaciona con la pobreza del hogar."),
-        (10, "Hacinamiento", "qué porcentaje de hogares tiene más de 2 personas por cuarto, según su nivel económico."),
-        (11, "Tipos de hogar", "cuántos hogares son unipersonales, nucleares, extendidos, compuestos o sin núcleo."),
-        (12, "Razón de dependencia demográfica", "cuántas personas menores de 15 o mayores de 65 hay por cada 100 en edad activa, comparado entre departamentos."),
-        (13, "Hogares unipersonales de adultos mayores", "de los hogares de una sola persona, qué porcentaje corresponde a alguien de 65 años o más."),
+        (7, "Cuántos hogares son pobres o indigentes en Montevideo", "un resumen simple de contexto."),
+        (8, "Jefatura de hogar femenina", "qué porcentaje de hogares tiene una jefa mujer, y cómo se relaciona con la pobreza del hogar."),
+        (9, "Hacinamiento", "qué porcentaje de hogares tiene más de 2 personas por cuarto, según su nivel económico."),
+        (10, "Tipos de hogar", "cuántos hogares son unipersonales, nucleares, extendidos, compuestos o sin núcleo."),
+        (11, "Razón de dependencia demográfica", "cuántas personas menores de 15 o mayores de 65 hay por cada 100 en edad activa, comparado entre departamentos."),
+        (12, "Hogares unipersonales de adultos mayores", "de los hogares de una sola persona, qué porcentaje corresponde a alguien de 65 años o más."),
     ]),
     "territorio": ("3 · Territorio", [
-        (14, "Índice de desarrollo territorial por departamento", "un puntaje que combina pobreza, empleo, precariedad de vivienda y nivel económico en una sola mirada, ranking de los 19 departamentos."),
-        (15, "Perfil territorial por departamento", "el detalle de cada componente del índice anterior, para entender por qué un departamento queda arriba o abajo."),
-        (16, "Brecha territorial entre el departamento mejor y peor posicionado", "cuánto separa, en el índice, al departamento con mejor puntaje del que tiene el peor."),
+        (13, "Índice de desarrollo territorial por departamento", "un puntaje que combina pobreza, empleo, precariedad de vivienda y nivel económico en una sola mirada, ranking de los 19 departamentos."),
+        (14, "Perfil territorial por departamento", "el detalle de cada componente del índice anterior, para entender por qué un departamento queda arriba o abajo."),
+        (15, "Brecha territorial entre el departamento mejor y peor posicionado", "cuánto separa, en el índice, al departamento con mejor puntaje del que tiene el peor."),
     ]),
     "vivienda": ("4 · Vivienda", [
-        (17, "Precariedad estructural de la vivienda", "qué porcentaje de hogares tiene al menos un problema estructural (humedad, goteras, grietas, etc.)."),
-        (18, "Precariedad estructural según nivel económico", "si los hogares de nivel económico más bajo tienen más problemas estructurales."),
-        (19, "Precariedad estructural por departamento", "en qué departamentos hay más y menos problemas estructurales de vivienda."),
-        (20, "Brecha de precariedad entre el nivel económico más bajo y el más alto", "cuántos puntos porcentuales separan a esos dos grupos."),
-        (21, "Carencias estructurales más frecuentes", "cuál es el problema de vivienda más común a nivel nacional, y cuáles le siguen."),
+        (16, "Precariedad estructural de la vivienda", "qué porcentaje de hogares tiene al menos un problema estructural (humedad, goteras, grietas, etc.)."),
+        (17, "Precariedad estructural según nivel económico", "si los hogares de nivel económico más bajo tienen más problemas estructurales."),
+        (18, "Precariedad estructural por departamento", "en qué departamentos hay más y menos problemas estructurales de vivienda."),
+        (19, "Brecha de precariedad entre el nivel económico más bajo y el más alto", "cuántos puntos porcentuales separan a esos dos grupos."),
+        (20, "Carencias estructurales más frecuentes", "cuál es el problema de vivienda más común a nivel nacional, y cuáles le siguen."),
     ]),
 }
 
@@ -277,13 +276,13 @@ _CATEGORIAS_METRICAS = {
 # agente se la agrega a plantilla_catalogo() con incluir_fies=True cuando
 # corresponde — nunca aparece si el año elegido no tiene esos datos.
 _CATEGORIA_FIES = ("5 · Seguridad alimentaria (submuestra de hogares)", [
-    (22, "Prevalencia de inseguridad alimentaria", "qué porcentaje de hogares está en inseguridad alimentaria moderada o severa, y cuántos en severa."),
-    (23, "Inseguridad alimentaria por quintil de ingreso", "cómo varía entre el 20% de hogares con menos ingreso y el 20% con más."),
-    (24, "Inseguridad alimentaria por región", "Montevideo comparado con el resto del país."),
-    (25, "Diferencia entre el quintil más pobre y el más rico", "cuántos puntos porcentuales separan a esos dos grupos."),
-    (26, "Inseguridad alimentaria severa por quintil de ingreso", "la misma comparación del punto 23, pero solo para el caso más grave."),
-    (27, "Inseguridad alimentaria en hogares con menores de 18 años", "compara hogares con y sin menores de edad."),
-    (28, "Inseguridad alimentaria en hogares con niños de 0 a 5 años", "la misma comparación, mirando solo a la primera infancia."),
+    (21, "Prevalencia de inseguridad alimentaria", "qué porcentaje de hogares está en inseguridad alimentaria moderada o severa, y cuántos en severa."),
+    (22, "Inseguridad alimentaria por quintil de ingreso", "cómo varía entre el 20% de hogares con menos ingreso y el 20% con más."),
+    (23, "Inseguridad alimentaria por región", "Montevideo comparado con el resto del país."),
+    (24, "Diferencia entre el quintil más pobre y el más rico", "cuántos puntos porcentuales separan a esos dos grupos."),
+    (25, "Inseguridad alimentaria severa por quintil de ingreso", "la misma comparación del punto 23, pero solo para el caso más grave."),
+    (26, "Inseguridad alimentaria en hogares con menores de 18 años", "compara hogares con y sin menores de edad."),
+    (27, "Inseguridad alimentaria en hogares con niños de 0 a 5 años", "la misma comparación, mirando solo a la primera infancia."),
 ])
 
 # Igual que _CATEGORIA_FIES: solo existe para los años que tienen los 12
@@ -293,14 +292,14 @@ _CATEGORIA_FIES = ("5 · Seguridad alimentaria (submuestra de hogares)", [
 # plantilla_areas(), porque procesar los 12 meses es bastante más pesado
 # que las demás categorías.
 _CATEGORIA_EMPLEO = ("6 · Empleo", [
-    (29, "Tasas de actividad, empleo y desempleo", "el panorama laboral general del año, promediado entre los 12 meses."),
-    (30, "Brecha de género en el mercado laboral", "compara las tasas de actividad, empleo y desempleo entre hombres y mujeres."),
-    (31, "Desempleo por departamento", "en qué departamentos la tasa de desempleo es más alta o más baja."),
-    (32, "Informalidad laboral por sexo", "qué porcentaje de ocupados no aporta a la seguridad social, comparando hombres y mujeres."),
-    (33, "Informalidad laboral por nivel educativo", "la misma comparación, según el nivel educativo del ocupado."),
-    (34, "Subempleo por sexo", "qué porcentaje de ocupados querría trabajar más horas de las que tiene, comparando hombres y mujeres."),
-    (35, "Desempleo juvenil (14 a 24 años) comparado con el resto", "si los jóvenes tienen una tasa de desempleo distinta al resto de la población activa."),
-    (36, "Situación ocupacional por sector formal/informal", "si son más los empleados, cuentapropistas o empleadores en cada sector."),
+    (28, "Tasas de actividad, empleo y desempleo", "el panorama laboral general del año, promediado entre los 12 meses."),
+    (29, "Brecha de género en el mercado laboral", "compara las tasas de actividad, empleo y desempleo entre hombres y mujeres."),
+    (30, "Desempleo por departamento", "en qué departamentos la tasa de desempleo es más alta o más baja."),
+    (31, "Informalidad laboral por sexo", "qué porcentaje de ocupados no aporta a la seguridad social, comparando hombres y mujeres."),
+    (32, "Informalidad laboral por nivel educativo", "la misma comparación, según el nivel educativo del ocupado."),
+    (33, "Subempleo por sexo", "qué porcentaje de ocupados querría trabajar más horas de las que tiene, comparando hombres y mujeres."),
+    (34, "Desempleo juvenil (14 a 24 años) comparado con el resto", "si los jóvenes tienen una tasa de desempleo distinta al resto de la población activa."),
+    (35, "Situación ocupacional por sector formal/informal", "si son más los empleados, cuentapropistas o empleadores en cada sector."),
 ])
 
 # Igual que _CATEGORIA_EMPLEO: solo se ofrece si el usuario la eligió en
@@ -308,13 +307,13 @@ _CATEGORIA_EMPLEO = ("6 · Empleo", [
 # diccionario de valores publicado para esa variable, ver
 # .claude/agents/encuesta-hogares.md.
 _CATEGORIA_SEGURIDAD = ("7 · Seguridad y victimización", [
-    (37, "Prevalencia de victimización por tipo de delito", "qué porcentaje de personas sufrió cada tipo de delito en el mes anterior a la entrevista (no es una cifra anual)."),
-    (38, "Victimización general por sexo", "haber sufrido al menos un delito en el mes anterior a la entrevista, comparando hombres y mujeres."),
-    (39, "Victimización general por departamento", "lo mismo, Montevideo comparado con el resto del país."),
-    (40, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
-    (41, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, cuántos hicieron la denuncia presencial en la comisaría."),
-    (42, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
-    (43, "Casos con violencia por tipo de delito", "de quienes fueron víctimas, en cuántos casos los autores amenazaron o ejercieron violencia."),
+    (36, "Prevalencia de victimización por tipo de delito", "qué porcentaje de personas sufrió cada tipo de delito en el mes anterior a la entrevista (no es una cifra anual)."),
+    (37, "Victimización general por sexo", "haber sufrido al menos un delito en el mes anterior a la entrevista, comparando hombres y mujeres."),
+    (38, "Victimización general por departamento", "lo mismo, Montevideo comparado con el resto del país."),
+    (39, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
+    (40, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, cuántos hicieron la denuncia presencial en la comisaría."),
+    (41, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
+    (42, "Casos con violencia por tipo de delito", "de quienes fueron víctimas, en cuántos casos los autores amenazaron o ejercieron violencia."),
 ])
 
 
@@ -719,7 +718,7 @@ def plantilla_areas(fies_disponible: bool, empleo_disponible: bool, seguridad_di
     """
     opciones = [
         ("brecha_digital", "Brecha Digital",
-         "acceso, calidad de conexión y uso de tecnología (TV cable, internet, computadora, streaming) en los hogares."),
+         "acceso a internet, calidad de la conexión y uso de tecnología (internet, computadora, streaming) en los hogares."),
         ("hogares", "Hogares",
          "composición del hogar, pobreza, jefatura, hacinamiento."),
         ("territorio", "Territorio",

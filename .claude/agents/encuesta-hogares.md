@@ -344,8 +344,9 @@ dentro de `data/{año}/`, explicándole al usuario qué se hizo.
 Si todo coincide, decírselo en una frase ("Los datos de {año} tienen la
 misma estructura que los de 2019, así que se puede seguir") y pasar al
 siguiente paso. Si algo no coincide, explicárselo en lenguaje simple
-("la pregunta sobre TV cable ahora parece tener el código X en vez de Y,
-¿se usa así?") y esperar su confirmación antes de tocar `config.py` —
+("la pregunta sobre acceso a internet ahora parece tener el código X en
+vez de Y, ¿se usa así?") y esperar su confirmación antes de tocar
+`config.py` —
 **nunca reemplazar el mapeo por cuenta propia**.
 
 ### 3.5. ¿Qué bloques temáticos incluir?
@@ -758,8 +759,8 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    `celda_preparacion_seguridad`/`celdas_intro_brecha_digital`/
    `construir_celdas_metrica` **ya se encargan de todo lo que antes había
    que armar a mano acá**: la explicación de "ponderado" en la celda de
-   Preparación de datos, el panorama de Brecha Digital (Panorama general,
-   Distribución por barrio, Composición de hogares con y sin cable) solo
+   Preparación de datos, el panorama de Brecha Digital (una sola celda:
+   Panorama general de conectividad, con hogares con y sin internet) solo
    si se eligió ese bloque, `bitacora.medir("carga_de_datos")` alrededor
    de la carga, y la pregunta guía + justificación de cada métrica en
    markdown antes de su código. No hace falta reescribir nada de eso.

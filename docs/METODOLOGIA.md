@@ -47,16 +47,17 @@ normas internacionales especializadas (ver
 sección nueva, revisarla contra esta lista:
 
 - **Falacia ecológica**: no mezclar el nivel de agregación. Si una variable
-  describe un barrio (ej. el % de abonados de todo el barrio), no se puede
-  usar para sacar conclusiones sobre hogares individuales de ese barrio, ni
-  viceversa. Si se cruzan variables de distinto nivel (hogar vs. barrio vs.
-  persona), **aclararlo explícitamente en el texto y en los títulos de las
-  gráficas** (ver el caso de "nivel de suscripción del barrio" en la
-  sección 4).
+  describe un territorio entero (ej. el índice de desarrollo territorial de
+  un departamento, o su % de pobreza), no se puede usar para sacar
+  conclusiones sobre hogares individuales de ese departamento, ni
+  viceversa. Si se cruzan variables de distinto nivel (hogar vs.
+  departamento vs. persona), **aclararlo explícitamente en el texto y en
+  los títulos de las gráficas** (ver el caso ya resuelto de la sección 4).
 - **Sesgo de mediador/selección**: no estratificar por una variable que es,
   en parte, resultado de la variable que se está explicando. Ejemplo:
-  cruzar "ingreso del hogar" con "nivel de suscripción del barrio" mezcla
-  causa y efecto de forma confusa y no aporta una conclusión clara.
+  cruzar "ingreso del hogar" con un índice territorial que ya tiene la
+  pobreza entre sus componentes mezcla causa y efecto de forma confusa y
+  no aporta una conclusión clara.
 - **Celdas chicas**: si un grupo tiene muy pocos casos, la comparación no es
   confiable. Antes de publicar una gráfica nueva agrupada por algo, ejecutar
   `analysis.grupos_con_muestra_chica(df, columna_grupo)` sobre el
@@ -165,13 +166,21 @@ sección nueva, revisarla contra esta lista:
 
 ## 4. Ejemplo real de ambigüedad ya resuelta: "nivel de suscripción"
 
-Puede volver a pasar con otras variables, así que vale la pena documentar el
-patrón: `nivel_suscripcion` es una clasificación por **cuartiles del % de
-abonados de todo un barrio** (se calcula en la sección de distribución por
-barrio), que después se le asigna a **cada hogar de ese barrio**, tenga o
-no tenga la tecnología. Cruzarla con `tipo_abonado` (que sí es del hogar)
-puede producir combinaciones que a primera vista parecen contradictorias
-("Sin cable" + "barrio de Alta suscripción"), pero son válidas: describen un
-hogar que es la excepción dentro de su barrio. La solución no es cambiar el
-cálculo — es dejar clarísimo en el título y el texto que una variable es del
-barrio y la otra del hogar.
+**Este caso ya no existe en el código**: la dimensión barrio se eliminó
+entera junto con TV cable en la versión 0.9.0 (ver `CHANGELOG.md`). Se
+conserva documentado porque el patrón puede volver a aparecer con
+cualquier otra variable de territorio.
+
+`nivel_suscripcion` era una clasificación por **cuartiles del % de
+abonados al cable de todo un barrio**, que después se le asignaba a **cada
+hogar de ese barrio**, tuviera o no la tecnología. Cruzarla con
+`tipo_abonado` (que sí era del hogar) producía combinaciones que a primera
+vista parecían contradictorias ("Sin cable" + "barrio de Alta
+suscripción"), pero eran válidas: describían un hogar que era la excepción
+dentro de su barrio.
+
+La lección que se conserva: cuando una variable es del territorio y otra
+del hogar, la solución no es cambiar el cálculo — es dejar clarísimo en el
+título y el texto de qué nivel es cada una. Hoy el caso vivo más parecido
+es el índice de desarrollo territorial, que es por departamento y nunca
+debe leerse como una propiedad de los hogares de ese departamento.

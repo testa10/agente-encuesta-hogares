@@ -59,7 +59,6 @@ HOGARES_COLUMNS = {
     "numero": "id_hogar",
     "nomdpto": "departamento",
     "nombarrio": "barrio",
-    "d21_7": "tipo_abonado",     # 1 = con cable, 2 = sin cable
     "estred13": "estrato_tipo",  # estrato socioeconómico 1 (bajo) a 5 (alto)
     "d25": "total_personas",
     # --- Ampliación: brecha digital, pobreza e ingresos del hogar ---
@@ -154,7 +153,6 @@ HOGARES_COLUMNS_CSV = {
     "ID": "id_hogar",
     "nom_dpto": "departamento",
     "barrio": "barrio",
-    "d21_7": "tipo_abonado",
     "ESTRED13": "estrato_tipo",
     "d25": "total_personas",
     "d21_16": "tiene_internet",
@@ -265,8 +263,6 @@ def hogares_csv_file(anio: int | str) -> Path:
             return candidato
     return carpeta / f"ECH_{anio}.csv"
 
-TIPO_ABONADO_LABELS = {1.0: "Con cable", 2.0: "Sin cable"}
-
 NIVEL_ECONOMICO_LABELS = {
     1: "1-Bajo",
     2: "2-Medio-Bajo",
@@ -282,8 +278,6 @@ SEXO_DEFAULT = "3-Otro"
 EDAD_BINS = [0, 15, 65, float("inf")]
 EDAD_LABELS = ["1-Niños-Jovenes", "2-Adultos", "3-Adultos_mayores"]
 
-NIVEL_SUSCRIPCION_LABELS = ["1-Baja", "2-Media-Baja", "3-Media-Alta", "4-Alta"]
-
 # Corrige un problema de codificación presente en las etiquetas de barrio del
 # archivo .sav original: el caracter 'ñ' puede quedar guardado como '¦' (U+00A6).
 MOJIBAKE_FIX = {"¦": "ñ"}
@@ -291,8 +285,11 @@ MOJIBAKE_FIX = {"¦": "ñ"}
 # Variables 1=Sí/2=No/99=Sin dato -> booleano (99 queda como NaN, no se asume).
 SI_NO_MAP = {1.0: True, 2.0: False}
 
+# TV cable salió del proyecto por completo: era el eje del análisis
+# original de 2019 y quedó como herencia cuando el foco pasó a ser la
+# conectividad. Medir "acceso a TV cable" no dice nada sobre si un hogar
+# está conectado — decisión del dueño del proyecto, ver CHANGELOG 0.9.0.
 TECNOLOGIAS_LABELS = {
-    "tiene_cable": "TV Cable",
     "tiene_internet": "Internet",
     "tiene_pc": "Computadora",
     "tiene_streaming": "Streaming",

@@ -54,10 +54,6 @@ METODOS_CRUDOS = {"mean", "median", "value_counts"}
 # no un trámite: si la razón no se sostiene, el fix es ponderar la
 # estadística, no ampliar la lista.
 ALLOWLIST: dict[str, str] = {
-    "clasificacion_barrios_resumen": (
-        "value_counts() cuenta BARRIOS (unidad geográfica), no hogares ni "
-        "personas — no existe un 'ponderador de barrio', cada barrio pesa 1."
-    ),
     "tasas_actividad_empleo_desempleo": (
         "mean() promedia una tasa YA ponderada (calculada mes a mes con "
         "ponderador_empleo) entre los 12 meses del año, no datos crudos — "
@@ -79,12 +75,6 @@ ALLOWLIST: dict[str, str] = {
     "indice_desarrollo_territorial": (
         "mean() promedia columnas de un índice YA normalizado (0-1), no datos "
         "crudos de hogares/personas."
-    ),
-    "plot_penetracion_por_barrio": (
-        "mean() promedia `pct_abonados`, una columna YA ponderada por barrio "
-        "(ver preprocessing.compute_penetracion_por_barrio) — es el promedio "
-        "de referencia entre barrios que se dibuja como línea punteada, no "
-        "una estadística nueva sobre datos crudos."
     ),
 }
 

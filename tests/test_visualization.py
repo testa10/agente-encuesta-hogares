@@ -13,20 +13,6 @@ import pandas as pd
 from encuesta_hogares import visualization as viz
 
 
-def test_plot_penetracion_por_barrio_ancla_el_eje_y_en_cero():
-    df = pd.DataFrame(
-        {
-            "barrio": ["1", "2", "3"],
-            "pct_abonados": [45.0, 60.0, 30.0],
-            "nivel_suscripcion": ["2-Media-Baja", "3-Media-Alta", "1-Baja"],
-        }
-    )
-
-    fig = viz.plot_penetracion_por_barrio(df)
-
-    assert fig.layout.yaxis.range[0] == 0
-
-
 # ============================================================================
 # Hogares y Brecha Digital: funciones nuevas, sin ninguna corrida real
 # todavía - smoke tests simples (corren sin error, devuelven una figura) en
@@ -117,17 +103,6 @@ def test_plot_indice_acceso_digital_por_no_falla():
 def test_plot_adopcion_tablet_ibirapita_no_falla():
     df = pd.DataFrame({"jefe_es_mayor": [True, False], "pct_con_tablet": [25.0, 1.0]})
     fig = viz.plot_adopcion_tablet_ibirapita(df, "jefe es mayor")
-    assert fig is not None
-
-
-def test_plot_clasificacion_barrios_no_falla():
-    df = pd.DataFrame(
-        {
-            "nivel_suscripcion": ["1-Baja", "2-Media-Baja", "3-Media-Alta", "4-Alta"],
-            "cantidad_barrios": [10, 9, 9, 10],
-        }
-    )
-    fig = viz.plot_clasificacion_barrios(df)
     assert fig is not None
 
 

@@ -1,6 +1,5 @@
 import pandas as pd
 
-from encuesta_hogares import config
 from encuesta_hogares.preprocessing import (
     classify_edad_grupo,
     classify_nivel_economico,
@@ -10,8 +9,6 @@ from encuesta_hogares.preprocessing import (
     compute_cohorte_generacional,
     compute_hacinamiento,
     compute_indice_acceso_digital,
-    compute_penetracion_por_barrio,
-    merge_penetracion,
     normalizar_departamento,
     decode_condiciones_vivienda,
     decode_si_no,
@@ -58,7 +55,6 @@ def _hogares_extendido_ejemplo():
         {
             "id_hogar": [1, 2, 3, 4],
             "departamento": ["MONTEVIDEO"] * 4,
-            "tipo_abonado": [1.0, 1.0, 2.0, 2.0],
             "estrato_tipo": [5.0, 1.0, 5.0, 1.0],
             "nivel_economico": ["5-Alto", "1-Bajo", "5-Alto", "1-Bajo"],
             "total_personas": [2.0, 4.0, 3.0, 5.0],
@@ -83,7 +79,6 @@ def _hogares_extendido_ejemplo():
 
 def test_prepare_hogares_extendido_decodes_booleanos():
     df = prepare_hogares_extendido(_hogares_extendido_ejemplo())
-    assert df["tiene_cable"].tolist() == [True, True, False, False]
     assert df["pobre"].tolist() == [False, True, False, True]
     assert df["tiene_internet"].tolist() == [True, False, True, False]
     assert df["goteras"].tolist() == [True, False, True, False]
@@ -95,7 +90,7 @@ def test_merge_personas_no_duplica_el_ponderador():
     # ver config.PERSONAS_COLUMNS). Si algún día se agregara a los dos
     # lados, este merge lo duplicaría como "ponderador_hogar_x"/"_y" en vez
     # de conservar una sola columna.
-    hogares_resumen = pd.DataFrame({"id_hogar": [1, 2], "tipo_abonado": [1.0, 2.0], "ponderador_hogar": [100.0, 200.0]})
+    hogares_resumen = pd.DataFrame({"id_hogar": [1, 2], "ponderador_hogar": [100.0, 200.0]})
     personas = pd.DataFrame({"id_hogar": [1, 2], "edad": [30, 45], "sexo": [1, 2]})
     combinado = merge_personas(hogares_resumen, personas)
     assert "ponderador_hogar" in combinado.columns
@@ -229,15 +224,16 @@ def test_clasificar_calidad_conexion_fija_gana_si_tiene_ambas():
 
 
 def test_compute_indice_acceso_digital():
+    # El índice va de 0 a 3 desde la 0.9.0: eran cuatro tecnologías hasta
+    # que se sacó TV cable del proyecto (ver config.TECNOLOGIAS_LABELS).
     df = pd.DataFrame(
         {
-            "tiene_cable": [True, False, True],
             "tiene_internet": [True, True, False],
             "tiene_pc": [True, False, False],
             "tiene_streaming": [False, False, False],
         }
     )
-    assert compute_indice_acceso_digital(df).tolist() == [3, 1, 1]
+    assert compute_indice_acceso_digital(df).tolist() == [2, 1, 0]
 
 
 def test_prepare_hogares_montevideo_ignora_mayusculas():
@@ -258,35 +254,6 @@ def test_normalizar_departamento_deja_mayusculas_consistentes_entre_anios():
     a = normalizar_departamento(hogares_2019)
     b = normalizar_departamento(hogares_2024)
     assert a["departamento"].tolist() == b["departamento"].tolist() == ["MONTEVIDEO", "SALTO"]
-
-
-def test_compute_penetracion_por_barrio_pondera_por_ponderador_hogar():
-    hogares_mdeo = pd.DataFrame(
-        {
-            "id_hogar": list(range(1, 11)),
-            "barrio": ["A", "A", "B", "B", "C", "C", "D", "D", "E", "E"],
-            "tipo_abonado": [1.0, 2.0, 1.0, 1.0, 2.0, 2.0, 1.0, 2.0, 1.0, 2.0],
-            "ponderador_hogar": [10.0, 30.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 30.0, 10.0],
-        }
-    )
-    resumen = compute_penetracion_por_barrio(hogares_mdeo)
-    barrio_a = resumen[resumen["barrio"] == "A"].iloc[0]
-    # Sin ponderar, el barrio A daría 50% (1 de 2 hogares) - ponderado, el
-    # hogar sin cable pesa el triple, baja a 25%.
-    assert barrio_a["pct_abonados"] == 25.0
-    assert barrio_a["total_hogares"] == 2  # tamaño de muestra, sin ponderar a propósito
-    assert set(resumen["nivel_suscripcion"].dropna().unique()) <= set(config.NIVEL_SUSCRIPCION_LABELS)
-
-
-def test_merge_penetracion_agrega_nivel_suscripcion_por_barrio():
-    hogares_mdeo = pd.DataFrame({"id_hogar": [1, 2, 3], "barrio": ["A", "A", "B"]})
-    penetracion_por_barrio = pd.DataFrame(
-        {"barrio": ["A", "B"], "nivel_suscripcion": ["3-Media-Alta", "1-Baja"]}
-    )
-    resultado = merge_penetracion(hogares_mdeo, penetracion_por_barrio)
-    assert resultado.set_index("id_hogar")["nivel_suscripcion"].tolist() == [
-        "3-Media-Alta", "3-Media-Alta", "1-Baja",
-    ]
 
 
 def test_prepare_fies_clasifica_por_umbral_y_etiqueta_region():
