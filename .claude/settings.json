@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-primer-paso.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-primer-paso.cjs\""
           }
         ]
       },
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-notebook-sin-duplicados.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-notebook-sin-duplicados.cjs\""
           }
         ]
       },
@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-no-segundo-plano.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-no-segundo-plano.cjs\""
           }
         ]
       },
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-no-git-indirecto.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-no-git-indirecto.cjs\""
           }
         ]
       },
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-notebook-metrica-sin-grafica-o-cita.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-notebook-metrica-sin-grafica-o-cita.cjs\""
           }
         ]
       }
@@ -76,7 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-notebook-graficas-faltantes.cjs\""
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/gate-notebook-graficas-faltantes.cjs\""
           }
         ]
       }
