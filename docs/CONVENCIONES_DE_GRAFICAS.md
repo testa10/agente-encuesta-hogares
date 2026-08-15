@@ -113,11 +113,12 @@ igual que cualquier otra.
   vs. 2025", o "2019 vs. 2024 vs. 2025")**: "año" es un grupo específico
   como cualquier otro, no hace falta código nuevo en ninguno de los dos
   casos. Es una opción de primera clase del catálogo
-  (`formularios.plantilla_catalogo`, campo "¿Comparar estas métricas con
-  otros años?", admite cualquier cantidad), no algo que la persona tenga
-  que pedir escribiéndolo en "otra métrica". Calcular la métrica una vez
-  por año con la función que ya exista (la misma que usa el informe de un
-  solo año) y después:
+  (`formularios.plantilla_catalogo`, campo "¿Comparar alguna métrica con
+  otros años?", con una casilla propia por métrica — se puede pedir para
+  una sola, para todas, o cualquier combinación), no algo que la persona
+  tenga que pedir escribiéndolo en "otra métrica". Calcular la métrica
+  una vez por año con la función que ya exista (la misma que usa el
+  informe de un solo año) y después:
   - **Exactamente 2 años**: cruzar las dos tablas con
     `analysis.diferencia_entre_tablas` y graficar con
     `visualization.plot_dumbbell` — confirmado en una corrida real

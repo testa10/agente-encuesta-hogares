@@ -827,10 +827,18 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    Apenas termine la llamada a `Write` que crea este script (antes de
    ejecutarlo), registrar otro punto de control: `run_python.bat -c
    "from encuesta_hogares import bitacora; bitacora.registrar(
-   'paso5_checkpoint', etapa='script_notebook_escrito')"`. El tramo entre
-   este punto y el anterior (`lectura_referencia_fin`) es, casi siempre,
-   el más largo del paso 5 — es el tiempo que tarda el modelo en generar
-   todo el código del script, no tiempo de ejecución de nada.
+   'paso5_checkpoint', etapa='script_notebook_escrito')"`. **Antes de
+   mecanizar las métricas fijas del catálogo, el tramo entre este punto y
+   el anterior (`lectura_referencia_fin`) era casi siempre el más largo
+   del paso 5** — el modelo generando a mano el código de cada métrica.
+   Con `notebook_builder.py` armando esas 43, ese tramo ahora debería ser
+   corto salvo que la corrida tenga bastante comparación entre años
+   (`metricas_comparadas`) y/o varias métricas a medida del paso 6 — esas
+   dos partes siguen escribiéndose a mano, así que siguen concentrando el
+   tiempo real cuando aparecen. Si este tramo sale largo en una corrida
+   sin comparación ni métricas del paso 6, es una señal real de que algo
+   se está escribiendo a mano que debería estar pasando por
+   `notebook_builder.py` — revisar, no asumir que es normal.
 3. Ejecutar ese único script **una vez** con `run_python.bat`. Al
    terminar, un tercer punto de control: `run_python.bat -c "from
    encuesta_hogares import bitacora; bitacora.registrar(

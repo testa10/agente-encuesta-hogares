@@ -205,25 +205,26 @@ confiable con los datos disponibles), lo indicará en otra pantalla junto
 con una alternativa válida, para aceptarla, proponer otra, o descartar
 esa métrica del informe.
 
-**Tras confirmar el catálogo, el proceso demora un tiempo considerable.**
-No es un cálculo instantáneo: el agente construye y revisa cada gráfica
-seleccionada, una por una. Como referencia (catálogo completo, las 43
-métricas de los siete bloques): **entre 25 y 30 minutos**. Seleccionar
-menos bloques o menos métricas reduce el tiempo proporcionalmente. Este
-proceso también consume una parte del uso disponible de Claude Code (en
-la corrida de referencia, el equivalente a unos 95 llamados a
-herramientas); que la terminal permanezca sin novedades visibles durante
-un rato prolongado es esperable, no indica un error.
+**Tras confirmar el catálogo, el proceso demora un tiempo variable —
+no es instantáneo.** Las 43 métricas fijas del catálogo se arman de
+forma mecánica (rápido, típicamente segundos por métrica); lo que sigue
+demorando minutos es que el agente calcule y revise cada gráfica de
+verdad contra los datos, más cualquier comparación entre años o métrica
+a medida que hayas pedido — esas dos últimas las sigue escribiendo el
+modelo en el momento, no son mecánicas. *(Nota interna: el rango "25 a
+30 minutos" que estaba acá antes describía el proceso previo a mecanizar
+el catálogo — se sacó porque ya no es representativo, y todavía no hay
+una corrida real de referencia con el proceso nuevo para reemplazarlo
+con un número confiable.)* Que la terminal permanezca sin novedades
+visibles durante un rato es esperable, no indica un error.
 
 **Si te preocupa llegar al límite de uso de tu plan a mitad de una
-corrida larga, conviene no elegir los siete bloques de una sola vez.**
-Cada bloque temático (Brecha Digital, Hogares, Territorio, Vivienda,
-Seguridad Alimentaria, Empleo, Seguridad y Victimización) demora, por sí
-solo, entre 2 y 5 minutos. Es preferible generar el informe en varias
-corridas más chicas — uno o dos bloques por vez, encadenándolas con el
-botón "crear un nuevo informe" del Paso 7 — en vez de arriesgarse a que
-una corrida completa de 25 a 30 minutos se corte a mitad de camino por
-falta de uso disponible. Cada corrida produce su propio informe
+corrida larga con muchos bloques y bastante comparación entre años,
+conviene no elegir los siete bloques de una sola vez.** Es preferible
+generar el informe en varias corridas más chicas — uno o dos bloques por
+vez, encadenándolas con el botón "crear un nuevo informe" del Paso 7 —
+en vez de arriesgarse a que una corrida larga se corte a mitad de camino
+por falta de uso disponible. Cada corrida produce su propio informe
 (notebook, HTML y PDF); si elegís bloques distintos en cada una, vas a
 terminar con varios informes parciales para el mismo año, no uno solo
 combinado.
