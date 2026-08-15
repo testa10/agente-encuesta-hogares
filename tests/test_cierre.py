@@ -66,8 +66,38 @@ class TestCuandoCierra:
         assert marca.read_text(encoding="utf-8") == "terminar"
 
 
+class TestLimpiezaDeMarcas:
+    """En una corrida real se comprobó que el .bat casi nunca llega a
+    borrar su marca (terminar Claude Code desarma la consola entera y se
+    lo lleva puesto), así que sin limpieza se acumula un archivo por
+    corrida en la carpeta temporal, para siempre."""
+
+    def test_borra_marcas_viejas_y_conserva_las_recientes(self, monkeypatch, tmp_path):
+        import os
+        import time
+
+        monkeypatch.setattr(cierre.tempfile, "gettempdir", lambda: str(tmp_path))
+
+        vieja = cierre.marca_de_cierre(1111)
+        vieja.write_text("vieja", encoding="utf-8")
+        antiguedad = time.time() - (cierre._VIDA_UTIL_MARCA_EN_SEGUNDOS + 60)
+        os.utime(vieja, (antiguedad, antiguedad))
+
+        reciente = cierre.marca_de_cierre(2222)
+        reciente.write_text("reciente", encoding="utf-8")
+
+        ajena = tmp_path / "otro-archivo-cualquiera.txt"
+        ajena.write_text("no es nuestro", encoding="utf-8")
+
+        cierre.limpiar_marcas_viejas()
+
+        assert not vieja.exists(), "una marca de más de un día ya no le sirve a nadie"
+        assert reciente.exists(), "una marca recién creada puede ser la de la corrida en curso"
+        assert ajena.exists(), "solo se tocan los archivos propios, nunca otros del temporal"
+
+
 @pytest.fixture
-def motivos_de_cierre(monkeypatch):
+def motivos_de_cierre(monkeypatch, tmp_path):
     """Espía sobre `cierre.cerrar_consola` — devuelve la lista de motivos
     con los que se lo llamó.
 
@@ -77,7 +107,16 @@ def motivos_de_cierre(monkeypatch):
     verdad) pisaría también el espía de `cierre.subprocess.run` y los
     tests medirían siempre cero. Acá lo que importa es CUÁNDO se pide el
     cierre; el cierre en sí ya se prueba en TestCuandoCierra.
+
+    La bitácora va a un archivo temporal por el mismo motivo que en
+    `test_formularios_timeout.py`: estos tests levantan formularios de
+    verdad, y sin esto cada corrida de la suite deja entradas falsas
+    ("formulario_mostrado", "finalizacion_respondida") en la bitácora real
+    de quien esté usando el proyecto en esa misma carpeta — indistinguibles
+    de una corrida real suya, justo en el archivo que existe para
+    reconstruir qué le pasó de verdad.
     """
+    monkeypatch.setattr(bitacora, "LOG_PATH", tmp_path / "bitacora.jsonl")
     motivos = []
 
     def espia(motivo: str) -> bool:

@@ -40,12 +40,17 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 from . import bitacora
 
 VAR_ACTIVA = "ENCUESTA_HOGARES_CONSOLA"
 VAR_PID_CONSOLA = "ENCUESTA_HOGARES_CONSOLA_PID"
+
+
+_PREFIJO_MARCA = "encuesta-hogares-cierre-"
+_VIDA_UTIL_MARCA_EN_SEGUNDOS = 24 * 60 * 60
 
 
 def marca_de_cierre(pid_consola: int) -> Path:
@@ -58,8 +63,40 @@ def marca_de_cierre(pid_consola: int) -> Path:
     verdad", y le mostraría al usuario un mensaje de error (con su
     `pause`, es decir una ventana que hay que cerrar a mano) justo al
     final de una corrida exitosa.
+
+    En la práctica el `.bat` casi nunca llega a leerla: verificado en una
+    corrida real, terminar el proceso de Claude Code desarma la consola
+    entera y se lleva puesto también al `.bat`, que entonces no ejecuta
+    sus últimas líneas (la ventana se cierra igual, que es lo que se
+    busca). La marca se mantiene igual como red de seguridad para los
+    entornos donde el `.bat` **sí** sobrevive —comprobado que puede
+    pasar—, porque ahí es lo único que evita el mensaje de error al final
+    de una corrida exitosa. Como contrapartida de que no siempre se
+    consuma, `limpiar_marcas_viejas()` se encarga de que no se acumulen.
     """
-    return Path(tempfile.gettempdir()) / f"encuesta-hogares-cierre-{pid_consola}.marker"
+    return Path(tempfile.gettempdir()) / f"{_PREFIJO_MARCA}{pid_consola}.marker"
+
+
+def limpiar_marcas_viejas() -> None:
+    """Borra marcas de cierre de corridas anteriores que nadie consumió.
+
+    Sin esto se acumula un archivo por corrida en la carpeta temporal,
+    para siempre: el `.bat` borra la suya al empezar y al terminar, pero
+    solo la de su propio PID, y encima la mayoría de las veces ni llega a
+    ejecutar esas líneas (ver `marca_de_cierre`). Nunca deja escapar una
+    excepción: no poder limpiar archivos temporales jamás puede impedir
+    que la consola se cierre, que es lo que de verdad importa acá.
+    """
+    limite = time.time() - _VIDA_UTIL_MARCA_EN_SEGUNDOS
+    try:
+        for vieja in Path(tempfile.gettempdir()).glob(f"{_PREFIJO_MARCA}*.marker"):
+            try:
+                if vieja.stat().st_mtime < limite:
+                    vieja.unlink()
+            except OSError:
+                continue
+    except Exception:
+        pass
 
 # Sube por la cadena de procesos padre desde este mismo proceso de Python
 # hasta encontrar el que es hijo directo de la consola que abrió
@@ -117,6 +154,7 @@ def cerrar_consola(motivo: str) -> bool:
     pid_consola = int(os.environ[VAR_PID_CONSOLA].strip())
     script = _PLANTILLA_POWERSHELL.format(pid_consola=pid_consola, pid_python=os.getpid())
     bitacora.registrar("cierre_consola", motivo=motivo, pid_consola=pid_consola)
+    limpiar_marcas_viejas()
     try:
         # La marca se deja ANTES de terminar el proceso: después de matar a
         # Claude Code, este mismo Python queda huérfano y no hay ninguna
