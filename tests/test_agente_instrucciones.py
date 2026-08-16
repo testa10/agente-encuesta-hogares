@@ -95,3 +95,48 @@ def test_prohibe_correr_bash_en_segundo_plano():
         "permitido para leer el resultado, mostrándole al usuario un "
         "prompt de aprobación de terminal."
     )
+
+
+# ============================================================================
+# Modelo fijado. Sin el campo `model` en el frontmatter, el subagente hereda
+# el modelo de la sesión principal, que a su vez toma el default de la
+# cuenta: el modelo con el que se genera un informe podía cambiar sin que
+# nadie tocara el proyecto. Para algo que se publica con respaldo
+# metodológico, esa variabilidad silenciosa no sirve — y como los cálculos
+# libres (comparación entre años y métricas a medida) los escribe el modelo
+# en cada corrida, el modelo es parte de la reproducibilidad del resultado.
+# ============================================================================
+
+_BAT_ARRANQUE = Path(__file__).resolve().parents[1] / "abrir_agente.bat"
+
+
+def _modelo_del_frontmatter() -> str | None:
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+    frontmatter = texto.split("---", 2)[1] if texto.startswith("---") else ""
+    encontrado = re.search(r"^model:\s*(\S+)\s*$", frontmatter, flags=re.MULTILINE)
+    return encontrado.group(1) if encontrado else None
+
+
+def test_el_subagente_fija_su_modelo_con_id_completo():
+    modelo = _modelo_del_frontmatter()
+    assert modelo is not None, (
+        "El frontmatter de .claude/agents/encuesta-hogares.md no fija `model`: "
+        "sin eso el subagente hereda el default de la cuenta y el informe deja "
+        "de ser reproducible."
+    )
+    assert modelo not in ("opus", "sonnet", "haiku", "fable", "inherit"), (
+        f"`model: {modelo}` es un alias — se mueve solo a la próxima generación "
+        "del modelo. Este proyecto pide el id completo (ej. claude-opus-5) para "
+        "que ese cambio sea una decisión explícita, con validación de por medio."
+    )
+
+
+def test_el_bat_de_arranque_usa_el_mismo_modelo_que_el_subagente():
+    """Si los dos se despistan, la sesión principal y el subagente corren con
+    modelos distintos sin que nadie lo note."""
+    modelo = _modelo_del_frontmatter()
+    bat = _BAT_ARRANQUE.read_text(encoding="latin-1")
+    assert f"--model {modelo}" in bat, (
+        f"abrir_agente.bat no fija el mismo modelo que el subagente ({modelo}). "
+        "Al actualizar uno hay que actualizar el otro."
+    )

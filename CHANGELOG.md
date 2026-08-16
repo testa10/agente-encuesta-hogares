@@ -10,6 +10,31 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.9.3] — 2026-08-15
+
+### Cambiado
+
+- **El modelo con el que corre el agente queda fijado a `claude-opus-5`**,
+  en el frontmatter del subagente y en `abrir_agente.bat`. Hasta ahora no
+  estaba fijado en ninguna parte: el subagente heredaba el modelo de la
+  sesión principal, que tomaba el default de la cuenta. Es decir que el
+  modelo con el que se generaba un informe podía cambiar sin que nadie
+  tocara el proyecto — si cambiaba el default de la cuenta, o si alguien
+  usaba `/model` en otra sesión.
+
+  Los 42 cálculos del catálogo **no** dependen del modelo (los hace
+  `analysis.py`, con tests y validación contra datos reales). Pero la
+  comparación entre años y las métricas a medida del paso 6 se escriben en
+  código libre en cada corrida: ahí el criterio del modelo es lo único que
+  separa un cálculo correcto de uno inventado, y es justo donde un número
+  puede terminar difiriendo de lo publicado por el INE sin justificación.
+
+  Se usa el id completo y no el alias `opus` a propósito: un alias se
+  movería solo a la próxima generación, y este proyecto prefiere que ese
+  cambio sea una decisión explícita, con una corrida de validación de por
+  medio. Dos tests lo sostienen: que el modelo esté fijado con id completo
+  (no alias), y que `abrir_agente.bat` use el mismo que el subagente.
+
 ## [0.9.2] — 2026-08-15
 
 ### Agregado

@@ -59,7 +59,13 @@ del "%ARCHIVO_PID%" >nul 2>nul
 set "MARCA_CIERRE=%TEMP%\encuesta-hogares-cierre-%ENCUESTA_HOGARES_CONSOLA_PID%.marker"
 if exist "%MARCA_CIERRE%" del "%MARCA_CIERRE%" >nul 2>nul
 
-claude "Quiero hacer la encuesta de hogares"
+REM --model se fija a proposito: sin el, la sesion toma el modelo por
+REM defecto de la cuenta, que puede cambiar sin que nadie toque el
+REM proyecto. El subagente ya fija el suyo en el frontmatter de
+REM .claude/agents/encuesta-hogares.md (ahi esta el motivo largo); esto
+REM cubre tambien la sesion principal, para que una corrida sea
+REM reproducible de punta a punta. Si se actualiza uno, actualizar el otro.
+claude --model claude-opus-5 "Quiero hacer la encuesta de hogares"
 
 REM Terminar el proceso de Claude Code hace que `claude` salga con codigo
 REM de error, asi que el codigo de salida por si solo no distingue "el
