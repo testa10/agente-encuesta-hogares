@@ -1,3 +1,5 @@
+import re
+
 from encuesta_hogares import config
 from encuesta_hogares.formularios import (
     _CATEGORIA_EMPLEO,
@@ -20,9 +22,9 @@ def _todas_las_metricas_del_catalogo():
     incluye los tres opcionales (FIES/Empleo/Seguridad).
     """
     metricas = []
-    for _titulo, lista in _CATEGORIAS_METRICAS.values():
+    for _titulo, _nota, lista in _CATEGORIAS_METRICAS.values():
         metricas.extend(lista)
-    for _titulo, lista in (_CATEGORIA_FIES, _CATEGORIA_EMPLEO, _CATEGORIA_SEGURIDAD):
+    for _titulo, _nota, lista in (_CATEGORIA_FIES, _CATEGORIA_EMPLEO, _CATEGORIA_SEGURIDAD):
         metricas.extend(lista)
     return metricas
 
@@ -302,3 +304,62 @@ def test_plantilla_catalogo_incluye_seguridad_cuando_se_pide():
 def test_plantilla_catalogo_sin_seguridad_por_defecto():
     html = plantilla_catalogo()
     assert 'value="37"' not in html
+
+
+# ============================================================================
+# Reglas de redacción del catálogo. Nacen de un problema real encontrado por
+# el dueño del proyecto leyendo el formulario: la métrica "Inseguridad
+# alimentaria severa por quintil de ingreso" decía "la misma comparación del
+# punto 23". Dos problemas a la vez: obliga a ir a buscar otra métrica para
+# entender esta, y —peor— al renumerarse el catálogo (v0.9.0) ese "23" quedó
+# apuntando a una métrica distinta, sin que nada lo detectara. La regla es
+# que cada explicación se entienda sola.
+# ============================================================================
+
+_REFERENCIAS_CRUZADAS = [
+    (re.compile(r"\b(?:punto|métrica|metrica)s?\s+\d+", re.I), "referencia a otra métrica por número"),
+    (re.compile(r"\bla misma comparación\b", re.I), '"la misma comparación" (¿cuál?)'),
+    (re.compile(r"\blo mismo\b", re.I), '"lo mismo" (¿que qué?)'),
+    (re.compile(r"\b(?:el|la|del|de la)\s+(?:índice\s+)?anterior\b", re.I), '"el/la anterior"'),
+    (re.compile(r"\besos dos grupos\b", re.I), '"esos dos grupos" sin decir cuáles'),
+]
+
+
+def test_ninguna_explicacion_del_catalogo_depende_de_otra_metrica():
+    problemas = []
+    for numero, nombre, explicacion in _todas_las_metricas_del_catalogo():
+        for patron, motivo in _REFERENCIAS_CRUZADAS:
+            if patron.search(explicacion):
+                problemas.append(f"  - {numero} ({nombre}): {motivo}\n      «{explicacion}»")
+    assert not problemas, (
+        "Hay explicaciones del catálogo que no se entienden solas — cada una "
+        "tiene que poder leerse sin haber leído las otras (y sin romperse si "
+        "el catálogo se renumera):\n\n" + "\n".join(problemas)
+    )
+
+
+def test_los_bloques_con_datos_mensuales_explican_que_significa():
+    """Empleo y Victimización se miden mes a mes, y eso cambia por completo
+    cómo hay que leer cada número (un 5% mensual no es un 5% anual). La
+    explicación va en la nota del bloque y no repetida en cada métrica."""
+    _titulo_empleo, nota_empleo, _metricas = _CATEGORIA_EMPLEO
+    assert "12 meses" in nota_empleo and "promedi" in nota_empleo.lower(), (
+        "El bloque de Empleo tiene que aclarar que cada número es el promedio "
+        "de los 12 meses del año, no una medición única"
+    )
+
+    _titulo_seg, nota_seguridad, _metricas_seg = _CATEGORIA_SEGURIDAD
+    assert "mes anterior" in nota_seguridad.lower(), (
+        "El bloque de Seguridad tiene que aclarar que todo se refiere al mes "
+        "anterior a la entrevista"
+    )
+    assert "anual" in nota_seguridad.lower(), (
+        "Tiene que decir explícitamente que no es una cifra anual — es el "
+        "error de lectura más probable"
+    )
+
+
+def test_la_nota_del_bloque_se_muestra_en_el_formulario():
+    html = plantilla_catalogo(incluir_empleo=True, incluir_seguridad=True)
+    assert "promedio de los 12 meses" in html
+    assert "MES ANTERIOR" in html

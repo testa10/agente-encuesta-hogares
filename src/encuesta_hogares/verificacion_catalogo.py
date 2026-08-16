@@ -118,11 +118,11 @@ def numeros_del_catalogo() -> dict[int, str]:
     lista a mano.
     """
     numeros: dict[int, str] = {}
-    for _clave, (_titulo_bloque, metricas) in formularios._CATEGORIAS_METRICAS.items():
+    for _clave, (_titulo_bloque, _nota, metricas) in formularios._CATEGORIAS_METRICAS.items():
         for numero, titulo, _descripcion in metricas:
             numeros[numero] = titulo
     for bloque in (formularios._CATEGORIA_FIES, formularios._CATEGORIA_EMPLEO, formularios._CATEGORIA_SEGURIDAD):
-        _titulo_bloque, metricas = bloque
+        _titulo_bloque, _nota, metricas = bloque
         for numero, titulo, _descripcion in metricas:
             numeros[numero] = titulo
     return numeros

@@ -10,6 +10,38 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.9.1] — 2026-08-15
+
+### Corregido
+
+- **Ninguna explicación del catálogo depende ya de otra métrica.** La
+  métrica "Inseguridad alimentaria severa por quintil de ingreso" decía
+  *"la misma comparación del punto 23"*: obligaba a ir a buscar otra
+  métrica para entenderla y, peor, tras la renumeración de la 0.9.0 ese
+  "23" quedó apuntando a una métrica **distinta** (pasó a ser
+  "Inseguridad alimentaria por región") sin que nada lo detectara. Se
+  reescribieron las 7 explicaciones que dependían de otra ("la misma
+  comparación", "lo mismo", "el índice anterior", "esos dos grupos") para
+  que cada una se entienda sola.
+
+  `test_ninguna_explicacion_del_catalogo_depende_de_otra_metrica` hace
+  cumplir la regla de ahora en más: falla si una explicación referencia
+  otra métrica por número o con una frase relativa. Verificado que atrapa
+  los siete textos viejos sin marcar ninguno legítimo.
+
+### Agregado
+
+- **Los bloques con datos mensuales explican qué significa eso**, en una
+  nota al principio del bloque (no repetida en cada métrica):
+  - **Empleo**: cada número es el promedio de los 12 meses del año — se
+    calcula el valor de cada mes por separado y después se promedian, así
+    ningún mes pesa más que otro. No es una foto de un mes suelto.
+  - **Seguridad y victimización**: todo se refiere al **mes anterior** a
+    la entrevista, no al año entero. Si un número dice 5%, es el 5% que
+    sufrió ese delito en un solo mes — no se puede leer como cifra anual
+    ni comparar con estadísticas anuales de otras fuentes.
+  - **FIES**: se calcula sobre una submuestra de hogares.
+
 ## [0.9.0] — 2026-08-15
 
 ### Eliminado

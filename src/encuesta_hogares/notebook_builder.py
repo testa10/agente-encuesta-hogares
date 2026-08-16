@@ -172,10 +172,10 @@ print(f"Personas x tipo de delito: {len(victimizacion_largo):,}")'''
 
 def _texto_catalogo() -> dict[int, tuple[str, str]]:
     resultado: dict[int, tuple[str, str]] = {}
-    for _clave, (_titulo_bloque, metricas) in formularios._CATEGORIAS_METRICAS.items():
+    for _clave, (_titulo_bloque, _nota, metricas) in formularios._CATEGORIAS_METRICAS.items():
         for numero, titulo, descripcion in metricas:
             resultado[numero] = (titulo, descripcion)
-    for _titulo_bloque, metricas in (
+    for _titulo_bloque, _nota, metricas in (
         formularios._CATEGORIA_FIES,
         formularios._CATEGORIA_EMPLEO,
         formularios._CATEGORIA_SEGURIDAD,
