@@ -105,6 +105,45 @@ changelog arranca en la versión donde se formalizó el versionado.
     ni comparar con estadísticas anuales de otras fuentes.
   - **FIES**: se calcula sobre una submuestra de hogares.
 
+## [0.12.0] — 2026-08-16
+
+### Agregado
+
+- **Un informe ya no puede publicar un disparate sin que nada lo note**
+  (`verificacion_plausibilidad.py`). Hasta ahora los chequeos verificaban
+  que un porcentaje estuviera entre 0 y 100, y eso deja pasar casi
+  cualquier error real: una tasa de desempleo de 45%, una pobreza de
+  0,14% (una proporción confundida con porcentaje) o una tasa de empleo
+  mayor que la de actividad son todas "porcentajes válidos" y todas
+  imposibles.
+
+  **No se trata de reproducir los cálculos del INE** —la metodología de
+  este proyecto puede diferir legítimamente de la suya— sino de que un
+  error grueso nunca llegue a un informe entregado. Son dos capas:
+
+  1. **Identidades estadísticas**: relaciones que se cumplen siempre, por
+     definición, sin depender de ninguna cifra externa. La tasa de empleo
+     no puede superar a la de actividad; las tres tasas tienen que cerrar
+     entre sí (`desempleo = (actividad − empleo) / actividad`); la
+     indigencia no puede superar a la pobreza; la inseguridad severa no
+     puede superar a la moderada o severa. Una violación acá es un bug
+     seguro, no una diferencia de criterio.
+  2. **Rangos de plausibilidad**: anchos a propósito, para atrapar
+     disparates sin marcar variación legítima. Incluyen la crisis de 2002
+     por arriba y escenarios mucho mejores que el actual por abajo — no
+     son objetivos a cumplir, son los límites de lo posible.
+
+  Los rangos se anclan en magnitudes que publica el propio INE (actividad
+  ~64%, empleo ~59,5%, desempleo 7,0-7,6%, informalidad 22,8%), y cada uno
+  lleva escrito de dónde sale: un test falla si alguno queda sin
+  justificación, porque un rango sin motivo es una opinión disfrazada de
+  verificación.
+
+  De paso quedó confirmado que las cifras de este proyecto están en el
+  orden correcto: desempleo 7,45% (2025) y 8,18% (2024) contra el 7,0-7,6%
+  que publica el INE — diferencia chica y compatible con promediar los 12
+  meses por separado.
+
 ## [0.11.0] — 2026-08-16
 
 ### Agregado

@@ -79,6 +79,7 @@ from encuesta_hogares import (  # noqa: E402
     notebook_builder,
     preprocessing,
     verificacion_catalogo,
+    verificacion_plausibilidad,
     visualization,
 )
 
@@ -168,6 +169,20 @@ def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         hogares = data_loader.load_hogares(sorted(carpeta.glob("H_*.sav"))[0])
         personas = data_loader.load_personas(sorted(carpeta.glob("P_*.sav"))[0])
     return preprocessing.normalizar_departamento(hogares), personas
+
+
+def _revisar_plausibilidad(anio: str, bloque: str, cifras: dict) -> None:
+    """Frena si una cifra es un disparate o rompe una identidad estadística.
+
+    No compara contra las cifras del INE ni pretende reproducirlas: la
+    metodología de este proyecto puede diferir legítimamente. Lo que
+    verifica es que el resultado no sea imposible — ver
+    `verificacion_plausibilidad`.
+    """
+    limpias = {k: v for k, v in cifras.items() if isinstance(v, (int, float))}
+    hallazgos = verificacion_plausibilidad.revisar(limpias)
+    detalle = "\n  ".join(str(h) for h in hallazgos)
+    assert not hallazgos, f"{anio} · {bloque}: el resultado no es plausible —\n  {detalle}"
 
 
 def validar_anio(anio: str, rec: Recolector) -> None:
@@ -261,10 +276,14 @@ def validar_anio(anio: str, rec: Recolector) -> None:
         resumen_conectividad = analysis.resumen_conectividad(hogares_ext)
         assert resumen_conectividad.total_hogares > 0
         assert 0 <= resumen_conectividad.pct_con_internet <= 100
+        _revisar_plausibilidad(anio, "Conectividad", {
+            "pct_con_internet": resumen_conectividad.pct_con_internet,
+        })
         print(f"Montevideo: {resumen_conectividad.total_hogares} hogares, {resumen_conectividad.pct_con_internet}% con internet (ponderado)")
 
         pobres = analysis.pct_pobres_indigentes(hogares_ext)
         assert 0 <= pobres["pct_pobres"] <= 100
+        _revisar_plausibilidad(anio, "Pobreza", pobres)
         print(f"Pobreza (ponderada): {pobres['pct_pobres']}% — sin ponderar sería {round(hogares_ext['pobre'].mean() * 100, 2)}%")
 
         brecha = analysis.brecha_digital_por_nivel_economico(hogares_ext)
@@ -369,6 +388,10 @@ def _validar_fies(anio: str, rec: Recolector) -> None:
         fies_clasificado = preprocessing.prepare_fies(fies)
         prevalencia = analysis.prevalencia_inseguridad_alimentaria(fies_clasificado)
         assert 0 <= prevalencia["moderada_o_severa"] <= 100
+        _revisar_plausibilidad(anio, "FIES", {
+            "pct_inseguridad_alimentaria": prevalencia["moderada_o_severa"],
+            "pct_inseguridad_severa": prevalencia.get("severa"),
+        })
         print(f"FIES: OK (inseguridad moderada o severa: {prevalencia['moderada_o_severa']}%)")
 
         inseguridad_por_region = analysis.inseguridad_alimentaria_por(fies_clasificado, "region")
@@ -382,6 +405,7 @@ def _validar_empleo(anio: str, rec: Recolector) -> None:
         assert empleo["mes"].nunique() == 12, "el panel de empleo tiene que traer los 12 meses"
         tasas = analysis.tasas_actividad_empleo_desempleo(empleo)
         assert 0 <= tasas["tasa_desempleo"] <= 100
+        _revisar_plausibilidad(anio, "Empleo", tasas)
         print(f"Empleo: OK (tasa de desempleo promedio anual: {tasas['tasa_desempleo']}%)")
 
         tasas_por_sexo = analysis.tasas_actividad_empleo_desempleo_por(empleo, "sexo_grupo")
