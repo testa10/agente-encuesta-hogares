@@ -140,3 +140,33 @@ def test_el_bat_de_arranque_usa_el_mismo_modelo_que_el_subagente():
         f"abrir_agente.bat no fija el mismo modelo que el subagente ({modelo}). "
         "Al actualizar uno hay que actualizar el otro."
     )
+
+
+# ============================================================================
+# Los números de métrica que citan las instrucciones tienen que existir en el
+# catálogo real. Nace de un desfasaje que pasó de verdad: al renumerar el
+# catálogo de 43 a 42 métricas (v0.9.0) se actualizó el código y los tests,
+# pero NO este archivo — quedó citando "métricas 37-43" cuando el catálogo
+# llega hasta 42, y "métrica 36" para algo que pasó a ser la 35. El agente
+# lee estas instrucciones, así que un número corrido lo manda a la métrica
+# equivocada.
+# ============================================================================
+
+def test_las_instrucciones_no_citan_metricas_fuera_del_catalogo():
+    from encuesta_hogares import verificacion_catalogo as vc
+
+    catalogo = set(vc.numeros_del_catalogo())
+    maximo = max(catalogo)
+    texto = AGENTE_MD.read_text(encoding="utf-8")
+
+    citados = set()
+    for rango in re.findall(r"métricas (\d+)-(\d+)\)", texto):
+        citados.update({int(rango[0]), int(rango[1])})
+    citados.update(int(n) for n in re.findall(r"la métrica (\d+)", texto))
+
+    fuera = sorted(n for n in citados if n not in catalogo)
+    assert not fuera, (
+        f"Las instrucciones del agente citan métricas que no existen en el "
+        f"catálogo (que va de 1 a {maximo}): {fuera} — quedaron con la "
+        f"numeración vieja después de renumerar."
+    )

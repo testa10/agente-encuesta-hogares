@@ -519,16 +519,54 @@ def _m12() -> Celda:
     return Celda(_markdown(12, "barras_h"), codigo)
 
 
+# Los CUATRO componentes del indice de desarrollo territorial.
+#
+# Empleo se sumo en la version 0.10.0: hasta entonces el catalogo y el
+# glosario decian que el indice combinaba "pobreza, empleo, precariedad de
+# vivienda y nivel economico", pero el calculo usaba solo tres - empleo no
+# estaba. Lo encontro el dueño del proyecto mirando el heatmap del perfil
+# territorial, que mostraba tres columnas donde el texto prometia cuatro.
+# Se eligio agregar el componente que faltaba, y no corregir el texto,
+# porque la definicion con empleo es la que se queria (y es la que usa el
+# IDERE-UY, el antecedente que este proyecto cita para Uruguay).
+#
+# Se usa la TASA DE EMPLEO y no la de desempleo a proposito: es el
+# indicador en positivo (mas alto = mejor), asi no hay que invertirlo y
+# queda alineado con el resto de la escala del indice.
+#
+# `normalizar_departamento` sobre el empleo NO es opcional: los archivos
+# de Empleo traen el departamento como "Artigas" y los de Hogares como
+# "ARTIGAS". Verificado contra los datos reales de 2025: sin normalizar,
+# de 19 departamentos coinciden 0, y el `.dropna()` de abajo dejaria el
+# indice COMPLETAMENTE VACIO en silencio, sin ningun error. Es exactamente
+# el modo de falla que documenta `preprocessing.normalizar_departamento`.
+#
+# El empleo se carga aca aunque el usuario no haya elegido el bloque
+# Empleo: el indice lo necesita igual. Se carga por separado (y no se
+# reusa `empleo_prep`, que solo existe si se eligio ese bloque) para que
+# esta celda funcione sola, sin depender de que otra la haya preparado.
 _COMPONENTES_TERRITORIO = (
     'pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")\n'
     'estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")\n'
     'precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")\n'
+    'with bitacora.medir("carga_de_datos_empleo_territorial"):\n'
+    "    empleo_territorial = preprocessing.normalizar_departamento(\n"
+    "        preprocessing.prepare_empleo(data_loader.load_empleo(ANIO))\n"
+    "    )\n"
+    'empleo_depto = analysis.tasas_actividad_empleo_desempleo_por(empleo_territorial, "departamento").set_index("departamento")\n'
     "componentes_territorio = pd.DataFrame({\n"
-    '    "pct_pobreza": pobreza_depto["pct_pobres"],\n'
-    '    "pct_precariedad": precariedad_depto["pct_precariedad"],\n'
-    '    "estrato_promedio": estrato_depto["estrato_promedio"],\n'
+    '    "Pobreza": pobreza_depto["pct_pobres"],\n'
+    '    "Precariedad de vivienda": precariedad_depto["pct_precariedad"],\n'
+    '    "Empleo": empleo_depto["tasa_empleo"],\n'
+    '    "Nivel económico": estrato_depto["estrato_promedio"],\n'
     "}).dropna()\n"
-    'indice_territorial = analysis.indice_desarrollo_territorial(componentes_territorio, invertir=["pct_pobreza", "pct_precariedad"])'
+    "assert len(componentes_territorio) > 1, (\n"
+    '    "El indice territorial quedo con %d departamentos: casi seguro que el cruce "\n'
+    '    "por departamento no coincidio entre fuentes." % len(componentes_territorio)\n'
+    ")\n"
+    'indice_territorial = analysis.indice_desarrollo_territorial(\n'
+    '    componentes_territorio, invertir=["Pobreza", "Precariedad de vivienda"]\n'
+    ")"
 )
 
 

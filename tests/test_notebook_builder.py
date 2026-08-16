@@ -157,3 +157,49 @@ def test_el_glosario_no_tiene_terminos_que_nadie_use():
         f"El glosario define términos que ninguna métrica usa: {sorted(sin_usar)} "
         f"— borrarlos o conectarlos a la métrica que corresponda."
     )
+
+
+# ============================================================================
+# Los componentes del índice territorial y lo que el informe dice de él
+# tienen que coincidir. Nace de un defecto real encontrado por el dueño del
+# proyecto mirando el heatmap del perfil territorial: el texto prometía
+# "pobreza, empleo, precariedad de vivienda y nivel económico" y la gráfica
+# mostraba tres columnas — empleo no estaba en el cálculo. Nada lo detectó
+# porque los tests verificaban que el índice estuviera entre 0 y 1, no que
+# su descripción coincidiera con sus componentes reales.
+# ============================================================================
+
+_COMPONENTES_ESPERADOS = ("Pobreza", "Precariedad de vivienda", "Empleo", "Nivel económico")
+
+
+def test_el_indice_territorial_calcula_los_cuatro_componentes_que_promete():
+    codigo = nb._COMPONENTES_TERRITORIO
+    for componente in _COMPONENTES_ESPERADOS:
+        assert f'"{componente}"' in codigo, (
+            f"El índice territorial no calcula «{componente}», pero el catálogo y el "
+            f"glosario dicen que sí. Si se saca un componente, hay que sacarlo también "
+            f"del texto — no puede decir una cosa y calcular otra."
+        )
+
+
+def test_el_glosario_describe_los_mismos_componentes_que_se_calculan():
+    definicion = nb._GLOSARIO["indice_territorial"].lower()
+    for termino in ("pobreza", "empleo", "precariedad", "nivel económico"):
+        assert termino in definicion, (
+            f"El glosario del índice territorial no menciona «{termino}», que sí es "
+            f"uno de los componentes calculados."
+        )
+
+
+def test_el_indice_territorial_normaliza_el_departamento_del_empleo():
+    """Sin esto el cruce da cero filas y el índice queda vacío en silencio:
+    los archivos de Empleo traen "Artigas" y los de Hogares "ARTIGAS".
+    Verificado contra los datos reales de 2025 (0 de 19 coincidían)."""
+    codigo = nb._COMPONENTES_TERRITORIO
+    assert "normalizar_departamento" in codigo, (
+        "El componente de empleo del índice territorial se cruza por departamento "
+        "sin normalizar — eso deja el índice vacío sin ningún error visible."
+    )
+    assert "assert len(componentes_territorio) > 1" in codigo, (
+        "Falta la red de seguridad que detecta un cruce vacío por departamento."
+    )

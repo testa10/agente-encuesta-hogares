@@ -149,12 +149,25 @@ class Recolector:
 
 
 def _cargar_hogares_y_personas(anio: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Carga Hogares/Personas del año, **normalizando el departamento** —
+    exactamente lo mismo que hace `notebook_builder.celda_preparacion_datos`
+    en el flujo real.
+
+    Esa normalización no estaba acá y el resultado fue que esta validación
+    dejó de reflejar la producción: al sumarle el componente de empleo al
+    índice territorial (v0.10.0), el cruce por departamento daba 0 filas
+    solo en este script —porque acá `hogares` venía con "Montevideo" y el
+    empleo normalizado con "MONTEVIDEO"—, mientras el notebook real
+    funcionaba bien. Una validación que no reproduce el mismo preprocesado
+    que producción sirve para muy poco.
+    """
     carpeta = config.DATA_DIR / anio
     if config.hogares_csv_file(anio).exists():
-        return data_loader.load_hogares_personas_csv(anio)
-    h_path = sorted(carpeta.glob("H_*.sav"))[0]
-    p_path = sorted(carpeta.glob("P_*.sav"))[0]
-    return data_loader.load_hogares(h_path), data_loader.load_personas(p_path)
+        hogares, personas = data_loader.load_hogares_personas_csv(anio)
+    else:
+        hogares = data_loader.load_hogares(sorted(carpeta.glob("H_*.sav"))[0])
+        personas = data_loader.load_personas(sorted(carpeta.glob("P_*.sav"))[0])
+    return preprocessing.normalizar_departamento(hogares), personas
 
 
 def validar_anio(anio: str, rec: Recolector) -> None:
@@ -203,21 +216,42 @@ def validar_anio(anio: str, rec: Recolector) -> None:
     with rec.bloque(f"{anio} · Índice de desarrollo territorial"):
         rec.requiere(hogares=hogares, hogares_cond=hogares_cond)
         hogares_cond["pobre"] = hogares_cond["pobre"] == 1.0
-        if n_carencias > 0:
+        hay_empleo = config.datos_disponibles(anio)["empleo"]
+        if n_carencias > 0 and hay_empleo:
             pobreza_depto = analysis.pct_pobres_por(hogares_cond, "departamento").set_index("departamento")
             estrato_depto = analysis.estrato_promedio_por(hogares, "departamento").set_index("departamento")
             precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento").set_index("departamento")
+            # normalizar_departamento sobre Empleo no es opcional: esos
+            # archivos traen "Artigas" y los de Hogares "ARTIGAS".
+            # Verificado contra 2025: sin normalizar coinciden 0 de 19
+            # departamentos y el dropna() deja el índice vacío en silencio.
+            empleo_territorial = preprocessing.normalizar_departamento(
+                preprocessing.prepare_empleo(data_loader.load_empleo(anio))
+            )
+            empleo_depto = analysis.tasas_actividad_empleo_desempleo_por(
+                empleo_territorial, "departamento"
+            ).set_index("departamento")
             componentes = pd.DataFrame({
-                "pct_pobreza": pobreza_depto["pct_pobres"],
-                "pct_precariedad": precariedad_depto["pct_precariedad"],
-                "estrato_promedio": estrato_depto["estrato_promedio"],
+                "Pobreza": pobreza_depto["pct_pobres"],
+                "Precariedad de vivienda": precariedad_depto["pct_precariedad"],
+                "Empleo": empleo_depto["tasa_empleo"],
+                "Nivel económico": estrato_depto["estrato_promedio"],
             }).dropna()
-            indice = analysis.indice_desarrollo_territorial(componentes, invertir=["pct_pobreza", "pct_precariedad"])
+            assert len(componentes) > 1, (
+                f"el índice territorial quedó con {len(componentes)} departamento(s) — "
+                "el cruce por departamento no coincidió entre fuentes"
+            )
+            indice = analysis.indice_desarrollo_territorial(
+                componentes, invertir=["Pobreza", "Precariedad de vivienda"]
+            )
             assert indice["indice"].between(0, 1).all()
             assert visualization.plot_indice_desarrollo_territorial(indice) is not None
-            print(f"Índice territorial: OK ({len(indice)} departamentos)")
-        else:
+            assert visualization.plot_perfil_territorial(indice) is not None
+            print(f"Índice territorial: OK ({len(indice)} departamentos, 4 componentes)")
+        elif n_carencias == 0:
             print("Índice territorial: sin verificar — módulo de condiciones de vivienda no disponible este año")
+        else:
+            print("Índice territorial: sin verificar — sin datos de Empleo, uno de sus 4 componentes")
 
     # --- Brecha Digital / Hogares: filtro a Montevideo + variables decodificadas ---
     with rec.bloque(f"{anio} · Brecha digital y pobreza (Montevideo)"):
@@ -433,7 +467,11 @@ def _correr_plantillas_del_catalogo(anio: str) -> None:
     if not disponibles["fies"]:
         metricas = [n for n in metricas if n not in range(21, 28)]
     if not disponibles["empleo"]:
-        metricas = [n for n in metricas if n not in range(28, 36)]
+        # 13-15 (Territorio) tambien: desde la 0.10.0 el indice de
+        # desarrollo territorial lleva la tasa de empleo como uno de sus
+        # cuatro componentes, asi que sin datos de Empleo no se puede
+        # calcular (el caso real es 2019, que no tiene ese modulo).
+        metricas = [n for n in metricas if n not in range(28, 36) and n not in (13, 14, 15)]
     if not disponibles["seguridad"]:
         metricas = [n for n in metricas if n not in range(36, 43)]
 

@@ -105,6 +105,55 @@ changelog arranca en la versión donde se formalizó el versionado.
     ni comparar con estadísticas anuales de otras fuentes.
   - **FIES**: se calcula sobre una submuestra de hogares.
 
+## [0.10.0] — 2026-08-16
+
+### Cambiado
+
+- **El índice de desarrollo territorial ahora sí calcula los cuatro
+  componentes que dice calcular.** El catálogo y el glosario decían que
+  combinaba "pobreza, empleo, precariedad de vivienda y nivel económico",
+  pero el cálculo usaba solo tres: **empleo nunca estuvo**. Lo encontró el
+  dueño del proyecto mirando el heatmap del perfil territorial, que
+  mostraba tres columnas donde el texto prometía cuatro.
+
+  Se agregó el componente que faltaba en vez de corregir el texto, porque
+  la definición con empleo es la que se quiere (y es la que usa el
+  IDERE-UY, el antecedente para Uruguay que este proyecto cita). Se usa la
+  **tasa de empleo** y no la de desempleo: es el indicador en positivo
+  (más alto = mejor), así no hay que invertirlo.
+
+  **Los valores del índice cambian** — no son comparables con los de un
+  informe generado antes de esta versión.
+
+  Nada lo había detectado porque los tests verificaban que el índice
+  estuviera entre 0 y 1, no que su descripción coincidiera con sus
+  componentes reales. Ahora hay tests que comparan una cosa con la otra.
+
+- **Las columnas del heatmap dejan de mostrar nombres de variable.** Decían
+  `pct_pobreza`, `pct_precariedad`, `estrato_promedio` — identificadores
+  del código, ilegibles para el público del informe. Ahora dicen
+  "Pobreza", "Precariedad de vivienda", "Empleo" y "Nivel económico".
+
+- **Las métricas de Territorio (13-15) quedan no disponibles en los años
+  sin datos de Empleo** (2019), porque el índice ahora lo necesita.
+
+### Corregido
+
+- **`normalizar_departamento` sobre los datos de Empleo, sin lo cual el
+  índice quedaba vacío en silencio.** Los archivos de Empleo traen el
+  departamento como "Artigas" y los de Hogares como "ARTIGAS":
+  verificado contra los datos reales de 2025, de 19 departamentos
+  coincidían **0**, y el `.dropna()` habría dejado el índice sin ninguna
+  fila sin lanzar ningún error. Es exactamente el modo de falla que ya
+  documentaba `preprocessing.normalizar_departamento`. Se agregó además
+  un `assert` como red de seguridad por si el cruce vuelve a fallar.
+
+- **Los números de métrica de las instrucciones del agente**, que habían
+  quedado con la numeración vieja tras renumerar el catálogo de 43 a 42
+  en la 0.9.0: citaban "métricas 37-43" cuando el catálogo llega a 42, y
+  "métrica 36" para lo que pasó a ser la 35. Nueve referencias corregidas,
+  con un test que ahora falla si alguna cita un número que no existe.
+
 ## [0.9.0] — 2026-08-15
 
 ### Eliminado
