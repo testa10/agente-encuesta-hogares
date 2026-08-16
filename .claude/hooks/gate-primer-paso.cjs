@@ -23,6 +23,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { registrar } = require("./_lib_bitacora.cjs");
 
 const DOCS_PERMITIDOS_ANTES_DEL_PASO_1 = ["metodologia.md", "flujo_de_trabajo.md", "convenciones_de_graficas.md"];
 
@@ -102,6 +103,7 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
+  registrar("hook_bloqueo", { hook: "primer-paso", ...{ herramienta: toolName } });
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {

@@ -105,6 +105,60 @@ changelog arranca en la versión donde se formalizó el versionado.
     ni comparar con estadísticas anuales de otras fuentes.
   - **FIES**: se calcula sobre una submuestra de hogares.
 
+## [0.11.0] — 2026-08-16
+
+### Agregado
+
+- **El formulario de áreas ya no ofrece bloques que quedarían vacíos.**
+  Hasta ahora Brecha Digital, Hogares, Territorio y Vivienda se ofrecían
+  siempre, "porque dependen únicamente de los datos de Hogares" — una
+  suposición falsa. Se llevó puesta una corrida real: se eligió 2023 y se
+  marcó solo Territorio, que ese año está **completamente vacío** (el INE
+  no relevó el módulo C5); el catálogo quedaba sin ninguna métrica y el
+  flujo volvía al mismo formulario sin explicar nada, como si fuera un
+  error del programa.
+
+  Peor era el caso silencioso: eligiendo Territorio **junto con** otro
+  bloque, el informe salía sin ninguna métrica territorial y sin ningún
+  aviso, porque el filtro recién actuaba al armar el catálogo.
+
+  Ahora los **siete** bloques se filtran por disponibilidad real, y los
+  que quedan afuera se listan con su motivo ("falta `c5_2` en los datos
+  del INE", "necesita datos de Empleo"). Lo resuelve
+  `verificacion_catalogo.bloques_disponibles(anio)`, que devuelve los
+  argumentos de `plantilla_areas` ya calculados — el agente no computa
+  nada a mano.
+
+- **Los hooks dejan constancia en la bitácora cuando bloquean.** En una
+  corrida real el notebook se ejecutó tres veces (83 s + 98 s + 83 s,
+  contra los ~83 s de una sola pasada) y no había forma de saber si eso
+  fue el trabajo legítimo de los hooks o retrabajo evitable, porque no
+  dejaban ningún rastro. Ahora cada bloqueo queda en la misma línea de
+  tiempo que los formularios y los tiempos de cada paso.
+
+- **Ninguna cifra del "Resumen analítico final" puede estar inventada.**
+  Nuevo hook (`gate-resumen-cifras-inventadas.cjs`) que verifica que cada
+  número citado en el resumen exista de verdad en la salida ejecutada del
+  notebook. Es el único lugar del informe donde el modelo transcribe
+  números a prosa —todo el resto calcula con pandas y muestra el
+  resultado— y es la parte que más gente lee.
+
+  Diseñado para no dar falsos positivos, que ahí serían peores que el
+  problema: acepta redondeos legítimos ("cerca del 14%" cuando el dato es
+  14,14%), coma o punto decimal, no confunde años con estadísticas, no
+  mira el cuerpo del informe y no bloquea un notebook sin ejecutar.
+
+### Corregido
+
+- **Los tests volvían a ensuciar la bitácora real**, ahora por el lado de
+  Node: al hacer que los hooks registraran sus bloqueos, cualquier test
+  que corriera un hook escribía en la bitácora de quien tuviera el
+  proyecto en esa carpeta. Es la segunda vez que aparece el mismo
+  problema (la primera fue por Python). Se cerró con un `conftest.py`
+  *autouse* que redirige el log de los hooks para toda la suite, más la
+  variable `ENCUESTA_HOGARES_BITACORA` — así un test nuevo no tiene que
+  saber que ese riesgo existe.
+
 ## [0.10.0] — 2026-08-16
 
 ### Cambiado

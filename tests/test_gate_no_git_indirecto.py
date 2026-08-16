@@ -14,6 +14,7 @@ límite de palabra igual que un espacio real.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -63,3 +64,58 @@ class TestGateNoGitIndirecto:
 
     def test_permite_un_comando_sin_ninguna_mencion_a_git(self):
         assert _correr_hook("run_python.bat tools/validar_con_datos_reales.py") is None
+
+
+# ============================================================================
+# Todo hook que bloquea deja constancia en la bitácora. Nace de un hueco de
+# observabilidad real: en una corrida de producción el notebook se ejecutó
+# TRES veces (83s + 98s + 83s, contra los ~83s de una sola pasada). La
+# explicación más probable era que los hooks de notebook hubieran bloqueado
+# y forzado correcciones —justo para lo que existen—, pero no se pudo
+# confirmar porque no dejaban ningún rastro. Sin saber si esos 3 minutos son
+# calidad bien invertida o retrabajo evitable, no se puede decidir nada.
+# ============================================================================
+
+_HOOKS = Path(__file__).resolve().parents[1] / ".claude" / "hooks"
+
+
+@pytest.mark.skipif(not _NODE_DISPONIBLE, reason="node no está disponible en esta máquina")
+def test_todo_hook_que_puede_bloquear_registra_el_bloqueo():
+    sin_registrar = []
+    for hook in sorted(_HOOKS.glob("gate-*.cjs")):
+        texto = hook.read_text(encoding="utf-8")
+        puede_bloquear = '"deny"' in texto or '"block"' in texto
+        if puede_bloquear and "registrar(" not in texto:
+            sin_registrar.append(hook.name)
+    assert not sin_registrar, (
+        "Estos hooks bloquean sin dejar constancia en la bitácora, así que un "
+        "bloqueo suyo es invisible al diagnosticar una corrida: "
+        f"{sin_registrar} — usar `registrar()` de _lib_bitacora.cjs."
+    )
+
+
+@pytest.mark.skipif(not _NODE_DISPONIBLE, reason="node no está disponible en esta máquina")
+def test_el_bloqueo_queda_escrito_en_la_bitacora(tmp_path):
+    """Corre el hook de verdad con Node y comprueba que la línea se escriba.
+
+    Usa ENCUESTA_HOGARES_BITACORA para que el log caiga en un archivo
+    temporal: sin esa redirección, correr los hooks en los tests ensucia la
+    bitácora real de quien tenga el proyecto en esa carpeta (ver
+    tests/conftest.py, que la aplica a toda la suite).
+    """
+    log = tmp_path / "bitacora_de_prueba.jsonl"
+    entrada = json.dumps({
+        "tool_name": "Bash",
+        "tool_input": {"command": "python -c \"import subprocess; subprocess.run(['git','status'])\""},
+    })
+    resultado = subprocess.run(
+        ["node", str(_HOOK)], input=entrada, capture_output=True, text=True,
+        env={**os.environ, "ENCUESTA_HOGARES_BITACORA": str(log)},
+    )
+    assert "deny" in resultado.stdout, "el hook tenía que bloquear este comando"
+
+    assert log.exists(), "el hook bloqueó pero no escribió nada en la bitácora"
+    evento = json.loads(log.read_text(encoding="utf-8").splitlines()[0])
+    assert evento["tipo"] == "hook_bloqueo"
+    assert evento["hook"] == "no-git-indirecto"
+    assert "timestamp" in evento

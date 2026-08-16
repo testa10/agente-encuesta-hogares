@@ -384,14 +384,28 @@ que solo aparece si hay Empleo/Seguridad disponibles: ahora es donde se
 decide **todo** lo que va a tener el informe, incluyendo Brecha Digital y
 Hogares — ninguno de los siete bloques se incluye por defecto.
 
-Verificar con `config.datos_disponibles(anio)` si hay datos de FIES,
-Empleo (`empleo_files` completos, los 12 meses) y/o Seguridad para el año
-elegido, y mostrarle al usuario
-`formularios.plantilla_areas(fies_disponible, empleo_disponible, seguridad_disponible)`
-— selección múltiple, puede marcar cualquier combinación, incluida
-ninguna. Brecha Digital, Hogares, Territorio y Vivienda se ofrecen
-siempre (dependen solo de los datos de Hogares, que ya se validaron en el
-paso 3) — nunca darlos por elegidos ni saltear este formulario aunque el
+**Mostrarle al usuario el formulario así, sin calcular ningún flag a
+mano:**
+
+```python
+formularios.plantilla_areas(**verificacion_catalogo.bloques_disponibles(anio))
+```
+
+`bloques_disponibles(anio)` resuelve solo, para los **siete** bloques,
+cuáles tienen datos ese año y con qué motivo quedan afuera los demás. No
+hace falta consultar `config.datos_disponibles()` por separado para esto.
+
+**Nunca dar por hecho que Brecha Digital, Hogares, Territorio y Vivienda
+están siempre disponibles.** Se creía eso —"dependen solo de los datos de
+Hogares"— y es falso: en 2023 el INE no relevó el módulo C5, así que
+Territorio y Vivienda quedan **completamente vacíos** ese año, y en 2019
+no hay datos de Empleo, que el índice territorial necesita como uno de sus
+cuatro componentes. Pasó de verdad en una corrida real: se eligió 2023 y
+se marcó solo Territorio, el catálogo quedó sin ninguna métrica y el flujo
+volvió a este mismo formulario sin explicar nada.
+
+Es selección múltiple: puede marcar cualquier combinación, incluida
+ninguna — nunca darlos por elegidos ni saltear este formulario aunque el
 pedido original mencione "brecha digital" o "penetración tecnológica"
 explícitamente: **la persona tiene que marcarlo ella misma en esta
 pantalla**, igual que cualquier otro bloque. Guardar la respuesta

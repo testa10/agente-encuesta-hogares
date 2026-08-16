@@ -14,6 +14,7 @@
 // con un timeout largo (1800000ms) en la propia llamada Bash. Este hook
 // no depende de que el modelo se acuerde de evitar el modo segundo plano -
 // lo bloquea directamente.
+const { registrar } = require("./_lib_bitacora.cjs");
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
 process.stdin.on("end", () => {
@@ -31,6 +32,7 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
+  registrar("hook_bloqueo", { hook: "no-segundo-plano", ...{} });
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {

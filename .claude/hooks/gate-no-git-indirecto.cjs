@@ -34,6 +34,7 @@
 // Cambiado el límite de "contieneGit" para excluir también guion y guion
 // bajo (no solo caracteres alfanuméricos), y agregado `\n` a los
 // separadores de "invocacionDirecta".
+const { registrar } = require("./_lib_bitacora.cjs");
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
 process.stdin.on("end", () => {
@@ -68,6 +69,7 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
+  registrar("hook_bloqueo", { hook: "no-git-indirecto", ...{} });
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {

@@ -16,6 +16,8 @@
 // en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
 // notebook) - ver ese archivo para el bug real que motivo separarla.
 const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
+const path = require("path");
+const { registrar } = require("./_lib_bitacora.cjs");
 
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
@@ -71,6 +73,7 @@ process.stdin.on("end", () => {
   }
 
   const detalle = violaciones.map((v) => `celda ${v.celda} (variable "${v.variable}")`).join(", ");
+  registrar("hook_bloqueo", { hook: "notebook-sin-duplicados", ...{ violaciones: violaciones.length, notebook: path.basename(rutaNotebook) } });
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {

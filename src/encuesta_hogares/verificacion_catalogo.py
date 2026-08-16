@@ -333,3 +333,85 @@ def aviso_metricas_no_disponibles(anio: int | str) -> list[str]:
             f"falta{plural} {', '.join(faltantes)} en los datos del INE."
         )
     return avisos
+
+
+# ============================================================================
+# Qué bloques temáticos tiene sentido ofrecerle a la persona para un año.
+#
+# Nace de una corrida real: alguien eligió 2023 y marcó solo "Territorio",
+# que para ese año está COMPLETAMENTE vacío (el INE no relevó el módulo C5,
+# del que depende la precariedad de vivienda, uno de los componentes del
+# índice). El catálogo quedaba sin ninguna métrica y el flujo volvía al
+# formulario de áreas sin explicar nada — parecía un error del programa.
+#
+# El caso silencioso era peor: eligiendo Territorio junto con otro bloque,
+# el informe salía sin ninguna métrica territorial y sin ningún aviso.
+#
+# `plantilla_areas` no puede calcular esto por su cuenta porque este módulo
+# ya importa `formularios` — invertirlo sería un import circular. Por eso la
+# función vive acá y el formulario recibe los flags ya resueltos.
+# ============================================================================
+
+# bloque -> (numeros de metrica, nombre visible en el formulario)
+BLOQUES: dict[str, tuple[range, str]] = {
+    "brecha_digital": (range(1, 7), "Brecha Digital"),
+    "hogares": (range(7, 13), "Hogares"),
+    "territorio": (range(13, 16), "Territorio"),
+    "vivienda": (range(16, 21), "Vivienda"),
+    "fies": (range(21, 28), "Seguridad alimentaria"),
+    "empleo": (range(28, 36), "Empleo"),
+    "seguridad": (range(36, 43), "Seguridad y victimización"),
+}
+
+
+def metricas_no_disponibles_del_anio(anio: int | str) -> dict[int, str]:
+    """Todas las métricas que no se pueden calcular para `anio`, con el
+    motivo — juntando las tres razones posibles: falta una columna en
+    Hogares, falta una columna en Empleo, o directamente no existe el
+    archivo de ese módulo para el año."""
+    disponibles = config.datos_disponibles(anio)
+    motivos: dict[int, str] = {}
+
+    for numero, faltantes in metricas_hogares_no_disponibles(anio).items():
+        motivos[numero] = f"falta {', '.join(faltantes)} en los datos del INE"
+    for numero, faltantes in metricas_empleo_no_disponibles(anio).items():
+        motivos[numero] = f"falta {', '.join(faltantes)} en los datos del INE"
+
+    for bloque, clave in (("fies", "fies"), ("empleo", "empleo"), ("seguridad", "seguridad")):
+        if not disponibles[clave]:
+            for numero in BLOQUES[bloque][0]:
+                motivos.setdefault(numero, "el INE no publicó ese módulo para este año")
+
+    # El índice de desarrollo territorial lleva la tasa de empleo como uno
+    # de sus cuatro componentes desde la v0.10.0, así que sin datos de
+    # Empleo tampoco se puede calcular (el caso real es 2019).
+    if not disponibles["empleo"]:
+        for numero in BLOQUES["territorio"][0]:
+            motivos.setdefault(numero, "necesita datos de Empleo, que el INE no publicó para este año")
+
+    return motivos
+
+
+def bloques_disponibles(anio: int | str) -> dict:
+    """Los argumentos que `formularios.plantilla_areas` necesita para no
+    ofrecer un bloque que quedaría vacío. Un bloque está disponible si al
+    menos una de sus métricas se puede calcular este año.
+
+    Se usa así:
+
+        formularios.plantilla_areas(**verificacion_catalogo.bloques_disponibles(anio))
+    """
+    sin_datos = metricas_no_disponibles_del_anio(anio)
+    argumentos: dict = {}
+    no_disponibles: dict[str, str] = {}
+
+    for bloque, (numeros, nombre_visible) in BLOQUES.items():
+        vivas = [n for n in numeros if n not in sin_datos]
+        argumentos[f"{bloque}_disponible"] = bool(vivas)
+        if not vivas:
+            # Todas las métricas del bloque comparten motivo en la
+            # práctica; se toma el del primero para no repetirlo siete veces.
+            no_disponibles[nombre_visible] = sin_datos[numeros[0]]
+
+    argumentos["no_disponibles"] = no_disponibles
+    return argumentos

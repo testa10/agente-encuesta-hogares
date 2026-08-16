@@ -717,7 +717,16 @@ document.getElementById('form').addEventListener('submit', async (e) => {{
 </script></body></html>"""
 
 
-def plantilla_areas(fies_disponible: bool, empleo_disponible: bool, seguridad_disponible: bool) -> str:
+def plantilla_areas(
+    fies_disponible: bool,
+    empleo_disponible: bool,
+    seguridad_disponible: bool,
+    brecha_digital_disponible: bool = True,
+    hogares_disponible: bool = True,
+    territorio_disponible: bool = True,
+    vivienda_disponible: bool = True,
+    no_disponibles: dict[str, str] | None = None,
+) -> str:
     """Paso 3.5: qué bloques temáticos quiere el usuario en el informe.
 
     **Ningún bloque viene marcado por defecto ni se asume — ni siquiera
@@ -727,40 +736,61 @@ def plantilla_areas(fies_disponible: bool, empleo_disponible: bool, seguridad_di
     elección más, al mismo nivel que FIES/Empleo/Seguridad — nadie ve nada
     de ningún bloque que no haya marcado acá primero.
 
-    Brecha Digital, Hogares, Territorio y Vivienda siempre se ofrecen como
-    opción (dependen únicamente de los datos de Hogares, que ya se validó
-    que existen en el paso 3). FIES/Empleo/Seguridad solo se ofrecen si
-    `config.datos_disponibles(anio)` los tiene para el año elegido — pasale
-    esos tres flags tal cual salen de ahí.
+    **Los SIETE bloques se ofrecen solo si el año elegido tiene datos para
+    ellos.** Hasta la versión 0.10.0, los cuatro primeros se ofrecían
+    siempre, "porque dependen únicamente de los datos de Hogares" — una
+    suposición falsa que se llevó puesta una corrida real: alguien eligió
+    2023 y marcó solo Territorio, que para ese año está **completamente
+    vacío** (el INE no relevó el módulo C5, del que depende la precariedad
+    de vivienda, uno de los componentes del índice). El catálogo quedaba
+    sin ninguna métrica y el flujo volvía a este mismo formulario, sin
+    explicar nada — parecía un error del programa.
+
+    Peor todavía era el caso silencioso: eligiendo Territorio **junto con**
+    otro bloque, el informe salía sin ninguna métrica territorial y sin
+    ningún aviso, porque el filtro por disponibilidad recién actuaba al
+    armar el catálogo.
+
+    Los flags no se calculan acá para no invertir la dependencia con
+    `verificacion_catalogo` (que ya importa este módulo): pedilos con
+    `verificacion_catalogo.bloques_disponibles(anio)`, que devuelve
+    exactamente estos argumentos.
+
+    `no_disponibles` es {nombre visible del bloque: motivo} para los que
+    quedaron afuera — se muestran como una nota al pie, para que la persona
+    entienda por qué su año tiene menos opciones en vez de suponer que el
+    programa se olvidó de algo.
     """
-    opciones = [
-        ("brecha_digital", "Brecha Digital",
+    candidatos = [
+        (brecha_digital_disponible, "brecha_digital", "Brecha Digital",
          "acceso a internet, calidad de la conexión y uso de tecnología (internet, computadora, streaming) en los hogares."),
-        ("hogares", "Hogares",
+        (hogares_disponible, "hogares", "Hogares",
          "composición del hogar, pobreza, jefatura, hacinamiento."),
-        ("territorio", "Territorio",
+        (territorio_disponible, "territorio", "Territorio",
          "un índice que combina pobreza, empleo, vivienda y nivel económico para comparar el desarrollo de los 19 departamentos."),
-        ("vivienda", "Vivienda",
+        (vivienda_disponible, "vivienda", "Vivienda",
          "condiciones estructurales de la vivienda (humedad, goteras, grietas, etc.)."),
+        (fies_disponible, "fies", "Seguridad alimentaria",
+         "inseguridad alimentaria en los hogares (submuestra), según ingreso y composición del hogar."),
+        (empleo_disponible, "empleo", "Empleo",
+         "actividad, desempleo, informalidad y subempleo."),
+        (seguridad_disponible, "seguridad", "Seguridad y victimización",
+         "percepción de seguridad y hechos delictivos sufridos por el hogar."),
     ]
-    if fies_disponible:
-        opciones.append((
-            "fies", "Seguridad alimentaria",
-            "inseguridad alimentaria en los hogares (submuestra), según ingreso y composición del hogar.",
-        ))
-    if empleo_disponible:
-        opciones.append(("empleo", "Empleo", "actividad, desempleo, informalidad y subempleo."))
-    if seguridad_disponible:
-        opciones.append((
-            "seguridad", "Seguridad y victimización",
-            "percepción de seguridad y hechos delictivos sufridos por el hogar.",
-        ))
+    opciones = [(valor, nombre, explicacion) for disponible, valor, nombre, explicacion in candidatos if disponible]
 
     opciones_html = "\n".join(
         f'<label class="metrica"><input type="checkbox" name="area" value="{valor}">'
         f'<span class="texto"><b>{nombre}</b> — <span class="explicacion">{explicacion}</span></span></label>'
         for valor, nombre, explicacion in opciones
     )
+    if no_disponibles:
+        detalle = "".join(f"<li><b>{nombre}</b>: {motivo}</li>" for nombre, motivo in sorted(no_disponibles.items()))
+        opciones_html += (
+            '<p class="nota-categoria" style="margin-top:18px;">'
+            "Para este año no están disponibles todos los temas, porque el INE no "
+            f"relevó esos datos:<ul style='margin:8px 0 0; padding-left:20px;'>{detalle}</ul></p>"
+        )
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <title>¿Qué querés incluir en el informe?</title>
 <style>{_ESTILO}</style></head><body>

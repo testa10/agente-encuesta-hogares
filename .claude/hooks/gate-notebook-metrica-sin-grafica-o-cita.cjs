@@ -23,6 +23,8 @@
 // en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
 // notebook) - ver ese archivo para el bug real que motivo separarla.
 const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
+const path = require("path");
+const { registrar } = require("./_lib_bitacora.cjs");
 
 const AUTORES_CONOCIDOS = [
   "Cleveland",
@@ -118,6 +120,7 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
+  registrar("hook_bloqueo", { hook: "notebook-metrica-sin-grafica-o-cita", ...{ violaciones: violaciones.length, notebook: path.basename(rutaNotebook) } });
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {

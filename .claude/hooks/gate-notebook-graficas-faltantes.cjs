@@ -11,6 +11,8 @@
 // en _lib_notebook_ejecutado.cjs (compartida con los otros dos hooks de
 // notebook) - ver ese archivo para el bug real que motivo separarla.
 const { resolverNotebookEjecutado } = require("./_lib_notebook_ejecutado.cjs");
+const path = require("path");
+const { registrar } = require("./_lib_bitacora.cjs");
 
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
@@ -60,6 +62,11 @@ process.stdin.on("end", () => {
     process.exit(0);
   }
 
+  registrar("hook_bloqueo", {
+    hook: "notebook-graficas-faltantes",
+    celdas_sin_output: celdasSinOutput.length,
+    notebook: path.basename(rutaNotebook),
+  });
   process.stdout.write(
     JSON.stringify({
       decision: "block",
