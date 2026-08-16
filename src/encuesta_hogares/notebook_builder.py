@@ -209,10 +209,201 @@ _JUSTIFICACION_POR_FAMILIA = {
 }
 
 
+# ============================================================================
+# Glosario de terminos, para que toda metrica explique su jerga.
+#
+# Nace de un problema real encontrado por el dueno del proyecto leyendo un
+# informe generado: las metricas de Empleo traian la formula del INE de
+# "tasa de actividad/empleo/desempleo" y otras metricas no explicaban nada.
+# La diferencia no era una decision: esas definiciones las escribia el
+# modelo a mano durante la corrida, asi que aparecian o no segun se
+# acordara. Igual que con los hooks y con el panorama de TV cable, una
+# regla que depende de que el modelo se acuerde no se cumple pareja - por
+# eso ahora el glosario es fijo y se arma solo.
+#
+# Cada definicion describe **lo que de verdad calcula este proyecto**
+# (verificable contra analysis.py/preprocessing.py), siguiendo el criterio
+# del INE. No se transcriben textos oficiales que no esten verificados.
+# ============================================================================
+
+_GLOSARIO = {
+    "condicion_actividad": (
+        "**Condición de actividad**: el INE clasifica a cada persona de 14 años o más como "
+        "*ocupada* (trabajó en el período de referencia), *desocupada* (no trabajó, buscó "
+        "trabajo y estaba disponible) o *inactiva* (ni trabaja ni busca). Los menores de 14 "
+        "años quedan fuera de todo este bloque."
+    ),
+    "tasa_actividad": (
+        "**Tasa de actividad** = (ocupados + desocupados) ÷ población de 14 años o más × 100. "
+        "Qué parte de la población en edad de trabajar está en el mercado laboral, sea "
+        "trabajando o buscando."
+    ),
+    "tasa_empleo": (
+        "**Tasa de empleo** = ocupados ÷ población de 14 años o más × 100."
+    ),
+    "tasa_desempleo": (
+        "**Tasa de desempleo** = desocupados ÷ (ocupados + desocupados) × 100. El denominador "
+        "es la población *activa*, no la población total: por eso un 8% de desempleo **no** "
+        "significa que el 8% de la gente no tenga trabajo, sino el 8% de quienes están "
+        "trabajando o buscando."
+    ),
+    "informalidad": (
+        "**Informalidad**: se considera informal a la persona ocupada que no aporta a la "
+        "seguridad social por ese trabajo. Es el criterio estándar en la región y el mismo que "
+        "usa el paquete oficial de R del INE para la ECH."
+    ),
+    "subempleo": (
+        "**Subempleo**: personas ocupadas que trabajan menos horas de las que querrían y están "
+        "disponibles para trabajar más."
+    ),
+    "pobreza": (
+        "**Pobreza e indigencia**: clasificación que ya viene calculada por el INE, no estimada "
+        "acá. Un hogar es *pobre* si su ingreso no alcanza la línea de pobreza (el costo de una "
+        "canasta básica alimentaria y no alimentaria) para su composición, e *indigente* si no "
+        "alcanza siquiera la canasta alimentaria."
+    ),
+    "nivel_economico": (
+        "**Nivel económico**: agrupación del estrato socioeconómico que asigna el INE a cada "
+        "hogar, de 1 (más bajo) a 5 (más alto)."
+    ),
+    "hacinamiento": (
+        "**Hacinamiento**: hogares con más de 2 personas por habitación."
+    ),
+    "jefe_hogar": (
+        "**Jefe/a de hogar**: la persona que los propios integrantes del hogar reconocen como "
+        "tal al responder la encuesta — no la determina el INE por ingreso ni por edad."
+    ),
+    "tipos_hogar": (
+        "**Tipos de hogar** (taxonomía CELADE/CEPAL): *unipersonal* (una sola persona), "
+        "*nuclear* (pareja y/o hijos), *extendido* (núcleo más otros parientes), *compuesto* "
+        "(incluye personas sin parentesco) y *sin núcleo* (parientes sin pareja ni hijos)."
+    ),
+    "razon_dependencia": (
+        "**Razón de dependencia demográfica** = personas menores de 15 más mayores de 65, "
+        "dividido por las de 15 a 64, × 100. Cuántas personas en edades potencialmente "
+        "dependientes hay por cada 100 en edad activa."
+    ),
+    "carencia_estructural": (
+        "**Carencia estructural de la vivienda**: la vivienda tiene al menos uno de los "
+        "problemas que releva el INE (humedad, goteras, grietas, riesgo de derrumbe, etc.). "
+        "Basta una para contarla como deficitaria — el mismo criterio de conteo de carencias "
+        "que usa el INE para NBI-vivienda. Qué problemas se relevan cambia según el año."
+    ),
+    "tecnologias": (
+        "**Tecnologías del hogar**: tener conexión a internet, computadora y servicios de "
+        "streaming. Son variables del hogar, no de cada persona."
+    ),
+    "calidad_conexion": (
+        "**Calidad de la conexión**: no solo tener o no tener internet, sino cómo. *Banda ancha "
+        "fija* (conexión del hogar), *solo móvil* (únicamente por datos de celular) o *sin "
+        "conexión*. Si el hogar tiene las dos, cuenta como banda ancha fija."
+    ),
+    "indice_acceso_digital": (
+        "**Índice de acceso digital**: puntaje de 0 a 3 según cuántas de las tres tecnologías "
+        "tiene el hogar (internet, computadora, streaming). Es un conteo simple, inspirado en "
+        "el enfoque de canasta digital básica de CEPAL."
+    ),
+    "cohorte": (
+        "**Cohorte generacional**: agrupa a los hogares según el año de nacimiento del jefe/a "
+        "(baby boomers, generación X, millennials, etc.), calculado sobre el año de la encuesta."
+    ),
+    "indice_territorial": (
+        "**Índice de desarrollo territorial**: combina pobreza, empleo, precariedad de vivienda "
+        "y nivel económico en un puntaje de 0 a 1 por departamento, normalizando cada componente "
+        "e invirtiendo los negativos para que más alto siempre signifique mejor. Es una medida "
+        "del departamento, nunca de un hogar puntual."
+    ),
+    "fies": (
+        "**Inseguridad alimentaria (escala FIES de FAO)**: se construye con preguntas sobre "
+        "haber tenido que saltear comidas o reducirlas por falta de dinero. *Moderada* implica "
+        "haber comprometido la calidad o la cantidad de la comida; *severa*, haber pasado hambre."
+    ),
+    "quintil": (
+        "**Quintil de ingreso**: los hogares ordenados por ingreso y partidos en cinco grupos "
+        "iguales. El quintil 1 es el 20% de menor ingreso y el 5 el 20% de mayor."
+    ),
+    "victimizacion": (
+        "**Victimización**: haber sufrido un delito en el mes anterior a la entrevista. Es una "
+        "cifra mensual, no anual."
+    ),
+    "comunicacion_policia": (
+        "**Comunicación a la policía**: haber avisado a la policía de cualquier modo, sin que "
+        "eso implique una denuncia formal."
+    ),
+    "denuncia_formal": (
+        "**Denuncia formal**: haber hecho la denuncia presencial en la comisaría. Es un "
+        "subconjunto de quienes se comunicaron con la policía."
+    ),
+}
+
+# numero de metrica -> terminos que usa. Toda metrica del catalogo tiene
+# entrada; `test_toda_metrica_del_catalogo_explica_sus_terminos` lo hace
+# cumplir, asi que una metrica nueva no puede quedarse sin glosario.
+_TERMINOS_POR_METRICA = {
+    1: ("tecnologias", "nivel_economico"),
+    2: ("tecnologias", "cohorte"),
+    3: ("calidad_conexion", "nivel_economico"),
+    4: ("tecnologias", "jefe_hogar"),
+    5: ("indice_acceso_digital", "nivel_economico"),
+    6: ("jefe_hogar",),
+    7: ("pobreza",),
+    8: ("jefe_hogar", "pobreza"),
+    9: ("hacinamiento", "nivel_economico"),
+    10: ("tipos_hogar",),
+    11: ("razon_dependencia",),
+    12: ("tipos_hogar",),
+    13: ("indice_territorial",),
+    14: ("indice_territorial",),
+    15: ("indice_territorial",),
+    16: ("carencia_estructural",),
+    17: ("carencia_estructural", "nivel_economico"),
+    18: ("carencia_estructural",),
+    19: ("carencia_estructural", "nivel_economico"),
+    20: ("carencia_estructural",),
+    21: ("fies",),
+    22: ("fies", "quintil"),
+    23: ("fies",),
+    24: ("fies", "quintil"),
+    25: ("fies", "quintil"),
+    26: ("fies",),
+    27: ("fies",),
+    28: ("condicion_actividad", "tasa_actividad", "tasa_empleo", "tasa_desempleo"),
+    29: ("tasa_actividad", "tasa_empleo", "tasa_desempleo"),
+    30: ("tasa_desempleo",),
+    31: ("informalidad",),
+    32: ("informalidad",),
+    33: ("subempleo",),
+    34: ("condicion_actividad", "tasa_desempleo"),
+    35: ("informalidad",),
+    36: ("victimizacion",),
+    37: ("victimizacion",),
+    38: ("victimizacion",),
+    39: ("victimizacion", "comunicacion_policia"),
+    40: ("victimizacion", "denuncia_formal"),
+    41: ("comunicacion_policia", "denuncia_formal"),
+    42: ("victimizacion",),
+}
+
+
 def _markdown(numero: int, familia_grafica: str) -> str:
+    """Las cinco partes que lleva SIEMPRE toda metrica del informe, en el
+    mismo orden: nombre, la pregunta que responde, que significa cada
+    termino segun el criterio del INE, por que esa grafica, y la grafica
+    (que la aporta la celda de codigo que acompana a esta).
+
+    Antes solo estaban el nombre, la descripcion y la justificacion de la
+    grafica: los terminos quedaban librados a que el modelo los explicara
+    en cada corrida, y por eso aparecian en Empleo pero no en el resto.
+    """
     titulo, descripcion = _TEXTO_CATALOGO[numero]
     justificacion = _JUSTIFICACION_POR_FAMILIA[familia_grafica]
-    return f"### {numero}. {titulo}\n\n**¿Qué muestra esta gráfica?** {descripcion}\n\n*{justificacion}*"
+    terminos = "\n".join(f"- {_GLOSARIO[t]}" for t in _TERMINOS_POR_METRICA[numero])
+    return (
+        f"### {numero}. {titulo}\n\n"
+        f"**¿Qué pregunta responde?** {descripcion}\n\n"
+        f"**Qué significa cada término (criterio del INE):**\n{terminos}\n\n"
+        f"*Por qué esta gráfica: {justificacion}*"
+    )
 
 
 # ============================================================================

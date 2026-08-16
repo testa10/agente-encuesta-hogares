@@ -89,3 +89,71 @@ def test_construir_celdas_notebook_agrega_celdas_de_empleo_y_seguridad_solo_si_s
         incluir_fies=False, incluir_empleo=True, incluir_seguridad=True,
     )
     assert len(con_empleo_y_seguridad) == len(base) + 2
+
+
+# ============================================================================
+# Estructura fija de toda métrica. Nace de un problema real encontrado por
+# el dueño del proyecto leyendo un informe generado: las métricas de Empleo
+# explicaban con la fórmula del INE qué es la tasa de actividad/empleo/
+# desempleo, y otras métricas no explicaban ningún término. La diferencia
+# no era una decisión — esas definiciones las escribía el modelo a mano
+# durante la corrida, así que salían o no según se acordara.
+# ============================================================================
+
+_PARTES_OBLIGATORIAS = [
+    ("¿Qué pregunta responde?", "la pregunta que responde la métrica"),
+    ("Qué significa cada término", "la explicación de los términos según el criterio del INE"),
+    ("Por qué esta gráfica:", "la justificación del tipo de gráfica elegido"),
+]
+
+
+def test_toda_metrica_del_catalogo_tiene_las_cinco_partes():
+    faltantes = []
+    for numero in sorted(nb.GENERADORES):
+        celda = nb.construir_celdas_metrica(numero)
+        if not celda.markdown.startswith(f"### {numero}. "):
+            faltantes.append(f"  - {numero}: no arranca con el nombre de la métrica")
+        for marca, descripcion in _PARTES_OBLIGATORIAS:
+            if marca not in celda.markdown:
+                faltantes.append(f"  - {numero}: le falta {descripcion}")
+        # La quinta parte es la gráfica, que la aporta la celda de código.
+        if "viz.plot_" not in celda.codigo:
+            faltantes.append(f"  - {numero}: no genera ninguna gráfica")
+    assert not faltantes, (
+        "Toda métrica del informe lleva siempre las mismas cinco partes "
+        "(nombre, pregunta que responde, términos según el INE, por qué esa "
+        "gráfica, y la gráfica):\n\n" + "\n".join(faltantes)
+    )
+
+
+def test_toda_metrica_del_catalogo_explica_sus_terminos():
+    """Una métrica nueva no puede quedarse sin entrada en el glosario: si
+    se agrega al catálogo y se olvida acá, esto falla en vez de generar un
+    informe donde esa métrica es la única sin explicar su jerga."""
+    del_catalogo = set(nb.GENERADORES)
+    con_terminos = set(nb._TERMINOS_POR_METRICA)
+    assert del_catalogo - con_terminos == set(), (
+        f"Métricas sin términos declarados: {sorted(del_catalogo - con_terminos)}"
+    )
+    assert con_terminos - del_catalogo == set(), (
+        f"_TERMINOS_POR_METRICA tiene métricas que ya no están en el catálogo: "
+        f"{sorted(con_terminos - del_catalogo)}"
+    )
+
+
+def test_todos_los_terminos_declarados_existen_en_el_glosario():
+    rotos = {
+        numero: [t for t in terminos if t not in nb._GLOSARIO]
+        for numero, terminos in nb._TERMINOS_POR_METRICA.items()
+    }
+    rotos = {n: ts for n, ts in rotos.items() if ts}
+    assert not rotos, f"Términos declarados que no están en el glosario: {rotos}"
+
+
+def test_el_glosario_no_tiene_terminos_que_nadie_use():
+    usados = {t for terminos in nb._TERMINOS_POR_METRICA.values() for t in terminos}
+    sin_usar = set(nb._GLOSARIO) - usados
+    assert not sin_usar, (
+        f"El glosario define términos que ninguna métrica usa: {sorted(sin_usar)} "
+        f"— borrarlos o conectarlos a la métrica que corresponda."
+    )

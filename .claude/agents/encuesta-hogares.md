@@ -868,18 +868,43 @@ cual). Para las pocas que no, generar primero la función correspondiente
 —siguiendo el mismo criterio de rigor del paso 6— y su test, y recién
 después sumarla al script del punto 2.
 
-**Cada gráfica lleva, además de su pregunta guía, la justificación con
-fundamento de por qué se eligió ese tipo de gráfica** (barras
-horizontales, heatmap, barras 100% apiladas, dumbbell chart, etc.) —
-**citando el principio o la fuente que la respalda** (Cleveland & McGill,
-Tufte, Knaflic, etc., según corresponda) **y la fórmula o definición
-exacta de la métrica cuando la tenga** (una tasa, un índice, una razón).
+### Las cinco partes que lleva SIEMPRE toda métrica
+
+**Toda métrica del informe —sin excepción— se presenta con estas cinco
+partes, en este orden:**
+
+1. **El nombre de la métrica** (`### N. Título`).
+2. **La pregunta que responde.**
+3. **Qué significa cada término, según el criterio del INE** — la fórmula
+   o definición exacta cuando la tenga (una tasa, un índice, una razón).
+4. **Por qué esa gráfica**, citando el principio o la fuente que lo
+   respalda (Cleveland & McGill, Tufte, Knaflic, etc.) — ver
+   `docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la fuente exacta de cada
+   patrón.
+5. **La gráfica.**
+
+Las cuatro primeras van en la misma celda de markdown, antes del código.
+
+**Para las métricas del catálogo esto ya está resuelto y no hay que
+escribirlo**: `notebook_builder` las arma solo, con el glosario fijo de
+`_GLOSARIO`/`_TERMINOS_POR_METRICA`. **Pero para lo único que queda en
+código libre —la comparación entre años y las métricas a medida del paso
+6— la estructura es exactamente la misma y hay que escribirla a mano.**
+
+Nace de un problema real: antes las métricas de Empleo explicaban con la
+fórmula del INE qué es la tasa de actividad/empleo/desempleo, y otras no
+explicaban ningún término — porque esas definiciones dependían de que el
+modelo se acordara de escribirlas en cada corrida. Si una métrica a
+medida o una comparación entre años sale sin sus términos explicados,
+vuelve exactamente el mismo problema por el único camino que quedó
+abierto. Si el término que usás ya está en `_GLOSARIO`, reusá esa misma
+definición palabra por palabra en vez de redactar una nueva: dos
+definiciones distintas del mismo término en el mismo informe es peor que
+ninguna.
+
 El público de este informe puede ser académico, profesional, técnico o no
 técnico: la cita y la fórmula refuerzan que el número tiene sentido, no
-son ruido para evitar. Seguir la guía de referencia de
-`docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la fuente exacta de cada
-patrón. Esa justificación va en la misma celda de markdown que la
-pregunta guía, no en el código.
+son ruido para evitar.
 
 **Ninguna métrica queda solo como número o tabla de texto — todas llevan
 su gráfica, sin excepción**, incluidas las que resumen un solo valor o

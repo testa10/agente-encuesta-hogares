@@ -10,6 +10,44 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.9.2] — 2026-08-15
+
+### Agregado
+
+- **Toda métrica del informe lleva ahora las mismas cinco partes**, en el
+  mismo orden: el nombre, la pregunta que responde, **qué significa cada
+  término según el criterio del INE**, por qué se eligió esa gráfica, y la
+  gráfica.
+
+  Nace de un informe generado real: las métricas de Empleo explicaban con
+  la fórmula del INE qué es la tasa de actividad, empleo y desempleo, y
+  otras métricas no explicaban ningún término. La diferencia no era una
+  decisión — esas definiciones las escribía el modelo a mano durante la
+  corrida, así que aparecían o no según se acordara. Es el mismo patrón
+  que ya había fallado con los hooks y con el panorama de TV cable: una
+  regla que depende de la memoria del modelo no se cumple pareja.
+
+  Ahora hay un glosario fijo (`notebook_builder._GLOSARIO`) con 23
+  términos —tasa de actividad/empleo/desempleo, informalidad, subempleo,
+  pobreza e indigencia, hacinamiento, tipos de hogar, razón de
+  dependencia, carencia estructural, escala FIES, quintil, victimización,
+  denuncia formal, índice de acceso digital, índice territorial, etc.— y
+  cada métrica declara cuáles usa. Cada definición describe **lo que de
+  verdad calcula el proyecto**, verificado contra `analysis.py`, siguiendo
+  el criterio del INE; no se transcriben textos oficiales sin verificar.
+
+  Cuatro tests lo hacen cumplir: que toda métrica tenga las cinco partes,
+  que ninguna quede sin términos declarados, que todo término declarado
+  exista en el glosario, y que el glosario no acumule términos que nadie
+  usa.
+
+- Las instrucciones del agente explicitan que **la comparación entre años
+  y las métricas a medida del paso 6 —lo único que queda en código libre—
+  llevan exactamente la misma estructura de cinco partes**, y que si un
+  término ya está en el glosario hay que reusar esa definición palabra por
+  palabra en vez de redactar otra. Sin eso, el problema volvía por el
+  único camino que quedó abierto.
+
 ## [0.9.1] — 2026-08-15
 
 ### Corregido
