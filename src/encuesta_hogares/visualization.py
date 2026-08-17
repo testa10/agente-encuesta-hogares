@@ -138,6 +138,12 @@ def plot_ingreso_hogar_departamento(serie: pd.Series):
     fig.update_layout(
         yaxis_title="", xaxis_title="Ingreso típico del hogar (UYU, sin valor locativo)",
         yaxis={"categoryorder": "total ascending"},
+        # Mismo margen que todas las barras horizontales con etiqueta
+        # afuera — era la única de las siete que no lo tenía; la encontró
+        # el test de clase de test_visualization.py antes de que saliera
+        # recortada en un informe real, que es exactamente para lo que
+        # ese test existe.
+        xaxis_range=[0, float(serie.max()) * 1.15],
         showlegend=False, width=800, height=550, title_x=0.5,
     )
     return fig
@@ -253,6 +259,11 @@ def plot_tipos_hogar(resumen: pd.DataFrame):
     fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
     fig.update_layout(
         xaxis_title="% de hogares", yaxis_title="", yaxis={"categoryorder": "total ascending"},
+        # Mismo margen a la derecha que plot_pct_por y compañía, por el mismo
+        # motivo: sin él, la etiqueta del tipo de hogar más frecuente queda
+        # cortada por el borde — encontrado en una corrida real con datos de
+        # 2023 ("Nuclear, 65.7%" salía recortado).
+        xaxis_range=[0, resumen["pct_hogares"].max() * 1.15],
         width=800, height=450, title_x=0.5, showlegend=False,
     )
     return fig
@@ -293,6 +304,11 @@ def plot_razon_dependencia_por(resumen: pd.DataFrame, criterio: str):
     fig.update_layout(
         yaxis_title="", xaxis_title="Razón de dependencia (%)",
         yaxis={"categoryorder": "total ascending"},
+        # Mismo margen a la derecha que plot_precariedad_estructural_por, por
+        # el mismo motivo: sin él, la etiqueta del departamento con la razón
+        # más alta queda cortada por el borde — encontrado en una corrida real
+        # con datos de 2023 ("ROCHA, 65.0" salía recortado).
+        xaxis_range=[0, resumen["razon_dependencia"].max() * 1.15],
         width=850, height=550, title_x=0.5, showlegend=False,
     )
     return fig

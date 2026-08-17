@@ -220,3 +220,40 @@ def test_plot_perfil_territorial_no_falla():
     )
     fig = viz.plot_perfil_territorial(resultado)
     assert fig is not None
+
+
+# ============================================================================
+# Guardián de clase: barras horizontales con etiqueta afuera SIEMPRE llevan
+# margen a la derecha.
+#
+# El mismo defecto (la etiqueta de la barra más larga cortada por el borde)
+# apareció en TRES corridas reales distintas, en seis funciones, de a dos
+# por vez: plot_pct_por y plot_tasa_mensual_promedio_por primero,
+# plot_precariedad_estructural_por y plot_carencias_estructurales_mas_
+# frecuentes después, y plot_tipos_hogar y plot_razon_dependencia_por al
+# final — cada una descubierta con datos reales, parchada en el notebook, y
+# re-ejecutando el informe entero (~2 min por vez). Arreglarlo función por
+# función garantiza que la séptima vuelva a costar una re-ejecución: esto
+# corta la clase entera, incluida cualquier función futura.
+# ============================================================================
+
+def test_toda_barra_horizontal_con_etiqueta_afuera_fija_su_margen_derecho():
+    import ast
+    import inspect
+
+    fuente = inspect.getsource(viz)
+    arbol = ast.parse(fuente)
+    sin_margen = []
+    for nodo in ast.walk(arbol):
+        if not isinstance(nodo, ast.FunctionDef) or not nodo.name.startswith("plot_"):
+            continue
+        cuerpo = ast.get_source_segment(fuente, nodo) or ""
+        es_horizontal = 'orientation="h"' in cuerpo or "orientation='h'" in cuerpo
+        etiqueta_afuera = '"outside"' in cuerpo or "'outside'" in cuerpo
+        if es_horizontal and etiqueta_afuera and "xaxis_range" not in cuerpo:
+            sin_margen.append(nodo.name)
+    assert not sin_margen, (
+        f"barras horizontales con etiqueta afuera y sin margen derecho "
+        f"(la etiqueta más larga va a salir cortada del informe): {sin_margen} "
+        f"— agregar xaxis_range=[0, maximo * 1.15] como en plot_tipos_hogar"
+    )

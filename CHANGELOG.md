@@ -10,6 +10,22 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.3] — 2026-08-17
+
+### Corregido
+
+- **Cerrada la clase entera del defecto "etiqueta cortada por el borde".**
+  Apareció en tres corridas reales distintas, en seis gráficas de barras
+  horizontales, de a dos por vez — y cada vez costó parchear el notebook y
+  re-ejecutarlo entero (~2 min). En esta pasada: el agente arregló
+  `plot_tipos_hogar` y `plot_razon_dependencia_por` en el código (con la
+  re-ejecución registrada por primera vez con su motivo, gracias a la regla
+  nueva del paso 7), y un test de clase nuevo — toda barra horizontal con
+  etiqueta afuera tiene que fijar su margen derecho — encontró la
+  **séptima** (`plot_ingreso_hogar_departamento`) antes de que saliera
+  recortada en ningún informe. La octava la va a encontrar el test, no una
+  corrida.
+
 ## [0.13.2] — 2026-08-17
 
 ### Cambiado
