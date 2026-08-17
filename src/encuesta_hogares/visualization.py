@@ -126,6 +126,10 @@ def plot_ingreso_hogar_departamento(serie: pd.Series):
     categorías, algunas con nombres largos) — horizontales para que se
     lean sin inclinar la cabeza (Cleveland & McGill, 1984), mismo criterio
     que `plot_razon_dependencia_por` para el mismo tipo de comparación.
+
+    No pertenece al catálogo fijo: es el par de
+    `analysis.ingreso_hogar_mediano_por_departamento`, disponible para las
+    métricas a medida del paso 6 (ver el docstring de esa función).
     """
     fig = px.bar(
         y=serie.index, x=serie.values, orientation="h",

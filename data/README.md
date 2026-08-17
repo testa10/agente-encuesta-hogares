@@ -7,11 +7,13 @@ archivos de datos para evitar que se suban por accidente.
 
 ## Cómo obtenerlos (paso a paso)
 
-> **El formato del archivo varía según el año**: hasta 2023, el INE
+> **El formato del archivo varía según el año**: hasta 2019, el INE
 > distribuye las bases de Hogares y Personas como dos archivos `.sav`
-> separados; desde 2024, las combina en un único CSV. El proyecto admite
-> ambos formatos automáticamente — solo cambia qué archivo se obtiene en
-> el paso 5.
+> separados; desde 2023, las combina en un único CSV (llamado "de
+> implantación" en algunos años, con el nombre exacto cambiando de un año
+> a otro). El proyecto admite ambos formatos y todas las variantes de
+> nombre vistas hasta ahora automáticamente — solo cambia qué archivo se
+> obtiene en el paso 5.
 
 1. Acceda a **https://www4.ine.gub.uy/Anda5/index.php/catalog/Encuestas_a_hogares**,
    donde figura el listado de todas las ediciones de la ECH, por año.
@@ -26,11 +28,12 @@ archivos de datos para evitar que se suban por accidente.
    aceptarse en su nombre.
 5. Se desplegará una lista de "Archivos de datos". La opción a buscar
    depende del año:
-   - **2023 o anterior**: la opción denominada, aproximadamente, **"Bases
+   - **2019 o anterior**: la opción denominada, aproximadamente, **"Bases
      ECH AAAA .SAV"**. Es un archivo comprimido (`.RAR`) de entre 15 y 20 MB.
-   - **2024 en adelante**: la opción con el CSV combinado (habitualmente
-     "Base ECH AAAA .CSV"), que también puede distribuirse dentro de un
-     `.RAR`.
+   - **2023 en adelante**: la opción con el CSV combinado — el nombre del
+     archivo varía según el año (casos reales: `ECH_implantacion_2023.csv`,
+     `ECH_2024.csv`, `ECH_2025_implantacion.csv`) y también puede
+     distribuirse dentro de un `.RAR`.
 
    Haga clic en el enlace de **Descargar** correspondiente.
 6. **Si descargó un `.RAR`**, extráigalo — Windows no lo abre de forma
@@ -42,20 +45,22 @@ archivos de datos para evitar que se suban por accidente.
    - **Dos archivos `.sav`**: corresponden a las bases de **Hogares** y
      **Personas** (los nombres exactos pueden variar según el año; suelen
      comenzar con `H` para Hogares y `P` para Personas).
-   - **Un único archivo `ECH_AAAA.csv`**: es la base combinada, con una
-     fila por persona y los datos del hogar repetidos para cada
-     integrante.
-8. Copie esos archivos (los dos `.sav`, o el `ECH_AAAA.csv`, según
+   - **Un único archivo CSV combinado** (`ECH_AAAA.csv` o una variante
+     "implantación"): es la base combinada, con una fila por persona y
+     los datos del hogar repetidos para cada integrante.
+8. Copie esos archivos (los dos `.sav`, o el CSV combinado, según
    corresponda) a la subcarpeta del año dentro de `data/` — por ejemplo,
    `data/2024/`. Si la solicitud se realizó a través del agente, esa
    carpeta ya habrá sido creada y abierta en el Explorador antes de este
-   paso.
+   paso. **No renombre el archivo**: el código ya reconoce las variantes
+   de nombre reales.
 
 Ante cualquier duda sobre la identificación de los archivos, puede
 consultarse directamente al agente, indicando qué archivos se
-extrajeron; el agente asistirá en identificarlos y renombrarlos si es
-necesario (el código detecta automáticamente, dentro de cada subcarpeta
-de año, los archivos `H_*.sav`/`P_*.sav` o `ECH_AAAA.csv`).
+extrajeron; el agente asistirá en identificarlos si es necesario (el
+código detecta automáticamente, dentro de cada subcarpeta de año, los
+archivos `H_*.sav`/`P_*.sav`, `ECH_AAAA.csv`, o las variantes
+"implantación" — ver `config.hogares_csv_file`).
 
 ## Datos opcionales: seguridad alimentaria, empleo y seguridad/victimización
 

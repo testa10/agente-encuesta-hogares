@@ -159,6 +159,11 @@ def ingreso_hogar_mediano_por_departamento(hogares: pd.DataFrame, departamentos:
     que el promedio) del hogar, sin valor locativo, para los departamentos
     indicados. No requiere filtrar a Montevideo — usa la tabla de hogares
     completa.
+
+    No pertenece a ninguna métrica del catálogo fijo — existe (con su test
+    y su gráfica, `viz.plot_ingreso_hogar_departamento`) para las métricas
+    a medida del paso 6: "ingreso por departamento" es un pedido natural, y
+    tenerlo ya escrito y ponderado evita que el modelo lo reinvente mal.
     """
     subset = hogares[hogares["departamento"].isin(departamentos)]
     # Sin include_groups=False a propósito (requiere pandas>=2.2; el

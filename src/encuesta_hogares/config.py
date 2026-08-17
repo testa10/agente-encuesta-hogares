@@ -107,7 +107,8 @@ PERSONAS_COLUMNS = {
     "e27": "edad",
     "PT1": "ingresos_personales",
     "pobpcoac": "condicion_actividad_cod",
-    "e60": "tiene_celular_persona",  # 1=Sí/2=No/99=Sin dato
+    # "e60" (tenencia de celular por persona) se dejó de mapear en la
+    # limpieza final: nada la usaba y el INE sacó la pregunta desde 2024.
     "e30": "parentesco_jefe",        # relación de parentesco con el jefe/a de hogar (14 categorías)
     # OJO: "pesoano" (ponderador) a propósito NO se mapea acá, aunque
     # también está en este archivo con el mismo valor que en Hogares
@@ -141,10 +142,10 @@ PERSONAS_COLUMNS = {
 #   hogar: se calcula aparte contando, por hogar, cuántas personas tienen
 #   condicion_actividad_cod == 2 (Ocupados) — ver
 #   data_loader.load_hogares_personas_csv().
-# - "tiene_celular_persona" (antes "e60") no tiene equivalente: la
-#   pregunta sobre tenencia de celular no está en el cuestionario 2024.
-#   Cualquier métrica que dependa de ella queda afuera del informe para
-#   este año (confirmado con el usuario).
+# - La pregunta sobre tenencia de celular (e60) no está en el
+#   cuestionario desde 2024 (confirmado con el usuario en su momento);
+#   en la limpieza final se dejó de mapear también para .sav, porque
+#   ninguna métrica del catálogo la usaba.
 HOGARES_COLUMNS_CSV = {
     "ID": "id_hogar",
     "nom_dpto": "departamento",

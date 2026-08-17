@@ -136,9 +136,10 @@ minutos.
 
 En resumen: acceda al catálogo del INE, acepte sus términos de uso,
 descargue la base del año de interés, y copie los archivos a la carpeta
-`data/` del proyecto. El formato exacto varía según el año (hasta 2023,
-dos archivos `.sav`; desde 2024, un único CSV combinado); el proyecto
-admite ambos formatos automáticamente.
+`data/` del proyecto. El formato exacto varía según el año (2019, dos
+archivos `.sav`; desde 2023, un único CSV combinado, cuyo nombre exacto
+también varía según el año); el proyecto admite ambos formatos
+automáticamente.
 
 La guía completa, con el detalle de cada paso, está en
 [`data/README.md`](data/README.md) — se recomienda seguirla, ya que
@@ -211,12 +212,11 @@ forma mecánica (rápido, típicamente segundos por métrica); lo que sigue
 demorando minutos es que el agente calcule y revise cada gráfica de
 verdad contra los datos, más cualquier comparación entre años o métrica
 a medida que hayas pedido — esas dos últimas las sigue escribiendo el
-modelo en el momento, no son mecánicas. *(Nota interna: el rango "25 a
-30 minutos" que estaba acá antes describía el proceso previo a mecanizar
-el catálogo — se sacó porque ya no es representativo, y todavía no hay
-una corrida real de referencia con el proceso nuevo para reemplazarlo
-con un número confiable.)* Que la terminal permanezca sin novedades
-visibles durante un rato es esperable, no indica un error.
+modelo en el momento, no son mecánicas. Como referencia real: una
+corrida grande (27 métricas de 4 bloques, con comparación entre tres
+años) tomó unos **15 minutos** de punta a punta, desde la bienvenida
+hasta el PDF. Que la terminal permanezca sin novedades visibles durante
+un rato es esperable, no indica un error.
 
 **Si te preocupa llegar al límite de uso de tu plan a mitad de una
 corrida larga con muchos bloques y bastante comparación entre años,
@@ -311,8 +311,11 @@ solicita confirmación antes de asumir cualquier cambio — nunca infiere en
 silencio.
 
 **¿Es posible analizar más de un año y compararlos?**
-Sí — puede solicitarse directamente al agente, por ejemplo: "quiero
-comparar el análisis de 2019 con el de 2024".
+Sí — el propio formulario del catálogo permite marcar qué métricas
+comparar y con qué años (dos años se muestran como comparación directa;
+tres o más, como serie por año). También puede pedirse por chat con las
+propias palabras, por ejemplo: "quiero comparar el análisis de 2019 con
+el de 2024".
 
 **¿Dónde se documentan los criterios de rigor que sigue el agente?**
 En [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md), que reúne las reglas de
@@ -327,13 +330,17 @@ tipo de gráfica están consolidadas en
 [`docs/BIBLIOGRAFIA.md`](docs/BIBLIOGRAFIA.md).
 
 **¿El agente registra la actividad del usuario?**
-Sí, un registro mínimo y local: qué pantallas se mostraron, cuándo, y si
-alguna demoró en exceso o falló — nunca el contenido escrito ni datos
-personales. Se guarda en `logs/bitacora.jsonl`, **en la propia
-computadora**, sin subirse ni compartirse automáticamente. Su propósito
-es permitir que, ante un problema reportado, quien mantiene el proyecto
-pueda diagnosticarlo a partir de ese archivo, en lugar de depender de una
-descripción de memoria.
+Sí, un registro mínimo y local: qué pantallas se mostraron, cuándo, qué
+se respondió en cada una (el año, las métricas marcadas — necesario para
+poder diagnosticar un "marqué X y el informe trajo otra cosa"), cuánto
+demoró cada paso, y si algo falló. Los formularios no piden datos
+personales, así que el registro tampoco los contiene — es una regla
+documentada en el propio código (`bitacora.py`). Se guarda en
+`logs/bitacora.jsonl`, **en la propia computadora**, sin subirse ni
+compartirse automáticamente. Su propósito es permitir que, ante un
+problema reportado, quien mantiene el proyecto pueda diagnosticarlo a
+partir de ese archivo, en lugar de depender de una descripción de
+memoria.
 
 **¿Cómo se ejecutan los tests automáticos?**
 

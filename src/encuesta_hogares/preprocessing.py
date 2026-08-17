@@ -115,22 +115,14 @@ def prepare_hogares_extendido(hogares_mdeo: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def compute_tiene_celular_hogar(personas: pd.DataFrame) -> pd.DataFrame:
-    """Determina, por hogar, si al menos una persona tiene teléfono celular.
-
-    `tiene_celular_persona` es una variable a nivel de persona, no de hogar
-    como `tiene_internet` o `tiene_streaming` — por eso se agrega con `.any()`
-    por `id_hogar` antes de poder cruzarla con datos del hogar.
-    """
-    personas = personas.copy()
-    personas["tiene_celular_persona"] = decode_si_no(personas["tiene_celular_persona"])
-    resumen = (
-        personas.groupby("id_hogar")["tiene_celular_persona"]
-        .any()
-        .reset_index()
-        .rename(columns={"tiene_celular_persona": "tiene_celular"})
-    )
-    return resumen
+# Acá vivió compute_tiene_celular_hogar (tenencia de celular por hogar,
+# variable e60 de Personas). Se eliminó en la limpieza final previa a
+# producción: ninguna métrica del catálogo la usaba (era un resto del
+# diseño anterior al rediseño de Brecha Digital), no tenía test, y solo
+# podía funcionar con datos de 2019 — el INE sacó esa pregunta del
+# cuestionario desde 2024 (decisión ya confirmada con el dueño en su
+# momento). Si alguna vez vuelve la pregunta al cuestionario, el patrón
+# era: decode_si_no + groupby("id_hogar").any().
 
 
 def prepare_fies(fies: pd.DataFrame) -> pd.DataFrame:

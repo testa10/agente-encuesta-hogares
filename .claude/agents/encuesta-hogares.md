@@ -1277,7 +1277,7 @@ compuerta de calidad antes de tocar ningún archivo permanente:
      código corra sin error — tiene que haberse visto un número real,
      verosímil, antes de curarla).
    - Qué archivos se van a tocar (`analysis.py`, `visualization.py`,
-     `formularios.py`, tests) y que la numeración de métricas existentes
+     `plantillas.py`, tests) y que la numeración de métricas existentes
      no se va a romper.
    Solo se sigue a partir del punto 1 si el dueño confirma explícitamente
    estos cuatro puntos en el chat. Esto no es la misma confirmación que
@@ -1289,8 +1289,9 @@ compuerta de calidad antes de tocar ningún archivo permanente:
    siguiendo el mismo criterio que ya usan `precariedad_estructural_por`,
    `tasas_actividad_empleo_desempleo_por`, `tipos_hogar_resumen`.
 2. Agregar la entrada correspondiente a `_CATEGORIAS_METRICAS` en
-   `src/encuesta_hogares/formularios.py`, con el mismo formato que las
-   demás (número corrido, nombre en negrita, explicación breve en una
+   `src/encuesta_hogares/plantillas.py` (ahí vive el catálogo desde la
+   v0.13.2; `formularios.py` solo lo reexporta), con el mismo formato que
+   las demás (número corrido, nombre en negrita, explicación breve en una
    frase) — sin romper la numeración de las métricas existentes.
 3. Agregar la entrada correspondiente en
    `encuesta_hogares.verificacion_catalogo.MANIFEST`, con la(s)

@@ -10,6 +10,32 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.4] — 2026-08-17
+
+### Corregido
+
+- **Barrida final de limpieza previa a producción** — prosa que contradecía
+  la realidad y un resto de código muerto:
+  - El README y `data/README.md` decían "hasta 2023, dos archivos `.sav`" —
+    falso: 2019 es el único año en `.sav`; 2023 ya vino como CSV combinado.
+    Ahora documentan los tres nombres reales de archivo del INE.
+  - La FAQ decía que la bitácora "nunca registra el contenido escrito" —
+    falso desde hace versiones: registra las respuestas de los formularios
+    (necesario para diagnosticar "marqué X y salió Y"). Ahora dice la
+    verdad, junto con la regla de que ningún formulario pide datos
+    personales.
+  - CONTRIBUTING y la curación del catálogo mandaban a editar el catálogo
+    en `formularios.py` — vive en `plantillas.py` desde la 0.13.2.
+  - La FAQ de comparación entre años no mencionaba que ahora es una opción
+    del propio formulario del catálogo.
+  - El README tenía una "(Nota interna)" esperando "una corrida real de
+    referencia" — reemplazada por el número medido: ~15 minutos.
+  - Eliminada `preprocessing.compute_tiene_celular_hogar` y el mapeo de la
+    columna e60: resto del catálogo pre-rediseño, sin ningún uso, sin
+    test, y solo funcional con 2019 (el INE sacó la pregunta desde 2024).
+    El par ingreso-por-departamento, en cambio, quedó documentado
+    explícitamente como herramienta para métricas a medida.
+
 ## [0.13.3] — 2026-08-17
 
 ### Corregido
