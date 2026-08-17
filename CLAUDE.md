@@ -79,6 +79,16 @@ no confundirlo con la lista de permisos:
   invocarlo desde adentro de otro intérprete).
 - El servidor de formularios solo acepta respuestas de su propia página
   (ver `formularios._origen_es_propio`).
+- `Edit`/`Write` están denegados sobre `.claude/**` y sobre los tres
+  `.bat` del lanzador. El motivo: todos los guardianes de este proyecto
+  (hooks, permisos, instrucciones del agente) viven ahí, así que un
+  agente que pudiera editarlos podría desarmarlos — y `run_python.bat`
+  en particular es el ancla de la regla de permisos más amplia, así que
+  reescribirlo sería ejecutar cualquier cosa bajo un permiso ya
+  aprobado. **Con la misma honestidad que el resto de esta sección**:
+  esto solo cierra las herramientas Edit/Write, no un `.py` que escriba
+  en esas rutas — es protección contra el desvío accidental, no una
+  frontera. La frontera, si hiciera falta, sigue siendo el sandbox.
 
 Si alguna vez hiciera falta una frontera real —por ejemplo, si el agente
 pasara a correr sobre datos o pedidos que no son de la propia persona—,

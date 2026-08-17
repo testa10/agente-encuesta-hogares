@@ -121,3 +121,39 @@ def test_un_content_length_invalido_no_tira_el_servidor(servidor):
     _postear(url, {"anio": "2024"})
     hilo.join(timeout=5)
     assert resultado["anio"] == "2024"
+
+
+def _postear_crudo(url: str, datos: bytes):
+    pedido = urllib.request.Request(url, data=datos, headers={"Content-Type": "application/json"})
+    return urllib.request.urlopen(pedido, timeout=5)
+
+
+def test_un_cuerpo_que_no_es_json_responde_400_y_el_formulario_sigue_vivo(servidor):
+    # Antes, `json.loads` tiraba la excepción dentro del hilo del servidor:
+    # la conexión moría con un traceback a stderr, el formulario seguía
+    # esperando como si nada, y la bitácora no registraba nada.
+    url, resultado, hilo = servidor
+
+    with pytest.raises(urllib.error.HTTPError) as error:
+        _postear_crudo(url, b"esto no es json {{{")
+    assert error.value.code == 400
+    assert resultado == {}
+
+    _postear(url, {"anio": "2024"})
+    hilo.join(timeout=5)
+    assert resultado["anio"] == "2024"
+
+
+def test_un_json_que_no_es_un_objeto_responde_400(servidor):
+    # `[1, 2]` es JSON válido pero `resultado.update([1, 2])` revienta:
+    # el formulario solo puede procesar un objeto.
+    url, resultado, hilo = servidor
+
+    with pytest.raises(urllib.error.HTTPError) as error:
+        _postear_crudo(url, b"[1, 2]")
+    assert error.value.code == 400
+    assert resultado == {}
+
+    _postear(url, {"anio": "2024"})
+    hilo.join(timeout=5)
+    assert resultado["anio"] == "2024"

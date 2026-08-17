@@ -12,7 +12,10 @@ description = "Agente y paquete reutilizable para analizar la Encuesta Continua 
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+# >=3.10 y no >=3.9: el código usa uniones `X | Y` en firmas evaluadas al
+# importar (ej. analysis.combinar_por_anio), que en 3.9 rompen el import.
+# Declarar 3.9 era prometer algo que el paquete no cumplía.
+requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.0",
     "pyreadstat>=1.2",
@@ -38,7 +41,7 @@ dev = ["pytest>=7.0", "pytest-cov>=5.0", "ruff>=0.6"]
 where = ["src"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 # E/F/W: errores reales (imports sin usar, nombres indefinidos, variables

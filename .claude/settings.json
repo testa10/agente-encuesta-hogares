@@ -19,7 +19,15 @@
     ],
     "deny": [
       "Bash(git *)",
-      "Bash(*git *)"
+      "Bash(*git *)",
+      "Edit(.claude/**)",
+      "Write(.claude/**)",
+      "Edit(run_python.bat)",
+      "Write(run_python.bat)",
+      "Edit(abrir_agente.bat)",
+      "Write(abrir_agente.bat)",
+      "Edit(instalar.bat)",
+      "Write(instalar.bat)"
     ]
   },
   "hooks": {

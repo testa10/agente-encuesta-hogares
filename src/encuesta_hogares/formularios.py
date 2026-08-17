@@ -85,6 +85,30 @@ def _leer_cuerpo(handler) -> bytes | None:
     return handler.rfile.read(largo)
 
 
+def _decodificar_respuesta(handler, cuerpo: bytes) -> dict | None:
+    """Convierte el cuerpo del POST en el dict que espera el formulario.
+    Devuelve None (y ya respondió 400) si no sirve.
+
+    Sin esto, un cuerpo que no fuera JSON válido —o que fuera JSON pero no
+    un objeto, ej. `[1,2]`— tiraba una excepción sin manejar dentro del
+    hilo del servidor: la conexión moría con un traceback a stderr, el
+    formulario seguía esperando como si nada, y la bitácora no registraba
+    nada — justo la herramienta que existe para diagnosticar a distancia
+    quedaba ciega en el único caso raro. Mismo criterio que `_leer_cuerpo`.
+    """
+    try:
+        datos = json.loads(cuerpo)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        datos = None
+    if not isinstance(datos, dict):
+        bitacora.registrar("formulario_post_invalido", largo_cuerpo=len(cuerpo))
+        handler.send_response(400)
+        handler.send_header("Content-Length", "0")
+        handler.end_headers()
+        return None
+    return datos
+
+
 def _nombre_desde_html(html: str) -> str:
     """Extrae el texto del primer <h1> del HTML para identificar el
     formulario en la bitácora, sin depender de que cada llamada a
@@ -361,7 +385,10 @@ def mostrar_formulario(html: str, timeout: float | None = 1800) -> dict:
             cuerpo = _leer_cuerpo(self)
             if cuerpo is None:
                 return
-            resultado.update(json.loads(cuerpo))
+            datos = _decodificar_respuesta(self, cuerpo)
+            if datos is None:
+                return
+            resultado.update(datos)
             respuesta = b'{"ok": true}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -469,7 +496,18 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
             self.wfile.write(html_bytes)
 
         def _servir_archivo(self, ruta: str, content_type: str):
-            datos = Path(ruta).read_bytes()
+            # El archivo puede haber desaparecido entre que se generó y que
+            # la persona hizo click (movido a mano, borrado por un
+            # antivirus). Sin esto, la excepción moría en el hilo del
+            # servidor y el click no hacía nada, sin registro de por qué.
+            try:
+                datos = Path(ruta).read_bytes()
+            except OSError as e:
+                bitacora.registrar("finalizacion_archivo_ilegible", ruta=ruta, mensaje=str(e))
+                self.send_response(404)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
             self.send_response(200)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(datos)))
@@ -483,7 +521,10 @@ def mostrar_finalizacion(pdf_path: str = "", html_path: str = "", timeout: float
             cuerpo = _leer_cuerpo(self)
             if cuerpo is None:
                 return
-            resultado.update(json.loads(cuerpo))
+            datos = _decodificar_respuesta(self, cuerpo)
+            if datos is None:
+                return
+            resultado.update(datos)
             respuesta = b'{"ok": true}'
             self.send_response(200)
             self.send_header("Content-Type", "application/json")

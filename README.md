@@ -1,7 +1,7 @@
 # Agente de Análisis: Encuesta Continua de Hogares (ECH, INE Uruguay)
 
 [![Tests](https://github.com/testa10/agente-encuesta-hogares/actions/workflows/tests.yml/badge.svg)](https://github.com/testa10/agente-encuesta-hogares/actions/workflows/tests.yml)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![Licencia: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/licencia-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 
 Este proyecto permite generar un informe de la Encuesta Continua de
