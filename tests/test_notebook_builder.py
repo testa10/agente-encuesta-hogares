@@ -404,6 +404,108 @@ def test_ningun_codigo_del_catalogo_imprime_un_objeto_crudo_de_pandas():
     )
 
 
+def test_ningun_print_interpola_un_resultado_de_analysis_sin_formato():
+    """Generalización del guardián de arriba, pedida por el dueño tras la
+    corrida 2025: el patrón `:\\n{...}` atrapa el repr multilínea, pero un
+    `print(f"... {resultado}")` en línea mete el mismo ruido técnico al
+    informe sin pasar por ese patrón. Regla mecánica: todo valor que venga
+    de una llamada a `analysis.*` se imprime con format spec (`:.2f`,
+    `:+.2f`, ...) — un escalar sin formato es un número sin redondear, y
+    una Series sin formato es el repr crudo que prohíbe METODOLOGIA.md
+    sección 3."""
+    import ast
+
+    infractoras = []
+    for numero in sorted(nb.GENERADORES):
+        arbol = ast.parse(nb.construir_celdas_metrica(numero).codigo)
+        de_analysis = {
+            objetivo.id
+            for nodo in ast.walk(arbol)
+            if isinstance(nodo, ast.Assign)
+            and isinstance(nodo.value, ast.Call)
+            and isinstance(nodo.value.func, ast.Attribute)
+            and isinstance(nodo.value.func.value, ast.Name)
+            and nodo.value.func.value.id == "analysis"
+            for objetivo in nodo.targets
+            if isinstance(objetivo, ast.Name)
+        }
+        for nodo in ast.walk(arbol):
+            es_print = (
+                isinstance(nodo, ast.Call)
+                and isinstance(nodo.func, ast.Name)
+                and nodo.func.id == "print"
+            )
+            if not es_print:
+                continue
+            for arg in nodo.args:
+                if not isinstance(arg, ast.JoinedStr):
+                    continue
+                for valor in arg.values:
+                    if (
+                        isinstance(valor, ast.FormattedValue)
+                        and isinstance(valor.value, ast.Name)
+                        and valor.value.id in de_analysis
+                        and valor.format_spec is None
+                    ):
+                        infractoras.append(f"{numero}: {{{valor.value.id}}}")
+    assert not infractoras, (
+        f"estas métricas imprimen un resultado de analysis.* sin format spec "
+        f"(si es una Series sale el repr crudo; si es un escalar, sin "
+        f"redondear): {infractoras} — formatear como en _m19 (:.2f)"
+    )
+
+
+def test_las_edades_que_definen_la_poblacion_estan_en_el_codigo():
+    """Generalización de la métrica 6 (corrida 2025): la pregunta definía la
+    población con "65 años o más" y la plantilla calculaba sobre todos los
+    hogares de Montevideo — el número que prometía la pregunta no aparecía
+    en ninguna parte del cálculo, y descubrirlo costó dos re-ejecuciones
+    completas del notebook.
+
+    Regla mecánica: toda edad mencionada en el título o la pregunta de una
+    métrica tiene que aparecer como número en el código de su plantilla, o
+    en el fuente de las funciones declaradas en el MANIFEST (donde el filtro
+    puede vivir encapsulado, como el 65 de `pct_unipersonales_mayores`).
+    No valida la semántica completa — eso sigue siendo trabajo de la
+    revisión del agente — pero cierra la clase "población prometida con un
+    número que el cálculo nunca usa" sin pagar una corrida para enterarse.
+    """
+    import importlib
+    import inspect
+    import re
+
+    faltantes = []
+    for numero in sorted(nb.GENERADORES):
+        titulo, descripcion = nb._TEXTO_CATALOGO[numero]
+        texto = f"{titulo} {descripcion}"
+        edades: set[str] = set()
+        for frase in re.findall(r"(?:\d+\s+(?:a|y)\s+)?\d+\s+años?\b", texto):
+            edades.update(re.findall(r"\d+", frase))
+        if not edades:
+            continue
+        # Solo la plantilla y las funciones de análisis/preprocesamiento: la
+        # visualización queda afuera a propósito — que el título de la
+        # gráfica mencione la edad no prueba que el cálculo la use (era
+        # exactamente el defecto de la métrica 6).
+        fuentes = [nb.construir_celdas_metrica(numero).codigo]
+        for referencia in vc.MANIFEST[numero]["funciones"]:
+            modulo, funcion = referencia.split(".")
+            objeto = getattr(importlib.import_module(f"encuesta_hogares.{modulo}"), funcion)
+            fuentes.append(inspect.getsource(objeto))
+        todo = "\n".join(fuentes)
+        for edad in sorted(edades):
+            if not re.search(rf"\b{edad}\b", todo):
+                faltantes.append(
+                    f"{numero}: la pregunta define la población con «{edad} años» "
+                    f"y ese número no aparece en el cálculo"
+                )
+    assert not faltantes, (
+        "La pregunta de estas métricas promete una población que el código "
+        "no filtra (la clase del defecto de la métrica 6 en la corrida "
+        "2025):\n" + "\n".join(f"  - {f}" for f in faltantes)
+    )
+
+
 def test_ningun_titulo_de_plantilla_excede_el_ancho_verificado_de_la_figura():
     """Gemelo del guardián de títulos de `test_visualization.py`, sobre los
     títulos que las plantillas de este módulo pasan a las gráficas

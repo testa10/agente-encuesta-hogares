@@ -10,6 +10,42 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.6] — 2026-08-17
+
+### Corregido
+
+- **Auditoría única "promesa vs. cálculo" de las 42 métricas del catálogo**
+  (la corrección de la métrica 6 en v0.13.5, generalizada a pedido del
+  dueño, para que ninguna otra métrica pague una re-ejecución por lo
+  mismo). Solo dos tenían diferencias, ambas de prosa:
+  - **Métrica 8 (jefatura femenina)**: prometía "y cómo se relaciona con la
+    pobreza del hogar", pero el código calcula solamente la tasa — el mismo
+    criterio de la métrica 38 en la 0.13.4: no se puede decir una cosa y
+    mostrar otra. Reescrita para decir lo que de verdad se calcula (tasa
+    nacional, sobre hogares con jefatura identificada).
+  - **Métrica 9 (hacinamiento)**: se calcula sobre Montevideo y la pregunta
+    no lo decía (el bloque Brecha Digital declara su alcance Montevideo en
+    la presentación del bloque; el bloque Hogares mezcla alcances por
+    métrica, así que el alcance tiene que estar en cada pregunta). Ahora lo
+    dice, igual que la métrica 7.
+
+### Agregado
+
+- **Guardián de poblaciones con edad**: toda edad que el título o la
+  pregunta de una métrica usa para definir su población ("65 años o más",
+  "menores de 18 años", "0 a 5 años", "14 a 24 años") tiene que aparecer
+  como número en el código de la plantilla o en las funciones declaradas en
+  el MANIFEST. Es la clase exacta de la métrica 6: población prometida con
+  un número que el cálculo nunca usaba. La visualización queda afuera a
+  propósito: que el título de la gráfica mencione la edad no prueba que el
+  cálculo la use.
+- **Guardián AST de prints sin formato** (generaliza el de Series crudas,
+  también a pedido del dueño): ningún print de plantilla puede interpolar
+  un resultado de `analysis.*` sin format spec — atrapa el repr crudo
+  también en la forma en línea (`print(f"... {serie}")`), que el patrón
+  `:\n{` no cubría. Verificado contra las versiones malas reales de las
+  métricas 6 y 41 antes de entrar.
+
 ## [0.13.5] — 2026-08-17
 
 ### Corregido

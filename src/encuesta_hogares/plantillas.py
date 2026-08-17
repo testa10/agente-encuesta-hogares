@@ -181,8 +181,8 @@ _CATEGORIAS_METRICAS = {
     ]),
     "hogares": ("2 · Hogares", "", [
         (7, "Cuántos hogares son pobres o indigentes en Montevideo", "¿qué porcentaje de los hogares de Montevideo está en situación de pobreza, y cuántos de esos llegan a la indigencia? El punto de partida para leer el resto del informe."),
-        (8, "Jefatura de hogar femenina", "qué porcentaje de hogares tiene una jefa mujer, y cómo se relaciona con la pobreza del hogar."),
-        (9, "Hacinamiento", "¿qué porcentaje de hogares vive hacinado, y eso cambia según el nivel económico?"),
+        (8, "Jefatura de hogar femenina", "¿qué porcentaje de los hogares del país tiene una jefa mujer? Se calcula sobre los hogares con jefatura identificada."),
+        (9, "Hacinamiento", "¿qué porcentaje de los hogares de Montevideo vive hacinado, y eso cambia según el nivel económico?"),
         (10, "Tipos de hogar", "cuántos hogares son unipersonales, nucleares, extendidos, compuestos o sin núcleo."),
         (11, "Razón de dependencia demográfica", "¿qué departamentos cargan con más población dependiente en relación con su población en edad de trabajar?"),
         (12, "Hogares unipersonales de adultos mayores", "de los hogares de una sola persona, qué porcentaje corresponde a alguien de 65 años o más."),
