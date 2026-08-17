@@ -20,19 +20,15 @@ DATA_DIR = PROJECT_ROOT / "data"
 # usuario que guarde los archivos ahí (ver .claude/agents/encuesta-hogares.md).
 
 
-def _resolve_data_file(prefix: str, fallback_name: str) -> Path:
-    """Busca en data/{año}/ el archivo más reciente que empiece con `prefix`
-    (H o P). Si hay más de un año disponible, usa el más nuevo (los nombres
-    de subcarpeta son años, así que ordenan cronológicamente). Si no hay
-    ninguno todavía, devuelve una ruta de referencia (no falla al importar
-    el módulo, solo al intentar leer el archivo).
-    """
-    candidatos = sorted(DATA_DIR.glob(f"*/{prefix}_*.sav"))
-    return candidatos[-1] if candidatos else DATA_DIR / fallback_name
-
-
-HOGARES_FILE = _resolve_data_file("H", "AAAA/H_AAAA.sav")
-PERSONAS_FILE = _resolve_data_file("P", "AAAA/P_AAAA.sav")
+# No hay ninguna constante "archivo de Hogares por defecto" a propósito.
+# Existió (`HOGARES_FILE`/`PERSONAS_FILE`, resolviendo "el .sav más
+# reciente de data/") y era una trampa que nadie usaba: desde que el INE
+# pasó al CSV combinado (2023 en adelante), el único año con .sav es 2019,
+# así que `load_hogares()` sin argumentos cargaba 2019 en silencio aunque
+# hubiera años más nuevos instalados — un análisis del año equivocado sin
+# ningún error, en un proyecto donde la fidelidad estadística es lo
+# innegociable. El año se elige siempre explícito: `hogares_csv_file(anio)`
+# para 2023+, o los `H_*.sav`/`P_*.sav` de `data/{año}/` para 2019.
 
 # Año de referencia: los datos con los que se construyó y validó todo el
 # análisis original. Nunca se borran ni se mueven — sirven para comparar

@@ -75,16 +75,26 @@ def fix_entidad_html_rota(value):
     return re.sub(r"<([0-9a-fA-F]{2})>", lambda m: chr(int(m.group(1), 16)), value)
 
 
-def load_hogares(path: Path = config.HOGARES_FILE) -> pd.DataFrame:
-    """Carga la base de Hogares y devuelve solo las columnas necesarias, renombradas."""
+def load_hogares(path: Path) -> pd.DataFrame:
+    """Carga la base de Hogares (.sav) y devuelve solo las columnas
+    necesarias, renombradas.
+
+    `path` es obligatorio a propósito — tenía un default ("el .sav más
+    reciente de data/") que desde que el INE pasó al CSV combinado
+    resolvía a 2019 para siempre: un llamado sin argumentos cargaba un año
+    viejo en silencio, sin ningún error. El año lo elige siempre quien
+    llama: `data/{año}/H_*.sav`.
+    """
     df, _meta = pyreadstat.read_sav(str(path))
     df = df.loc[:, list(config.HOGARES_COLUMNS)].rename(columns=config.HOGARES_COLUMNS)
     df["barrio"] = df["barrio"].map(fix_mojibake)
     return df
 
 
-def load_personas(path: Path = config.PERSONAS_FILE) -> pd.DataFrame:
-    """Carga la base de Personas y devuelve solo las columnas necesarias, renombradas."""
+def load_personas(path: Path) -> pd.DataFrame:
+    """Carga la base de Personas (.sav) y devuelve solo las columnas
+    necesarias, renombradas. `path` obligatorio — mismo motivo que
+    `load_hogares`."""
     df, _meta = pyreadstat.read_sav(str(path))
     df = df.loc[:, list(config.PERSONAS_COLUMNS)].rename(columns=config.PERSONAS_COLUMNS)
     return df

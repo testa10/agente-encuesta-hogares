@@ -185,18 +185,43 @@ sus propios cuidados:
 
 ## 4. Cómo manejar un año de datos nuevo (lo específico de este proyecto)
 
-1. Confirmar con el usuario qué archivos `.sav` puso en `data/` y de qué
-   año son.
-2. Inspeccionar los metadatos del archivo nuevo con `pyreadstat` (sin cargar
-   todos los datos) para revisar si los códigos de columna que usa
-   `config.py` (`HOGARES_COLUMNS`, `PERSONAS_COLUMNS`,
-   `CONDICIONES_VIVIENDA_COLUMNS`) siguen existiendo y significan lo mismo
-   (comparar contra las etiquetas de variable, `column_labels` de
-   pyreadstat).
+> Esta sección estuvo escrita para la era `.sav` ("qué archivos .sav puso
+> en data/", inspeccionar con pyreadstat) hasta la v0.13.x, cuando ya
+> hacía dos años que todo llegaba como CSV — el mismo tipo de prosa
+> desactualizada que en su momento fueron "las 43 métricas". Lo que sigue
+> es el proceso real, para ambos formatos.
+
+1. Confirmar con el usuario qué archivos puso en `data/{año}/` y de qué
+   año son. El formato depende del año, y **el INE tampoco es consistente
+   con los nombres** (los tres casos son reales, no hipotéticos):
+   - hasta 2019: dos `.sav` separados (`H_*.sav` Hogares, `P_*.sav`
+     Personas);
+   - 2023: un CSV combinado con el orden de palabras invertido
+     (`ECH_implantacion_2023.csv`);
+   - 2024: `ECH_2024.csv`; desde 2025: `ECH_{año}_implantacion.csv`.
+
+   `config.hogares_csv_file(anio)` ya reconoce las tres variantes de
+   nombre, y `config.datos_disponibles(anio)` resuelve qué módulos
+   opcionales (FIES, Empleo, Victimización) existen de verdad para el
+   año. Si el INE inventa un cuarto nombre, el lugar para contemplarlo
+   es esa función — no renombrar el archivo del usuario a mano.
+2. Correr `verificacion_estructura.verificar_anio(anio)` (o
+   `tools/verificar_estructura_datos.py`): compara las columnas reales
+   del año — en cualquiera de los dos formatos — contra lo que
+   `config.py` espera, y reporta qué falta y qué sobra.
+   `verificacion_catalogo.metricas_no_disponibles_del_anio(anio)`
+   complementa: dice qué métricas del catálogo quedan afuera para ese
+   año y por qué columna o módulo. Para un `.sav` también sirve
+   inspeccionar las etiquetas de variable con `pyreadstat`
+   (`column_labels`) sin cargar los datos.
 3. Si algún código cambió de nombre o desapareció, **nunca asumir un
    reemplazo por cuenta propia**: proponerle al usuario la columna
-   candidata (por su etiqueta) y esperar su confirmación antes de tocar
-   `config.py`.
+   candidata (por su etiqueta, o por el diccionario de variables que el
+   INE publica con cada año) y esperar su confirmación antes de tocar
+   `config.py`. Es lo que pasó de verdad con la canasta 2006 → 2017
+   (`pobre06`/`pobre17`, año de transición 2024): la preferencia quedó
+   en `config.PREFERENCIA_METODOLOGIA_HOGARES` como decisión confirmada
+   con el usuario, no elegida en silencio por el código.
 4. Una vez validado el mapeo, correr el pipeline estándar completo (armar
    el notebook, verificarlo, generar HTML y PDF — secciones 1 y 2 de este
    documento) y regenerar los cortes/cuartiles reales para ese año — nunca
