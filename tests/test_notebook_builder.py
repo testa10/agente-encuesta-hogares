@@ -15,6 +15,8 @@ código libre (ver el docstring de notebook_builder.py), así que no hay
 nada de eso para probar acá.
 """
 
+import pytest
+
 from encuesta_hogares import notebook_builder as nb
 from encuesta_hogares import verificacion_catalogo as vc
 
@@ -47,7 +49,12 @@ def test_todas_las_metricas_generan_codigo_python_valido():
         compile(celda.codigo, f"<metrica_{numero}>", "exec")
 
 
-def test_construir_celdas_notebook_arma_preparacion_mas_una_celda_por_metrica():
+def test_construir_celdas_notebook_arma_la_estructura_completa():
+    """Introducción + preparación + un tramo por tema + nota metodológica.
+
+    Antes el informe abría con "Preparación de datos" y las métricas salían
+    como una lista plana, sin nada que dijera a qué tema pertenecía cada una.
+    """
     celdas = nb.construir_celdas_notebook(
         anio_base=2025,
         metricas=[1, 8, 22],
@@ -56,39 +63,132 @@ def test_construir_celdas_notebook_arma_preparacion_mas_una_celda_por_metrica():
         incluir_empleo=False,
         incluir_seguridad=False,
     )
-    # 1 preparación + 3 métricas (sin Brecha Digital, sin Empleo/Seguridad).
-    assert len(celdas) == 4
+    cabezas = [c.markdown.split(chr(10))[0] for c in celdas]
+
+    assert cabezas[0].startswith("# "), "el informe tiene que abrir con su título"
+    assert "Informe 2025" in cabezas[0]
+    assert cabezas[-1] == "## Nota metodológica", "la metodología va al final"
+
+    # Un encabezado de tema antes de cada métrica, y las métricas agrupadas.
+    assert cabezas.count("## Brecha Digital") == 1
+    assert cabezas.count("## Hogares") == 1
+    assert cabezas.count("## Seguridad alimentaria") == 1
+    assert cabezas.index("## Brecha Digital") < cabezas.index("### 1. Brecha digital por nivel económico")
+    assert cabezas.index("## Hogares") < cabezas.index("### 8. Jefatura de hogar femenina")
 
 
-def test_construir_celdas_notebook_agrega_panorama_solo_si_se_eligio_brecha_digital():
+def test_las_metricas_se_agrupan_por_tema_no_en_el_orden_elegido():
+    """Se eligen desordenadas a propósito: el informe tiene que ordenarlas
+    por tema igual."""
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[22, 1, 8], incluir_brecha_digital=False,
+        incluir_fies=True, incluir_empleo=False, incluir_seguridad=False,
+    )
+    cabezas = [c.markdown.split(chr(10))[0] for c in celdas]
+    orden = [c for c in cabezas if c.startswith("### ")]
+    assert orden == [
+        "### 1. Brecha digital por nivel económico",
+        "### 8. Jefatura de hogar femenina",
+        "### 22. Inseguridad alimentaria por quintil de ingreso",
+    ]
+
+
+def test_el_ponderado_no_abre_el_informe_sino_que_cierra_en_metodologia():
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[1], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+    )
+    preparacion = next(c for c in celdas if c.markdown.startswith("## Preparación de datos"))
+    assert "ponderador" not in preparacion.markdown.lower(), (
+        "la explicación de 'ponderado' es metodología, no la apertura del informe"
+    )
+    assert "ponderador" in celdas[-1].markdown.lower()
+
+
+def test_el_panorama_abre_el_bloque_de_brecha_digital_y_no_el_informe():
+    """El panorama de conectividad es contexto de ese tema, no del informe
+    entero: va después de la presentación del bloque."""
     sin_brecha = nb.construir_celdas_notebook(
         anio_base=2025, metricas=[8], incluir_brecha_digital=False,
         incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
     )
     con_brecha = nb.construir_celdas_notebook(
-        anio_base=2025, metricas=[8], incluir_brecha_digital=True,
+        anio_base=2025, metricas=[1], incluir_brecha_digital=True,
         incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
     )
-    # Una sola celda de panorama. Eran tres hasta la 0.9.0 ("Panorama
-    # general" contando hogares con y sin TV cable, "Distribución por
-    # barrio" con el % de abonados, y "Composición de los hogares con y
-    # sin cable"): aparecían en todo informe que incluyera el bloque, sin
-    # importar las métricas elegidas, y por vivir acá y no en el catálogo
-    # sobrevivieron a la limpieza de métricas de cable de la 0.6.0 hasta
-    # llegar a un informe real.
-    assert len(con_brecha) == len(sin_brecha) + 1
+    assert not any("Panorama general" in c.markdown for c in sin_brecha)
+
+    cabezas = [c.markdown.split(chr(10))[0] for c in con_brecha]
+    assert cabezas.index("## Brecha Digital") < cabezas.index("### Panorama general de conectividad en Montevideo")
 
 
-def test_construir_celdas_notebook_agrega_celdas_de_empleo_y_seguridad_solo_si_se_eligieron():
-    base = nb.construir_celdas_notebook(
-        anio_base=2025, metricas=[8], incluir_brecha_digital=False,
-        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+def test_la_preparacion_de_un_tema_abre_ese_tema_y_no_el_informe():
+    """La preparación específica de Empleo y de Seguridad se carga dentro de
+    su tema, no arriba de todo.
+
+    Dejarlas arriba ponía un "## Empleo: preparación específica de este
+    bloque" entre la preparación general y el primer tema, lejos del
+    "## Empleo" al que pertenece. Ninguna métrica de otro bloque usa lo que
+    definen, así que se pueden mover (el índice territorial también mira
+    empleo, pero se lo carga por su cuenta).
+    """
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[8, 28, 36], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=True, incluir_seguridad=True,
     )
-    con_empleo_y_seguridad = nb.construir_celdas_notebook(
+    cabezas = [c.markdown.split(chr(10))[0] for c in celdas]
+    preparaciones = [i for i, c in enumerate(cabezas) if c == "### Preparación de los datos de este tema"]
+    assert len(preparaciones) == 2
+    for i in preparaciones:
+        assert cabezas[i - 1].startswith("## "), "cada preparación va justo debajo del título de su tema"
+        assert cabezas[i + 1].startswith("### "), "y antes de la primera métrica del tema"
+
+
+def test_no_se_carga_empleo_si_no_quedo_ninguna_metrica_de_empleo():
+    """Consecuencia buena del cambio anterior: la preparación cuelga del
+    tema, así que sin métricas de ese tema no se carga el archivo."""
+    celdas = nb.construir_celdas_notebook(
         anio_base=2025, metricas=[8], incluir_brecha_digital=False,
         incluir_fies=False, incluir_empleo=True, incluir_seguridad=True,
     )
-    assert len(con_empleo_y_seguridad) == len(base) + 2
+    assert not any("load_empleo" in c.codigo for c in celdas)
+    assert not any("load_victimizacion" in c.codigo for c in celdas)
+
+
+# ============================================================================
+# celdas_extra: por dónde entran las comparaciones entre años y las métricas
+# a medida, que se escriben a mano a propósito.
+#
+# Antes el agente armaba la lista de celdas él mismo para poder intercalar
+# esas celdas, y esa libertad es justo la que hacía que el informe saliera
+# distinto en cada corrida. Ahora la estructura la arma la función y el
+# agente solo cuelga lo suyo de la métrica que acompaña.
+# ============================================================================
+
+def test_las_celdas_extra_van_pegadas_a_su_metrica_dentro_del_bloque():
+    comparacion = nb.Celda(markdown="### Comparación 2023 vs 2025", codigo="pass")
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[8, 9], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+        celdas_extra={8: [comparacion]},
+    )
+    titulos = [c.markdown.split("\n")[0] for c in celdas]
+    posicion = titulos.index("### Comparación 2023 vs 2025")
+
+    # Justo después de la métrica 8 y antes de la 9, no al final del informe.
+    assert titulos[posicion - 1].startswith("### 8.")
+    assert titulos[posicion + 1].startswith("### 9.")
+
+
+def test_una_celda_extra_de_una_metrica_no_elegida_es_un_error():
+    # Si se dejara pasar, el informe saldría bien formado pero sin la
+    # comparación que la persona pidió: un fallo invisible.
+    with pytest.raises(ValueError, match="que no se eligieron"):
+        nb.construir_celdas_notebook(
+            anio_base=2025, metricas=[8], incluir_brecha_digital=False,
+            incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+            celdas_extra={30: [nb.Celda(markdown="### Huérfana")]},
+        )
 
 
 # ============================================================================
@@ -100,30 +200,140 @@ def test_construir_celdas_notebook_agrega_celdas_de_empleo_y_seguridad_solo_si_s
 # durante la corrida, así que salían o no según se acordara.
 # ============================================================================
 
-_PARTES_OBLIGATORIAS = [
-    ("¿Qué pregunta responde?", "la pregunta que responde la métrica"),
-    ("Qué significa cada término", "la explicación de los términos según el criterio del INE"),
-    ("Por qué esta gráfica:", "la justificación del tipo de gráfica elegido"),
-]
+def test_toda_metrica_del_catalogo_tiene_las_cinco_partes_en_orden():
+    """Las cinco partes, en este orden exacto (definición del dueño del
+    proyecto, v0.13.0):
 
+    a. nombre de la métrica
+    b. qué pregunta responde
+    c. términos **propios** de la métrica, si corresponde — los del bloque
+       ya se explicaron arriba y no se repiten, así que esta parte es la
+       única opcional
+    d. la gráfica
+    e. la explicación académica de por qué esa gráfica, con su referencia
+       bibliográfica
 
-def test_toda_metrica_del_catalogo_tiene_las_cinco_partes():
+    El cambio de orden importa: antes la justificación iba ANTES de la
+    gráfica. Ahora primero se ve el dato y después se entiende por qué está
+    presentado así, que es como se lee un informe.
+    """
     faltantes = []
     for numero in sorted(nb.GENERADORES):
         celda = nb.construir_celdas_metrica(numero)
+
+        # (a) y (b) van en el markdown que precede a la gráfica.
         if not celda.markdown.startswith(f"### {numero}. "):
             faltantes.append(f"  - {numero}: no arranca con el nombre de la métrica")
-        for marca, descripcion in _PARTES_OBLIGATORIAS:
-            if marca not in celda.markdown:
-                faltantes.append(f"  - {numero}: le falta {descripcion}")
-        # La quinta parte es la gráfica, que la aporta la celda de código.
+        if "¿Qué pregunta responde?" not in celda.markdown:
+            faltantes.append(f"  - {numero}: no dice qué pregunta responde")
+        # (c) es opcional, pero si aparece tiene que ir DESPUÉS de la
+        # pregunta y ANTES de la gráfica.
+        if "Qué significa cada término" in celda.markdown:
+            if celda.markdown.index("¿Qué pregunta responde?") > celda.markdown.index("Qué significa cada término"):
+                faltantes.append(f"  - {numero}: los términos van después de la pregunta, no antes")
+        # (d) la gráfica.
         if "viz.plot_" not in celda.codigo:
             faltantes.append(f"  - {numero}: no genera ninguna gráfica")
+        # (e) la justificación, DESPUÉS de la gráfica.
+        if "Por qué esta gráfica:" not in celda.markdown_final:
+            faltantes.append(f"  - {numero}: la justificación académica no va después de la gráfica")
+        if "Por qué esta gráfica:" in celda.markdown:
+            faltantes.append(f"  - {numero}: la justificación quedó ANTES de la gráfica")
+
     assert not faltantes, (
-        "Toda métrica del informe lleva siempre las mismas cinco partes "
-        "(nombre, pregunta que responde, términos según el INE, por qué esa "
-        "gráfica, y la gráfica):\n\n" + "\n".join(faltantes)
+        "Toda métrica lleva siempre las mismas cinco partes, en orden "
+        "(nombre, pregunta, términos propios, gráfica, justificación "
+        "académica):\n\n" + "\n".join(faltantes)
     )
+
+
+def test_los_terminos_del_bloque_no_se_repiten_en_cada_metrica():
+    """El caso que motivó el cambio: "índice de desarrollo territorial" se
+    explicaba igual en las tres métricas de Territorio."""
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[13, 14, 15], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+    )
+    veces = sum(1 for c in celdas if "Índice de desarrollo territorial**:" in c.markdown)
+    assert veces == 1, f"el término se explica {veces} veces; tiene que explicarse una sola, en el bloque"
+
+    bloque = next(c for c in celdas if c.markdown.startswith("## Territorio"))
+    assert "Índice de desarrollo territorial**:" in bloque.markdown
+
+
+def test_un_termino_de_una_sola_metrica_elegida_se_queda_en_la_metrica():
+    """Dinámico: si la persona elige una sola métrica de Territorio, no
+    tiene sentido explicar el término en una sección aparte."""
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[13], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+    )
+    bloque = next(c for c in celdas if c.markdown.startswith("## Territorio"))
+    metrica = next(c for c in celdas if c.markdown.startswith("### 13."))
+    assert "Índice de desarrollo territorial**:" not in bloque.markdown
+    assert "Índice de desarrollo territorial**:" in metrica.markdown
+
+
+def test_un_termino_que_cruza_bloques_se_repite_en_cada_uno():
+    """Decisión del dueño del proyecto: repetir, para que cada bloque se
+    lea solo sin ir a buscar una definición a otra sección."""
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=[1, 3, 5, 17, 19], incluir_brecha_digital=False,
+        incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+    )
+    bloques_con_nivel_economico = [
+        c.markdown.split(chr(10))[0] for c in celdas
+        if c.markdown.startswith("## ") and "Nivel económico**:" in c.markdown
+    ]
+    assert bloques_con_nivel_economico == ["## Brecha Digital", "## Vivienda"]
+
+
+def test_el_informe_emite_todas_las_metricas_elegidas():
+    """Ninguna métrica del catálogo puede quedarse fuera del informe.
+
+    Las métricas se emiten recorriendo los bloques, así que una que no
+    pertenezca a ninguno desaparecería: el informe saldría entero y sin
+    ella, sin ningún aviso.
+    """
+    todas = sorted(vc.MANIFEST)
+    celdas = nb.construir_celdas_notebook(
+        anio_base=2025, metricas=todas, incluir_brecha_digital=True,
+        incluir_fies=True, incluir_empleo=True, incluir_seguridad=True,
+    )
+    emitidas = {
+        int(c.markdown.split(".")[0].removeprefix("### "))
+        for c in celdas
+        if c.markdown.startswith("### ") and c.markdown[4:5].isdigit()
+    }
+    assert emitidas == set(todas), f"quedaron fuera del informe: {sorted(set(todas) - emitidas)}"
+
+
+def test_una_metrica_sin_bloque_no_se_pierde_en_silencio():
+    with pytest.raises(ValueError, match="no pertenecen a ningún bloque"):
+        nb.construir_celdas_notebook(
+            anio_base=2025, metricas=[999], incluir_brecha_digital=False,
+            incluir_fies=False, incluir_empleo=False, incluir_seguridad=False,
+        )
+
+
+def test_toda_metrica_justifica_su_grafica_citando_una_fuente():
+    """El mismo criterio que hace cumplir
+    `.claude/hooks/gate-notebook-metrica-sin-grafica-o-cita.cjs`, pero del
+    lado de Python, que es donde se escriben las justificaciones.
+
+    Nace de que el hook estuvo un tiempo mirando un formato de encabezado
+    que este módulo ya no emitía: encontraba cero métricas y pasaba en
+    verde. Mientras tanto, dos familias de gráfica ("barras 100% apiladas"
+    y "heatmap") quedaron sin cita. Un solo guardián, y en otro lenguaje,
+    no alcanzaba.
+    """
+    autores = ("Cleveland", "McGill", "Tufte", "Knaflic", "Few", "Ware", "Wilke",
+               "storytellingwithdata")
+    sin_cita = [
+        familia for familia, texto in nb._JUSTIFICACION_POR_FAMILIA.items()
+        if not any(autor in texto for autor in autores)
+    ]
+    assert not sin_cita, f"familias de gráfica sin cita: {sin_cita}"
 
 
 def test_toda_metrica_del_catalogo_explica_sus_terminos():

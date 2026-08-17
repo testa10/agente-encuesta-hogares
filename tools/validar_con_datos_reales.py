@@ -17,7 +17,7 @@ tests sintéticos y solo aparecieron contra datos de verdad:
   confundir, y un dataframe sintético de prueba no distingue una de otra
   si no se arma con cuidado.
 
-No se listan las 43 métricas del catálogo una por una — esa lista cambia
+No se listan las 42 métricas del catálogo una por una — esa lista cambia
 seguido y mantenerla sincronizada acá sería el mismo tipo de
 comentario/lista que se desactualiza solo. En cambio, se invoca la
 función de `analysis.py` que sostiene cada una contra datos reales
@@ -26,8 +26,8 @@ argumento de agrupación, así que son bastantes menos de 47 llamadas) y se
 verifican invariantes genéricos (porcentajes entre 0 y 100, categorías
 mutuamente excluyentes sumando ~100%, sin valores nulos donde no
 corresponde) — no solo que el pipeline cargue sin explotar. Antes de esta
-versión, 31 de las 47 métricas no tenían ninguna función real invocada
-acá, y esa brecha no la detectaba ni la suite sintética ni "no tira
+versión, 31 de las 47 métricas de entonces no tenían ninguna función real
+invocada acá, y esa brecha no la detectaba ni la suite sintética ni "no tira
 error": números mal calculados podían pasar sin que nada lo notara.
 `test_verificacion_catalogo.py::test_toda_metrica_del_manifiesto_tiene_su_funcion_validada_con_datos_reales`
 falla si en el futuro se agrega una métrica nueva al catálogo cuya

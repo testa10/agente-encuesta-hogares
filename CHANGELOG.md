@@ -10,100 +10,100 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
-## [0.9.3] — 2026-08-15
+## [0.13.0] — 2026-08-17
 
 ### Cambiado
 
-- **El modelo con el que corre el agente queda fijado a `claude-opus-5`**,
-  en el frontmatter del subagente y en `abrir_agente.bat`. Hasta ahora no
-  estaba fijado en ninguna parte: el subagente heredaba el modelo de la
-  sesión principal, que tomaba el default de la cuenta. Es decir que el
-  modelo con el que se generaba un informe podía cambiar sin que nadie
-  tocara el proyecto — si cambiaba el default de la cuenta, o si alguien
-  usaba `/model` en otra sesión.
+- **El informe tiene una estructura fija, que ya no depende de que el
+  modelo se acuerde.** La arma `notebook_builder.construir_celdas_notebook`
+  de punta a punta: introducción, preparación de datos, un tramo por tema,
+  y nota metodológica al final. Antes el agente armaba la lista de celdas
+  él mismo, y de ahí salían tres problemas que se veían leyendo un informe
+  generado:
 
-  Los 42 cálculos del catálogo **no** dependen del modelo (los hace
-  `analysis.py`, con tests y validación contra datos reales). Pero la
-  comparación entre años y las métricas a medida del paso 6 se escriben en
-  código libre en cada corrida: ahí el criterio del modelo es lo único que
-  separa un cálculo correcto de uno inventado, y es justo donde un número
-  puede terminar difiriendo de lo publicado por el INE sin justificación.
+  - **No había introducción.** Lo primero que leía quien recibía el informe
+    era "Preparación de datos", encabezado por el párrafo que explica qué
+    significa "ponderado" — que es metodología, no una apertura. Y como
+    nada la generaba, la introducción que apareciera la escribía el modelo:
+    cambiaba de una corrida a otra.
+  - **No había temas.** Las métricas salían como una lista plana, en el
+    orden en que la persona las había marcado: la 1, la 8, la 22 y la 28
+    una detrás de otra, sin nada que dijera a qué tema pertenecía cada una.
+    Ahora se agrupan por tema, en el orden del catálogo, y cada tema abre
+    con su nombre y con qué mide.
+  - **Los términos se repetían.** "Índice de desarrollo territorial" se
+    explicaba idéntico en las tres métricas de Territorio; FIES, en las
+    siete de Seguridad alimentaria.
 
-  Se usa el id completo y no el alias `opus` a propósito: un alias se
-  movería solo a la próxima generación, y este proyecto prefiere que ese
-  cambio sea una decisión explícita, con una corrida de validación de por
-  medio. Dos tests lo sostienen: que el modelo esté fijado con id completo
-  (no alias), y que `abrir_agente.bat` use el mismo que el subagente.
+- **Los términos del INE se explican una vez, donde corresponde.** Un
+  término va en la presentación del tema si más de una de las métricas
+  elegidas lo usa; si lo usa una sola, se queda dentro de esa métrica. Lo
+  decide `terminos_de_bloque()` sobre lo que la persona eligió de verdad,
+  no una lista fija: elegir las tres métricas de Territorio lo explica una
+  vez arriba, elegir una sola lo explica dentro de ella. Un término que
+  cruza temas (como "nivel económico") se repite en cada tema, porque los
+  tramos se leen sueltos.
 
-## [0.9.2] — 2026-08-15
+- **La justificación de cada gráfica pasó a ir después de la gráfica.** Las
+  cinco partes de toda métrica quedan: nombre, qué pregunta responde,
+  términos propios (si le quedan), la gráfica, y por qué esa gráfica con su
+  referencia bibliográfica. Primero se ve el dato, después se entiende por
+  qué está presentado así. Para esto `Celda` acepta `markdown_final`, que
+  es el markdown que sale después del código.
 
-### Agregado
+- **La explicación de "ponderado" se mudó al final**, a una nota
+  metodológica, con un aviso de una línea en la introducción que dice dónde
+  encontrarla.
 
-- **Toda métrica del informe lleva ahora las mismas cinco partes**, en el
-  mismo orden: el nombre, la pregunta que responde, **qué significa cada
-  término según el criterio del INE**, por qué se eligió esa gráfica, y la
-  gráfica.
-
-  Nace de un informe generado real: las métricas de Empleo explicaban con
-  la fórmula del INE qué es la tasa de actividad, empleo y desempleo, y
-  otras métricas no explicaban ningún término. La diferencia no era una
-  decisión — esas definiciones las escribía el modelo a mano durante la
-  corrida, así que aparecían o no según se acordara. Es el mismo patrón
-  que ya había fallado con los hooks y con el panorama de TV cable: una
-  regla que depende de la memoria del modelo no se cumple pareja.
-
-  Ahora hay un glosario fijo (`notebook_builder._GLOSARIO`) con 23
-  términos —tasa de actividad/empleo/desempleo, informalidad, subempleo,
-  pobreza e indigencia, hacinamiento, tipos de hogar, razón de
-  dependencia, carencia estructural, escala FIES, quintil, victimización,
-  denuncia formal, índice de acceso digital, índice territorial, etc.— y
-  cada métrica declara cuáles usa. Cada definición describe **lo que de
-  verdad calcula el proyecto**, verificado contra `analysis.py`, siguiendo
-  el criterio del INE; no se transcriben textos oficiales sin verificar.
-
-  Cuatro tests lo hacen cumplir: que toda métrica tenga las cinco partes,
-  que ninguna quede sin términos declarados, que todo término declarado
-  exista en el glosario, y que el glosario no acumule términos que nadie
-  usa.
-
-- Las instrucciones del agente explicitan que **la comparación entre años
-  y las métricas a medida del paso 6 —lo único que queda en código libre—
-  llevan exactamente la misma estructura de cinco partes**, y que si un
-  término ya está en el glosario hay que reusar esa definición palabra por
-  palabra en vez de redactar otra. Sin eso, el problema volvía por el
-  único camino que quedó abierto.
-
-## [0.9.1] — 2026-08-15
+- **La preparación específica de Empleo y de Seguridad abre su propio
+  tema**, en vez de quedar arriba de todo. Antes aparecía un "## Empleo:
+  preparación específica de este bloque" entre la preparación general y el
+  primer tema, lejos del "## Empleo" al que pertenece. De paso quedó un
+  efecto bueno: si ninguna métrica de ese tema entró al informe, el archivo
+  de Empleo (o el de Victimización) ya no se carga. El panorama de
+  conectividad y las dos preparaciones ahora cuelgan como `###` del título
+  de su tema, en vez de competir con él en el mismo nivel.
 
 ### Corregido
 
-- **Ninguna explicación del catálogo depende ya de otra métrica.** La
-  métrica "Inseguridad alimentaria severa por quintil de ingreso" decía
-  *"la misma comparación del punto 23"*: obligaba a ir a buscar otra
-  métrica para entenderla y, peor, tras la renumeración de la 0.9.0 ese
-  "23" quedó apuntando a una métrica **distinta** (pasó a ser
-  "Inseguridad alimentaria por región") sin que nada lo detectara. Se
-  reescribieron las 7 explicaciones que dependían de otra ("la misma
-  comparación", "lo mismo", "el índice anterior", "esos dos grupos") para
-  que cada una se entienda sola.
+- **El hook que exige que toda métrica tenga gráfica y cita bibliográfica
+  no estaba mirando nada.** Buscaba encabezados `#### Métrica N`, que es
+  como se escribían las celdas cuando se escribían a mano; desde que las
+  arma `notebook_builder` salen como `### N. Título`. Encontraba cero
+  métricas y dejaba pasar cualquier notebook: verde por no mirar. Se
+  detectó corriendo el hook contra un notebook generado de verdad, y en
+  cuanto empezó a mirar aparecieron **dos familias de gráfica sin cita**
+  (barras 100% apiladas y heatmap, que afectaban a las métricas 3, 14 y
+  35). Las citas ya estaban en `docs/CONVENCIONES_DE_GRAFICAS.md` — Wilke
+  sobre proporciones, Ware sobre percepción — pero nunca habían llegado al
+  generador, y el hook tampoco reconocía a esos dos autores.
 
-  `test_ninguna_explicacion_del_catalogo_depende_de_otra_metrica` hace
-  cumplir la regla de ahora en más: falla si una explicación referencia
-  otra métrica por número o con una frase relativa. Verificado que atrapa
-  los siete textos viejos sin marcar ninguno legítimo.
+  Ahora hay un test que corre el hook de Node sobre el notebook completo de
+  las 42 métricas, más un test del lado de Python que exige cita en cada
+  familia de gráfica. Un solo guardián, y en otro lenguaje, no alcanzaba.
 
-### Agregado
+- El hook además cortaba mal: la cita de una métrica podía contar como si
+  fuera de la anterior, tapando a una que no tenía ninguna.
 
-- **Los bloques con datos mensuales explican qué significa eso**, en una
-  nota al principio del bloque (no repetida en cada métrica):
-  - **Empleo**: cada número es el promedio de los 12 meses del año — se
-    calcula el valor de cada mes por separado y después se promedian, así
-    ningún mes pesa más que otro. No es una foto de un mes suelto.
-  - **Seguridad y victimización**: todo se refiere al **mes anterior** a
-    la entrevista, no al año entero. Si un número dice 5%, es el 5% que
-    sufrió ese delito en un solo mes — no se puede leer como cifra anual
-    ni comparar con estadísticas anuales de otras fuentes.
-  - **FIES**: se calcula sobre una submuestra de hogares.
+- **Una métrica que no perteneciera a ningún tema habría desaparecido del
+  informe en silencio** — el informe se arma recorriendo los temas, así que
+  saldría entero y sin ella. Hoy no pasa con ninguna de las 42, pero podía
+  pasar en cuanto se agregara una al catálogo olvidando su rango en
+  `verificacion_catalogo.BLOQUES`. Ahora corta con un error, y hay un test
+  que verifica que las 42 elegidas llegan al informe.
+
+- Tres referencias a secciones que no existen: el hook citaba "la sección 9
+  de `docs/METODOLOGIA.md`" y la hoja de estilos del PDF, "la sección 8" —
+  ese documento tiene cuatro. Ahora apuntan a donde la regla vive de verdad
+  (`CONVENCIONES_DE_GRAFICAS.md` y `FLUJO_DE_TRABAJO.md`).
+
+- La documentación decía "las 43 métricas fijas del catálogo" (instrucciones
+  del agente, README y el validador) cuando son 42 desde que se sacó TV
+  cable. Corregido, y atado al catálogo real con un test para que no vuelva
+  a quedar viejo.
+
+- El bloque 0.9.1–0.9.3 del changelog había quedado pegado arriba de todo,
+  arriba de versiones posteriores. Reordenado.
 
 ## [0.12.0] — 2026-08-16
 
@@ -246,6 +246,101 @@ changelog arranca en la versión donde se formalizó el versionado.
   en la 0.9.0: citaban "métricas 37-43" cuando el catálogo llega a 42, y
   "métrica 36" para lo que pasó a ser la 35. Nueve referencias corregidas,
   con un test que ahora falla si alguna cita un número que no existe.
+
+## [0.9.3] — 2026-08-15
+
+### Cambiado
+
+- **El modelo con el que corre el agente queda fijado a `claude-opus-5`**,
+  en el frontmatter del subagente y en `abrir_agente.bat`. Hasta ahora no
+  estaba fijado en ninguna parte: el subagente heredaba el modelo de la
+  sesión principal, que tomaba el default de la cuenta. Es decir que el
+  modelo con el que se generaba un informe podía cambiar sin que nadie
+  tocara el proyecto — si cambiaba el default de la cuenta, o si alguien
+  usaba `/model` en otra sesión.
+
+  Los 42 cálculos del catálogo **no** dependen del modelo (los hace
+  `analysis.py`, con tests y validación contra datos reales). Pero la
+  comparación entre años y las métricas a medida del paso 6 se escriben en
+  código libre en cada corrida: ahí el criterio del modelo es lo único que
+  separa un cálculo correcto de uno inventado, y es justo donde un número
+  puede terminar difiriendo de lo publicado por el INE sin justificación.
+
+  Se usa el id completo y no el alias `opus` a propósito: un alias se
+  movería solo a la próxima generación, y este proyecto prefiere que ese
+  cambio sea una decisión explícita, con una corrida de validación de por
+  medio. Dos tests lo sostienen: que el modelo esté fijado con id completo
+  (no alias), y que `abrir_agente.bat` use el mismo que el subagente.
+
+## [0.9.2] — 2026-08-15
+
+### Agregado
+
+- **Toda métrica del informe lleva ahora las mismas cinco partes**, en el
+  mismo orden: el nombre, la pregunta que responde, **qué significa cada
+  término según el criterio del INE**, por qué se eligió esa gráfica, y la
+  gráfica.
+
+  Nace de un informe generado real: las métricas de Empleo explicaban con
+  la fórmula del INE qué es la tasa de actividad, empleo y desempleo, y
+  otras métricas no explicaban ningún término. La diferencia no era una
+  decisión — esas definiciones las escribía el modelo a mano durante la
+  corrida, así que aparecían o no según se acordara. Es el mismo patrón
+  que ya había fallado con los hooks y con el panorama de TV cable: una
+  regla que depende de la memoria del modelo no se cumple pareja.
+
+  Ahora hay un glosario fijo (`notebook_builder._GLOSARIO`) con 23
+  términos —tasa de actividad/empleo/desempleo, informalidad, subempleo,
+  pobreza e indigencia, hacinamiento, tipos de hogar, razón de
+  dependencia, carencia estructural, escala FIES, quintil, victimización,
+  denuncia formal, índice de acceso digital, índice territorial, etc.— y
+  cada métrica declara cuáles usa. Cada definición describe **lo que de
+  verdad calcula el proyecto**, verificado contra `analysis.py`, siguiendo
+  el criterio del INE; no se transcriben textos oficiales sin verificar.
+
+  Cuatro tests lo hacen cumplir: que toda métrica tenga las cinco partes,
+  que ninguna quede sin términos declarados, que todo término declarado
+  exista en el glosario, y que el glosario no acumule términos que nadie
+  usa.
+
+- Las instrucciones del agente explicitan que **la comparación entre años
+  y las métricas a medida del paso 6 —lo único que queda en código libre—
+  llevan exactamente la misma estructura de cinco partes**, y que si un
+  término ya está en el glosario hay que reusar esa definición palabra por
+  palabra en vez de redactar otra. Sin eso, el problema volvía por el
+  único camino que quedó abierto.
+
+## [0.9.1] — 2026-08-15
+
+### Corregido
+
+- **Ninguna explicación del catálogo depende ya de otra métrica.** La
+  métrica "Inseguridad alimentaria severa por quintil de ingreso" decía
+  *"la misma comparación del punto 23"*: obligaba a ir a buscar otra
+  métrica para entenderla y, peor, tras la renumeración de la 0.9.0 ese
+  "23" quedó apuntando a una métrica **distinta** (pasó a ser
+  "Inseguridad alimentaria por región") sin que nada lo detectara. Se
+  reescribieron las 7 explicaciones que dependían de otra ("la misma
+  comparación", "lo mismo", "el índice anterior", "esos dos grupos") para
+  que cada una se entienda sola.
+
+  `test_ninguna_explicacion_del_catalogo_depende_de_otra_metrica` hace
+  cumplir la regla de ahora en más: falla si una explicación referencia
+  otra métrica por número o con una frase relativa. Verificado que atrapa
+  los siete textos viejos sin marcar ninguno legítimo.
+
+### Agregado
+
+- **Los bloques con datos mensuales explican qué significa eso**, en una
+  nota al principio del bloque (no repetida en cada métrica):
+  - **Empleo**: cada número es el promedio de los 12 meses del año — se
+    calcula el valor de cada mes por separado y después se promedian, así
+    ningún mes pesa más que otro. No es una foto de un mes suelto.
+  - **Seguridad y victimización**: todo se refiere al **mes anterior** a
+    la entrevista, no al año entero. Si un número dice 5%, es el 5% que
+    sufrió ese delito en un solo mes — no se puede leer como cifra anual
+    ni comparar con estadísticas anuales de otras fuentes.
+  - **FIES**: se calcula sobre una submuestra de hogares.
 
 ## [0.9.0] — 2026-08-15
 

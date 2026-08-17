@@ -20,23 +20,57 @@ justificar el tipo de gráfica elegido en cada métrica, ver
 
 ## 1. Estructura estándar del análisis
 
-El análisis se organiza siempre en las mismas grandes partes (los números de
-sección pueden variar si se agregan o quitan preguntas, pero el orden lógico
-se mantiene):
+La estructura es fija y la arma `notebook_builder.construir_celdas_notebook`,
+no el modelo durante la corrida. Antes cada informe salía distinto: la
+introducción la escribía el modelo, y las métricas aparecían como una lista
+plana en el orden en que la persona las había marcado, sin nada que dijera a
+qué tema pertenecía cada una.
 
-1. **Preparación de datos**: cargar Hogares y Personas, filtrar a Montevideo,
-   clasificar nivel económico. Es la única parte que se genera siempre —
-   toda infraestructura, sin contenido temático propio.
-2. **Bloques elegidos**, cada uno organizado como "Entorno" temático propio
-   (Brecha Digital, Hogares, Territorio, Vivienda, y — si corresponde —
-   Seguridad Alimentaria, Empleo, Seguridad y Victimización): el usuario
-   elige qué bloques quiere (paso 3.5) y qué métricas de cada uno (paso 4).
-3. **Resumen analítico final**, organizado por los mismos bloques que
-   terminó teniendo el informe (nunca por una lista fija de Entornos), con
-   cifras reales (nunca estimadas) y redactado para un lector no técnico.
+1. **Introducción**: qué se analizó, de dónde salen los datos, cuántas
+   métricas trae y en qué temas. Texto fijo, idéntico corrida a corrida.
+2. **Preparación de datos**: cargar Hogares y Personas, filtrar a Montevideo,
+   clasificar nivel económico. Infraestructura, sin contenido temático.
+3. **Un tramo por tema elegido** (Brecha Digital, Hogares, Territorio,
+   Vivienda, y — si corresponde — Seguridad Alimentaria, Empleo, Seguridad y
+   Victimización), en el orden del catálogo y no en el de selección. Cada
+   tramo abre con el nombre del tema, qué mide, y **los términos del INE que
+   usan varias de sus métricas**; después va lo que ese tema necesite cargar
+   aparte (Empleo y Seguridad tienen su propio archivo; Brecha Digital, su
+   panorama de conectividad), y después sus métricas.
+4. **Nota metodológica**: qué significa que un porcentaje esté "ponderado".
+   Va al final porque es metodología: estaba abriendo el informe, que era lo
+   primero que leía quien lo recibía.
+5. **Resumen analítico final**, organizado por los mismos bloques que terminó
+   teniendo el informe, con cifras reales (nunca estimadas) y redactado para
+   un lector no técnico.
 
-Cada subsección nueva sigue el mismo patrón: **una pregunta guía en
-markdown, antes de la celda de código que la responde.** Nunca al revés.
+### Las cinco partes de cada métrica
+
+Toda métrica —del catálogo, a medida, o una comparación entre años— lleva
+las mismas cinco partes **en este orden**:
+
+1. El nombre de la métrica.
+2. Qué pregunta responde.
+3. Qué significa cada término **propio de esta métrica**, según el criterio
+   del INE. Es la única parte opcional: si todos sus términos ya los explicó
+   la presentación del tema, no va.
+4. La gráfica.
+5. Por qué esa gráfica, con la referencia bibliográfica que lo respalda
+   (Cleveland & McGill, Tufte, Knaflic — ver `CONVENCIONES_DE_GRAFICAS.md`).
+
+La justificación va **después** de la gráfica, no antes: primero se ve el
+dato, después se entiende por qué está presentado así.
+
+### Términos: a nivel tema o a nivel métrica
+
+Un término del INE se explica en la presentación del tema si más de una de
+las métricas elegidas lo usa; si lo usa una sola, se queda dentro de esa
+métrica. Lo decide `notebook_builder.terminos_de_bloque()` sobre lo que la
+persona eligió de verdad, no una lista fija: elegir las tres métricas de
+Territorio explica "índice de desarrollo territorial" una vez arriba; elegir
+una sola lo explica dentro de ella. Un término que cruza temas (como "nivel
+económico") se explica en cada tema que lo use, porque los tramos se leen
+sueltos.
 
 ## 2. Reglas de rigor estadístico (no negociables)
 
@@ -81,11 +115,11 @@ sección nueva, revisarla contra esta lista:
   `media_ponderada_por` (promedio), `proporcion_ponderada` (value_counts
   ponderado), `mediana_ponderada` (mediana). Si se agrega una función
   nueva de Hogares/Personas y no se va a ponderar, dejar explícito por qué
-  en el docstring — no que se haya olvidado. **Como "ponderado" ahora
-  aparece en casi todas las gráficas, el informe le tiene que explicar
-  ese término al lector una vez, en lenguaje simple** — ver la
-  instrucción y el texto base en `.claude/agents/encuesta-hogares.md`,
-  paso 5.2, sección "Preparación de datos".
+  en el docstring — no que se haya olvidado. **Como "ponderado" aparece en
+  casi todas las gráficas, el informe le explica ese término al lector una
+  vez, en lenguaje simple**: lo hace
+  `notebook_builder.celda_nota_metodologica()`, al final del informe, con un
+  aviso de una línea en la introducción que dice dónde buscarlo.
 - **Límite conocido: sin intervalos de confianza ni test de significancia.**
   Los microdatos públicos del INE no incluyen las variables de diseño
   muestral (conglomerado/estrato) necesarias para calcular un error

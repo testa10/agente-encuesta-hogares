@@ -4,7 +4,8 @@
    numeración de página: Chromium (el motor que usa Playwright para imprimir
    a PDF) no soporta esas cajas de margen de CSS. La numeración de página y
    el encabezado/pie se arman aparte, con las opciones header_template /
-   footer_template de Playwright — ver docs/METODOLOGIA.md sección 8. */
+   footer_template de Playwright — ver docs/FLUJO_DE_TRABAJO.md, sección 2
+   ("Generación del informe PDF profesional"). */
 
 @page {
   size: A4;

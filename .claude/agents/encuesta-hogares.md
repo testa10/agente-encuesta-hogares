@@ -769,7 +769,7 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    Estos puntos de control dividen ese hueco en tramos medibles.
 2. Escribir **un único archivo** Python que arma la lista de celdas.
 
-   **Para las 43 métricas fijas del catálogo (paso 4), usar
+   **Para las 42 métricas fijas del catálogo (paso 4), usar
    `notebook_builder.py` en vez de escribir el código a mano** — ver su
    docstring para el porqué (una medición real: 7 de los ~10 minutos que
    tardaba este paso eran el modelo escribiendo texto que, para el
@@ -779,31 +779,36 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    ```python
    from encuesta_hogares import notebook_builder as nb
 
-   celdas = [nb.celda_preparacion_datos(anio, incluir_fies)]
-   if incluir_empleo:
-       celdas.append(nb.celda_preparacion_empleo(anio))
-   if incluir_seguridad:
-       celdas.append(nb.celda_preparacion_seguridad(anio))
-   if incluir_brecha_digital:
-       celdas.extend(nb.celdas_intro_brecha_digital())
-
-   for numero in metricas:  # todas las elegidas del paso 4, en orden
-       celdas.append(nb.construir_celdas_metrica(numero))
-       if numero in metricas_comparadas:  # ver más abajo
-           celdas.append(<celda de comparación escrita a mano>)
+   celdas = nb.construir_celdas_notebook(
+       anio_base=anio,
+       metricas=metricas,          # todas las elegidas del paso 4
+       incluir_brecha_digital=incluir_brecha_digital,
+       incluir_fies=incluir_fies,
+       incluir_empleo=incluir_empleo,
+       incluir_seguridad=incluir_seguridad,
+       # Comparaciones entre años y métricas a medida: escritas a mano,
+       # colgadas de la métrica a la que acompañan. Van justo después de
+       # ella, dentro de su bloque.
+       celdas_extra={numero: [<celda escrita a mano>], ...},
+   )
 
    nb.escribir_notebook(celdas, ruta_notebook)
    ```
 
-   `celda_preparacion_datos`/`celda_preparacion_empleo`/
-   `celda_preparacion_seguridad`/`celdas_intro_brecha_digital`/
-   `construir_celdas_metrica` **ya se encargan de todo lo que antes había
-   que armar a mano acá**: la explicación de "ponderado" en la celda de
-   Preparación de datos, el panorama de Brecha Digital (una sola celda:
-   Panorama general de conectividad, con hogares con y sin internet) solo
-   si se eligió ese bloque, `bitacora.medir("carga_de_datos")` alrededor
-   de la carga, y la pregunta guía + justificación de cada métrica en
-   markdown antes de su código. No hace falta reescribir nada de eso.
+   **Una sola llamada, no una lista armada a mano.**
+   `construir_celdas_notebook` es la que garantiza la estructura del
+   informe (v0.13.0): introducción fija, preparación de datos, un tramo
+   por tema con su presentación y sus términos, y la nota metodológica al
+   final. Armar la lista a mano — como se hacía antes — vuelve a producir
+   una lista plana de métricas sin introducción ni bloques. Si algo no
+   entra en `celdas_extra`, se arregla la función y su test, no acá.
+
+   Ya se encarga de todo lo que antes había que armar a mano: la
+   explicación de "ponderado" (ahora en la nota metodológica del final,
+   que es su lugar), el panorama de conectividad al abrir Brecha Digital,
+   `bitacora.medir("carga_de_datos")` alrededor de la carga, el
+   agrupamiento de las métricas por tema, y las cinco partes de cada
+   métrica en el orden correcto. No hace falta reescribir nada de eso.
 
    **La comparación entre años (paso 4, `comparar_anios`/
    `metricas_comparadas`) queda fuera de `notebook_builder.py` a
@@ -814,17 +819,23 @@ señal de haberse ido del método — hay que parar y volver a este proceso:
    datos de años distintos es justo el tipo de tarea donde conviene que
    alguien (o algo) note que un resultado no cierra y lo investigue, no
    una plantilla fija. Para cada número en `metricas_comparadas`, agregar
-   una celda de comparación aparte, a mano, **después** de la celda que ya
-   armó `notebook_builder` para esa métrica — mismo criterio ya
-   documentado más abajo en esta sección (2 años → dumbbell, 3+ →
-   serie), y usar siempre `preprocessing.normalizar_departamento` /
-   `analysis.tabla_a_dict`, ya escritas y testeadas, en vez de reinventar
-   ese código.
+   una celda de comparación aparte, a mano, y pasarla en `celdas_extra`
+   colgada de esa métrica — mismo criterio ya documentado más abajo en
+   esta sección (2 años → dumbbell, 3+ → serie), y usar siempre
+   `preprocessing.normalizar_departamento` / `analysis.tabla_a_dict`, ya
+   escritas y testeadas, en vez de reinventar ese código.
 
    **Las métricas a medida del paso 6 tampoco pasan por
-   `notebook_builder.py`** — se agregan igual que siempre, a mano, con
-   `notebook_builder.Celda(markdown=..., codigo=...)` para que queden en
-   el mismo formato que el resto de la lista.
+   `notebook_builder.py`** — se escriben a mano con
+   `notebook_builder.Celda(markdown=..., codigo=..., markdown_final=...)`.
+   Si acompañan a una métrica del catálogo, van en `celdas_extra`; si no,
+   se agregan al final de la lista, antes de la nota metodológica.
+
+   **Toda celda escrita a mano lleva las mismas cinco partes y el mismo
+   orden que las del catálogo** (nombre, pregunta, términos propios,
+   gráfica, justificación académica): la justificación va en
+   `markdown_final`, que es el markdown que sale **después** del código.
+   Y los términos que ya explicó la presentación del bloque no se repiten.
 
    **La ruta es siempre exactamente
    `notebooks/Informe_ECH_{año}.ipynb`** (el año elegido en el paso 1, sin
@@ -915,15 +926,36 @@ partes, en este orden:**
 
 1. **El nombre de la métrica** (`### N. Título`).
 2. **La pregunta que responde.**
-3. **Qué significa cada término, según el criterio del INE** — la fórmula
-   o definición exacta cuando la tenga (una tasa, un índice, una razón).
-4. **Por qué esa gráfica**, citando el principio o la fuente que lo
-   respalda (Cleveland & McGill, Tufte, Knaflic, etc.) — ver
-   `docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la fuente exacta de cada
-   patrón.
-5. **La gráfica.**
+3. **Qué significa cada término propio de esta métrica**, según el criterio
+   del INE — la fórmula o definición exacta cuando la tenga (una tasa, un
+   índice, una razón). **Es la única parte opcional**: si todos los
+   términos que usa la métrica ya los explicó la presentación del bloque,
+   esta parte no va (ver más abajo).
+4. **La gráfica.**
+5. **La explicación académica de por qué esa gráfica**, citando el
+   principio o la fuente que lo respalda (Cleveland & McGill, Tufte,
+   Knaflic, etc.) — ver `docs/CONVENCIONES_DE_GRAFICAS.md`, que trae la
+   fuente exacta de cada patrón.
 
-Las cuatro primeras van en la misma celda de markdown, antes del código.
+**El orden importa y cambió en la v0.13.0:** la justificación de la
+gráfica va **después** de la gráfica, no antes. Primero se ve el dato,
+después se entiende por qué está presentado así — que es como se lee un
+informe. En el notebook eso son tres celdas: markdown (1-3), código (4),
+markdown (5).
+
+### Términos: a nivel bloque o a nivel métrica
+
+El informe presenta cada tema con su nombre, qué mide y **los términos del
+INE que usan varias de sus métricas**. Un término va a nivel bloque si más
+de una de las métricas elegidas lo usa; si lo usa una sola, se queda en esa
+métrica. Lo calcula `notebook_builder.terminos_de_bloque()` sobre lo que la
+persona eligió de verdad — nunca a ojo.
+
+Nace de que "índice de desarrollo territorial" se explicaba igual en las
+tres métricas de Territorio, y FIES en las siete de Seguridad alimentaria.
+
+**Al escribir una métrica a medida o una comparación entre años, fijate
+primero qué términos ya explicó el bloque y no los repitas.**
 
 **Para las métricas del catálogo esto ya está resuelto y no hay que
 escribirlo**: `notebook_builder` las arma solo, con el glosario fijo de
@@ -1048,7 +1080,9 @@ paso 4 como a cualquier pregunta nueva que surja más adelante:
    error. Si se termina editando el mismo archivo de test tres o cuatro
    veces seguidas, parar: significa que no se leyó bien el patrón
    existente antes de empezar. Agregarle su test, y sumar la celda al
-   notebook con su pregunta guía en markdown antes de la gráfica.
+   notebook con las cinco partes en orden (ver el paso 5.2): pregunta guía
+   antes de la gráfica, justificación académica después, en
+   `markdown_final`.
 5. Correr el flujo de verificación completo **una vez**, no en un bucle.
 6. Ayudar al usuario a redactar una conclusión corta para esa sección
    nueva, basada en los números reales que salieron — nunca en una
@@ -1099,8 +1133,9 @@ incluso acá).
 
 Antes de dar el trabajo por terminado, repasar el notebook completo contra
 la sección 3 de `docs/METODOLOGIA.md`: sin encabezados amontonados, cada
-gráfica con su pregunta guía, sin huecos de numeración, sin referencias a
-secciones que ya no existen, terminología consistente. **Releer también el
+gráfica con su pregunta guía antes y su justificación después, sin huecos
+de numeración, sin referencias a secciones que ya no existen, terminología
+consistente. **Releer también el
 "Resumen analítico final" entero**: si se encuentra cualquier placeholder,
 texto entre paréntesis del tipo "(pendiente)", o una sección sin
 completar, es que se saltó un paso — hay que volver y escribirlo con

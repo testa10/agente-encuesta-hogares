@@ -170,3 +170,22 @@ def test_las_instrucciones_no_citan_metricas_fuera_del_catalogo():
         f"catálogo (que va de 1 a {maximo}): {fuera} — quedaron con la "
         f"numeración vieja después de renumerar."
     )
+
+
+def test_la_cantidad_de_metricas_que_dice_la_documentacion_es_la_real():
+    """"Las 43 métricas fijas del catálogo" decían las instrucciones y el
+    README, cuando son 42 desde que se sacó TV cable.
+
+    Es una frase de prosa que nadie verificaba, igual que las referencias a
+    secciones inexistentes. Sale barato atarla al catálogo real.
+    """
+    from encuesta_hogares import verificacion_catalogo as vc
+
+    reales = len(vc.MANIFEST)
+    raiz = AGENTE_MD.parents[2]
+    equivocados = []
+    for archivo in (AGENTE_MD, raiz / "README.md", raiz / "tools" / "validar_con_datos_reales.py"):
+        for cantidad in re.findall(r"las (\d+) métricas (?:fijas )?del catálogo", archivo.read_text(encoding="utf-8")):
+            if int(cantidad) != reales:
+                equivocados.append(f"{archivo.name}: dice {cantidad}, son {reales}")
+    assert not equivocados, "\n".join(equivocados)

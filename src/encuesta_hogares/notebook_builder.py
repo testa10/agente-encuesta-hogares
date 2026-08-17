@@ -60,8 +60,23 @@ from . import entrega, formularios
 
 @dataclass
 class Celda:
+    """Un tramo del informe: markdown, después código, y opcionalmente más
+    markdown DESPUÉS del código.
+
+    `markdown_final` existe porque el orden del informe lo pide: desde la
+    v0.13.0, la justificación académica de por qué se eligió ese tipo de
+    gráfica va **después** de la gráfica, no antes. Antes se explicaba
+    primero y se mostraba después, que es al revés de como se lee un
+    informe: primero se ve el dato, después se entiende por qué está
+    presentado así.
+
+    `codigo` vacío es válido: sirve para tramos que son solo texto (la
+    introducción, la presentación de un bloque, la nota metodológica).
+    """
+
     markdown: str
-    codigo: str
+    codigo: str = ""
+    markdown_final: str = ""
 
 
 # ============================================================================
@@ -69,7 +84,11 @@ class Celda:
 # elegido — nada de comparación entre años acá (ver docstring del módulo).
 # ============================================================================
 
-_TEXTO_PONDERADO = '''"""La palabra 'ponderado' aparece en casi todos los porcentajes de este informe.
+# Prosa suelta, no un literal de Python: hasta la v0.13.0 este texto se
+# inyectaba dentro de una celda de código, envuelto en `"""`, y por eso
+# arrastraba las comillas y una primera línea de contexto. Ahora es markdown
+# de la nota metodológica y nada más.
+_TEXTO_PONDERADO = '''\
 La Encuesta Continua de Hogares no encuesta a todos los hogares del país en la
 misma proporción en que existen en la realidad — un departamento chico, por
 ejemplo, puede terminar levemente sub o sobrerrepresentado en la muestra real
@@ -78,7 +97,7 @@ cada hogar encuestado un 'ponderador': un factor que ajusta cuánto pesa ese
 hogar al calcular un promedio o porcentaje, para que el resultado final
 represente a toda la población, no solo a quienes quedaron en la muestra tal
 cual. Es el mismo criterio que usa el propio INE en sus publicaciones
-oficiales, no una decisión de este informe."""'''
+oficiales, no una decisión de este informe.'''
 
 
 def celda_preparacion_datos(anio_base: int, incluir_fies: bool) -> Celda:
@@ -86,7 +105,14 @@ def celda_preparacion_datos(anio_base: int, incluir_fies: bool) -> Celda:
     temático (ver docs/METODOLOGIA.md, sección 1). Envuelve la carga con
     `bitacora.medir("carga_de_datos")`, como indica el paso 5 del agente.
     """
-    markdown = "## Preparación de datos\n\n" + _TEXTO_PONDERADO.strip('"')
+    # El párrafo de "ponderado" estaba acá y era lo primero que veía el
+    # lector del informe. Es metodología, no apertura: se mudó a
+    # `celda_nota_metodologica()`, al final.
+    markdown = (
+        "## Preparación de datos\n\n"
+        "Carga de los microdatos del INE y armado de las variables que usan "
+        "las métricas de este informe."
+    )
     fies_extra = ""
     if incluir_fies:
         fies_extra = '''
@@ -144,7 +170,9 @@ def celda_preparacion_empleo(anio_base: int) -> Celda:
 
 meses_cubiertos = sorted(int(m) for m in empleo_prep["mes"].unique())
 print(f"Meses de Empleo cubiertos: {len(meses_cubiertos)}")'''
-    return Celda(markdown="## Empleo: preparación específica de este bloque", codigo=codigo)
+    # `###`, no `##`: cuelga del "## Empleo" que abre el tema, igual que las
+    # métricas. Y sin repetir "Empleo" en el título, que ya está arriba.
+    return Celda(markdown="### Preparación de los datos de este tema", codigo=codigo)
 
 
 def celda_preparacion_seguridad(anio_base: int) -> Celda:
@@ -155,7 +183,7 @@ def celda_preparacion_seguridad(anio_base: int) -> Celda:
     victimizados = victimizacion_largo[victimizacion_largo["victimizado"]]
 
 print(f"Personas x tipo de delito: {len(victimizacion_largo):,}")'''
-    return Celda(markdown="## Seguridad y Victimización: preparación específica de este bloque", codigo=codigo)
+    return Celda(markdown="### Preparación de los datos de este tema", codigo=codigo)
 
 
 # ============================================================================
@@ -199,14 +227,32 @@ _JUSTIFICACION_POR_FAMILIA = {
         "Barras horizontales, para que las categorías se lean sin inclinar "
         "la cabeza (Cleveland & McGill, 1984)."
     ),
-    "barras_100": "Barras 100% apiladas, para mostrar cómo se reparte el total entre categorías.",
+    "barras_100": (
+        "Barras 100% apiladas, para mostrar la composición completa de cada "
+        "grupo en una sola barra cuando las partes suman exactamente 100% "
+        "(Wilke, *Fundamentals of Data Visualization*, cap. proporciones)."
+    ),
     "dumbbell": (
         "Gráfico de dos puntos conectados (dumbbell), para comparar dos grupos "
         "conservando el valor real de cada uno, no solo la diferencia entre "
         "ambos (Tufte; Knaflic, storytellingwithdata.com)."
     ),
-    "heatmap": "Heatmap, para cruzar dos variables categóricas a la vez en una sola gráfica.",
+    "heatmap": (
+        "Heatmap, para cruzar dos variables categóricas cuando importa la "
+        "magnitud relativa de la concentración y no el valor exacto de cada "
+        "celda: por el principio Gestalt de similitud, las celdas de color "
+        "parecido se agrupan solas a la vista (Ware, *Information "
+        "Visualization: Perception for Design*)."
+    ),
 }
+
+# Toda familia lleva su cita: el hook
+# `.claude/hooks/gate-notebook-metrica-sin-grafica-o-cita.cjs` bloquea la
+# ejecución del notebook si alguna métrica no la tiene. "barras_100" y
+# "heatmap" salieron sin cita hasta la v0.13.0 — el hook no las detectaba
+# porque buscaba un formato de encabezado que este módulo ya no emite, así
+# que nunca las miró. Las citas estaban desde antes en
+# `docs/CONVENCIONES_DE_GRAFICAS.md`; lo que faltaba era traerlas acá.
 
 
 # ============================================================================
@@ -385,24 +431,216 @@ _TERMINOS_POR_METRICA = {
 }
 
 
-def _markdown(numero: int, familia_grafica: str) -> str:
-    """Las cinco partes que lleva SIEMPRE toda metrica del informe, en el
-    mismo orden: nombre, la pregunta que responde, que significa cada
-    termino segun el criterio del INE, por que esa grafica, y la grafica
-    (que la aporta la celda de codigo que acompana a esta).
+def terminos_de_bloque(metricas_elegidas: list[int] | set[int]) -> dict[str, list[str]]:
+    """Qué términos corresponden a la presentación de cada bloque, según
+    las métricas que la persona **eligió de verdad** en esta corrida.
 
-    Antes solo estaban el nombre, la descripcion y la justificacion de la
-    grafica: los terminos quedaban librados a que el modelo los explicara
-    en cada corrida, y por eso aparecian en Empleo pero no en el resto.
+    Un término es "de bloque" si lo usa más de una de las métricas
+    elegidas de ese bloque: explicarlo una vez arriba y no repetirlo en
+    cada métrica. Si solo lo usa una, se queda en su métrica.
+
+    Es dinámico y no fijo por catálogo (decisión del dueño del proyecto):
+    quien elige una sola métrica de Territorio no tiene por qué leer el
+    índice explicado en una sección aparte, y quien elige las tres no
+    tiene por qué leerlo tres veces. Sigue siendo 100% mecánico — lo
+    calcula esta función, no el modelo.
+
+    Un término que cruza bloques (nivel económico y jefe/a de hogar
+    aparecen en Brecha Digital y también en Hogares/Vivienda) se **repite**
+    en cada bloque que lo use, también por decisión del dueño: así cada
+    bloque se lee solo, sin tener que ir a buscar una definición a otra
+    sección.
+    """
+    from . import verificacion_catalogo
+
+    elegidas = set(metricas_elegidas)
+    resultado: dict[str, list[str]] = {}
+    for bloque, (numeros, _nombre) in verificacion_catalogo.BLOQUES.items():
+        del_bloque = [n for n in numeros if n in elegidas]
+        cuenta: dict[str, int] = {}
+        for numero in del_bloque:
+            for termino in _TERMINOS_POR_METRICA.get(numero, ()):
+                cuenta[termino] = cuenta.get(termino, 0) + 1
+        compartidos = [t for t, veces in cuenta.items() if veces > 1]
+        if compartidos:
+            # Orden estable: el del glosario, no el de aparición.
+            resultado[bloque] = [t for t in _GLOSARIO if t in compartidos]
+    return resultado
+
+
+def _bloque_de(numero: int) -> str:
+    from . import verificacion_catalogo
+
+    for bloque, (numeros, _nombre) in verificacion_catalogo.BLOQUES.items():
+        if numero in numeros:
+            return bloque
+    return ""
+
+
+def _markdown(numero: int, terminos_ya_explicados: set[str] | None = None) -> str:
+    """Partes a, b y c de la métrica: nombre, la pregunta que responde y
+    los términos **propios** de esta métrica.
+
+    Los términos que ya explicó la presentación del bloque no se repiten
+    acá (`terminos_ya_explicados`), y si no queda ninguno propio, la
+    sección de términos directamente no aparece — no se deja un título
+    vacío.
     """
     titulo, descripcion = _TEXTO_CATALOGO[numero]
-    justificacion = _JUSTIFICACION_POR_FAMILIA[familia_grafica]
-    terminos = "\n".join(f"- {_GLOSARIO[t]}" for t in _TERMINOS_POR_METRICA[numero])
-    return (
-        f"### {numero}. {titulo}\n\n"
-        f"**¿Qué pregunta responde?** {descripcion}\n\n"
-        f"**Qué significa cada término (criterio del INE):**\n{terminos}\n\n"
-        f"*Por qué esta gráfica: {justificacion}*"
+    ya = terminos_ya_explicados or set()
+    propios = [t for t in _TERMINOS_POR_METRICA[numero] if t not in ya]
+
+    partes = [f"### {numero}. {titulo}", f"**¿Qué pregunta responde?** {descripcion}"]
+    if propios:
+        detalle = "\n".join(f"- {_GLOSARIO[t]}" for t in propios)
+        partes.append(f"**Qué significa cada término (criterio del INE):**\n{detalle}")
+    return "\n\n".join(partes)
+
+
+def _markdown_justificacion(familia_grafica: str) -> str:
+    """Parte e: por qué esta gráfica, con la referencia bibliográfica.
+
+    Va DESPUÉS de la gráfica (parte d) y no antes: primero se ve el dato,
+    después se entiende por qué está presentado así.
+    """
+    return f"*Por qué esta gráfica: {_JUSTIFICACION_POR_FAMILIA[familia_grafica]}*"
+
+
+# ============================================================================
+# Estructura del informe: introduccion, presentacion de cada bloque y nota
+# metodologica.
+#
+# Nace de una revision del dueño del proyecto leyendo un informe generado.
+# Tres problemas, todos de estructura y no de calculo:
+#
+# 1. No habia introduccion. Lo primero que veia el lector era "Preparacion
+#    de datos" con el parrafo que explica que significa "ponderado" - una
+#    explicacion metodologica, no una apertura. Y como no habia ninguna
+#    introduccion mecanizada, la que apareciera la escribia el modelo, asi
+#    que cambiaba de una corrida a otra.
+# 2. No habia estructura por bloque. Las metricas salian como una lista
+#    plana en el orden en que la persona las habia elegido: la 1, la 8, la
+#    22 y la 28 una detras de otra, sin nada que dijera a que tema
+#    pertenecia cada una.
+# 3. Los terminos se repetian. "Indice de desarrollo territorial" se
+#    explicaba igual en las tres metricas de Territorio; FIES, en las
+#    siete de Seguridad alimentaria.
+# ============================================================================
+
+_PRESENTACION_BLOQUE = {
+    "brecha_digital": (
+        "Qué tan conectados están los hogares y quiénes quedan afuera. No alcanza con "
+        "contar cuántos tienen internet: el bloque mira también la calidad de esa "
+        "conexión y cómo cambia el acceso según el nivel económico, la generación del "
+        "jefe o jefa de hogar y el equipamiento disponible. Se calcula sobre Montevideo."
+    ),
+    "hogares": (
+        "Cómo están compuestos los hogares y en qué condiciones viven. Reúne pobreza e "
+        "indigencia, quién encabeza el hogar, cuántas personas conviven por habitación y "
+        "qué proporción de la población depende económicamente del resto."
+    ),
+    "territorio": (
+        "Cómo se compara el desarrollo entre los 19 departamentos. En vez de repetir una "
+        "misma tasa cortada por departamento, este bloque combina varias dimensiones en "
+        "un único indicador comparable, y después abre ese indicador para mostrar qué "
+        "dimensión explica que un departamento quede arriba o abajo."
+    ),
+    "vivienda": (
+        "En qué estado están las viviendas. Se releva un conjunto de problemas "
+        "estructurales (humedad, goteras, grietas, riesgo de derrumbe) y se mira cuántos "
+        "hogares tienen al menos uno, y si esa carga se reparte parejo entre niveles "
+        "económicos y departamentos. Qué problemas se preguntan cambia según el año."
+    ),
+    "fies": (
+        "Si los hogares tuvieron dificultades para acceder a alimentos por falta de "
+        "dinero. Se mide con una escala internacional de la FAO, sobre una submuestra de "
+        "hogares y no sobre todos los encuestados, y se compara entre niveles de ingreso, "
+        "regiones y hogares con y sin menores a cargo."
+    ),
+    "empleo": (
+        "La situación laboral del año. El INE releva empleo todos los meses, así que cada "
+        "número de este bloque es el promedio de los 12 meses: se calcula el valor de cada "
+        "mes por separado y después se promedian, de modo que ningún mes pesa más que "
+        "otro. No es una foto de un mes suelto ni una medición única de todo el año."
+    ),
+    "seguridad": (
+        "Qué delitos sufrieron las personas y qué hicieron después. **Todas las preguntas "
+        "de este bloque se refieren al mes anterior a la entrevista, no al año entero**: "
+        "si un número dice 5%, significa que el 5% sufrió ese delito en un solo mes. No "
+        "se puede leer como una cifra anual ni compararlo con estadísticas anuales de "
+        "otras fuentes."
+    ),
+}
+
+
+def celda_introduccion(anio_base: int, metricas: list[int], bloques: list[str]) -> Celda:
+    """Apertura del informe: qué se analizó, de dónde salen los datos y qué
+    contiene. Fija y mecanizada, para que no cambie de una corrida a otra.
+
+    La explicación de "ponderado" **no** va acá: es metodología, y vive en
+    `celda_nota_metodologica()`, al final. Acá solo queda la advertencia de
+    una línea, para que quien lea un porcentaje sepa dónde buscar el detalle.
+    """
+    from . import verificacion_catalogo
+
+    nombres = [verificacion_catalogo.BLOQUES[b][1] for b in bloques if b in verificacion_catalogo.BLOQUES]
+    listado = "\n".join(f"- {nombre}" for nombre in nombres)
+    cuantas = len(metricas)
+    plural = "s" if cuantas != 1 else ""
+    return Celda(
+        markdown=(
+            f"# Encuesta Continua de Hogares — Informe {anio_base}\n\n"
+            f"Este informe analiza los microdatos de la **Encuesta Continua de Hogares "
+            f"(ECH) {anio_base}** del Instituto Nacional de Estadística (INE) de Uruguay, "
+            f"la fuente oficial sobre condiciones de vida de los hogares del país.\n\n"
+            f"Incluye **{cuantas} métrica{plural}** distribuida{plural} en los siguientes "
+            f"temas:\n\n{listado}\n\n"
+            f"Cada tema se presenta con una explicación de qué mide y de los términos "
+            f"técnicos que usa, según el criterio del INE. Cada métrica indica qué "
+            f"pregunta responde, muestra su gráfica y explica por qué se eligió ese tipo "
+            f"de gráfica.\n\n"
+            f"> Todos los porcentajes de este informe están **ponderados** por el factor "
+            f"de expansión del INE, para que representen a toda la población y no solo a "
+            f"los hogares encuestados. El detalle está en la nota metodológica del final."
+        )
+    )
+
+
+def celda_presentacion_bloque(bloque: str, terminos: list[str]) -> Celda:
+    """Presentación de un bloque: su nombre, qué mide, y los términos del
+    INE que van a aparecer en varias de sus métricas.
+
+    `terminos` viene de `terminos_de_bloque()`, que los calcula según lo que
+    la persona eligió: acá van los que usa más de una métrica del bloque, y
+    los que usa una sola se quedan en esa métrica.
+    """
+    from . import verificacion_catalogo
+
+    _numeros, nombre = verificacion_catalogo.BLOQUES[bloque]
+    partes = [f"## {nombre}", _PRESENTACION_BLOQUE[bloque]]
+    if terminos:
+        detalle = "\n".join(f"- {_GLOSARIO[t]}" for t in terminos)
+        partes.append(
+            "**Términos que aparecen en varias métricas de este tema "
+            f"(criterio del INE):**\n{detalle}"
+        )
+    return Celda(markdown="\n\n".join(partes))
+
+
+def celda_nota_metodologica() -> Celda:
+    """Cierre del informe: la explicación de "ponderado".
+
+    Estaba al principio, dentro de "Preparación de datos", y es lo primero
+    que veía el lector. Es metodología: su lugar es el final, que es donde
+    la busca quien la necesita.
+    """
+    return Celda(
+        markdown=(
+            "## Nota metodológica\n\n"
+            "**Qué significa que un porcentaje esté \"ponderado\".** "
+            "La palabra aparece en casi todos los porcentajes de este informe. "
+            + _TEXTO_PONDERADO.strip()
+        )
     )
 
 
@@ -418,7 +656,7 @@ def _m1() -> Celda:
         "brecha_nivel_economico = analysis.brecha_digital_por_nivel_economico(hogares_ext)\n"
         "fig = viz.plot_brecha_digital(brecha_nivel_economico)\nfig.show()"
     )
-    return Celda(_markdown(1, "barras"), codigo)
+    return Celda(_markdown(1), codigo, _markdown_justificacion("barras"))
 
 
 def _m2() -> Celda:
@@ -426,7 +664,7 @@ def _m2() -> Celda:
         "brecha_cohorte = analysis.brecha_digital_por_cohorte(hogares_ext_con_jefe)\n"
         "fig = viz.plot_brecha_digital_por_cohorte(brecha_cohorte)\nfig.show()"
     )
-    return Celda(_markdown(2, "barras"), codigo)
+    return Celda(_markdown(2), codigo, _markdown_justificacion("barras"))
 
 
 def _m3() -> Celda:
@@ -434,7 +672,7 @@ def _m3() -> Celda:
         'calidad_nivel_economico = analysis.calidad_conexion_por(hogares_ext, "nivel_economico")\n'
         'fig = viz.plot_calidad_conexion_por(calidad_nivel_economico, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(3, "barras_100"), codigo)
+    return Celda(_markdown(3), codigo, _markdown_justificacion("barras_100"))
 
 
 def _m4() -> Celda:
@@ -442,7 +680,7 @@ def _m4() -> Celda:
         "brecha_jefatura = analysis.brecha_digital_por_jefatura(hogares_ext_con_jefe)\n"
         "fig = viz.plot_brecha_digital_por_jefatura(brecha_jefatura)\nfig.show()"
     )
-    return Celda(_markdown(4, "barras"), codigo)
+    return Celda(_markdown(4), codigo, _markdown_justificacion("barras"))
 
 
 def _m5() -> Celda:
@@ -450,7 +688,7 @@ def _m5() -> Celda:
         'indice_acceso_nivel = analysis.indice_acceso_digital_por(hogares_ext_con_jefe, "nivel_economico")\n'
         'fig = viz.plot_indice_acceso_digital_por(indice_acceso_nivel, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(5, "barras"), codigo)
+    return Celda(_markdown(5), codigo, _markdown_justificacion("barras"))
 
 
 def _m6() -> Celda:
@@ -458,7 +696,7 @@ def _m6() -> Celda:
         'adopcion_tablet_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")\n'
         'fig = viz.plot_adopcion_tablet_ibirapita(adopcion_tablet_nivel, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(6, "barras"), codigo)
+    return Celda(_markdown(6), codigo, _markdown_justificacion("barras"))
 
 
 def _m7() -> Celda:
@@ -466,7 +704,7 @@ def _m7() -> Celda:
         "pobreza = analysis.pct_pobres_indigentes(hogares_ext)\n"
         "fig = viz.plot_pct_pobres_indigentes(pobreza)\nfig.show()"
     )
-    return Celda(_markdown(7, "barras_h"), codigo)
+    return Celda(_markdown(7), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m8() -> Celda:
@@ -474,7 +712,7 @@ def _m8() -> Celda:
         "jefatura = analysis.tasa_jefatura_femenina(tipo_hogar)\n"
         "fig = viz.plot_tasa_jefatura_femenina(jefatura)\nfig.show()"
     )
-    return Celda(_markdown(8, "barras_h"), codigo)
+    return Celda(_markdown(8), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m9() -> Celda:
@@ -487,7 +725,7 @@ def _m9() -> Celda:
         'hacinamiento_nivel = analysis.pct_hacinamiento_por(hogares_mdeo_hacinamiento, "nivel_economico")\n'
         'fig = viz.plot_hacinamiento_por(hacinamiento_nivel, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(9, "barras"), codigo)
+    return Celda(_markdown(9), codigo, _markdown_justificacion("barras"))
 
 
 def _m10() -> Celda:
@@ -495,7 +733,7 @@ def _m10() -> Celda:
         "tipos_hogar_resumen = analysis.tipos_hogar_resumen(tipo_hogar)\n"
         "fig = viz.plot_tipos_hogar(tipos_hogar_resumen)\nfig.show()"
     )
-    return Celda(_markdown(10, "barras_h"), codigo)
+    return Celda(_markdown(10), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m11() -> Celda:
@@ -508,7 +746,7 @@ def _m11() -> Celda:
         'dependencia_depto = analysis.razon_dependencia_por(personas_con_depto, "departamento")\n'
         'fig = viz.plot_razon_dependencia_por(dependencia_depto, "departamento")\nfig.show()'
     )
-    return Celda(_markdown(11, "barras_h"), codigo)
+    return Celda(_markdown(11), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m12() -> Celda:
@@ -516,7 +754,7 @@ def _m12() -> Celda:
         "unipersonales_mayores = analysis.pct_unipersonales_mayores(tipo_hogar)\n"
         "fig = viz.plot_pct_unipersonales_mayores(unipersonales_mayores)\nfig.show()"
     )
-    return Celda(_markdown(12, "barras_h"), codigo)
+    return Celda(_markdown(12), codigo, _markdown_justificacion("barras_h"))
 
 
 # Los CUATRO componentes del indice de desarrollo territorial.
@@ -572,12 +810,12 @@ _COMPONENTES_TERRITORIO = (
 
 def _m13() -> Celda:
     codigo = _COMPONENTES_TERRITORIO + "\nfig = viz.plot_indice_desarrollo_territorial(indice_territorial)\nfig.show()"
-    return Celda(_markdown(13, "barras_h"), codigo)
+    return Celda(_markdown(13), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m14() -> Celda:
     codigo = _COMPONENTES_TERRITORIO + "\nfig = viz.plot_perfil_territorial(indice_territorial)"
-    return Celda(_markdown(14, "heatmap"), codigo)
+    return Celda(_markdown(14), codigo, _markdown_justificacion("heatmap"))
 
 
 def _m15() -> Celda:
@@ -596,7 +834,7 @@ def _m15() -> Celda:
         '    titulo="Brecha territorial: mejor vs. peor departamento", xlabel="Índice (0 a 1)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(15, "dumbbell"), codigo)
+    return Celda(_markdown(15), codigo, _markdown_justificacion("dumbbell"))
 
 
 def _m16() -> Celda:
@@ -604,7 +842,7 @@ def _m16() -> Celda:
         "precariedad = analysis.precariedad_estructural(hogares_cond)\n"
         "fig = viz.plot_precariedad_estructural(precariedad)\nfig.show()"
     )
-    return Celda(_markdown(16, "barras_h"), codigo)
+    return Celda(_markdown(16), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m17() -> Celda:
@@ -612,7 +850,7 @@ def _m17() -> Celda:
         'precariedad_nivel = analysis.precariedad_estructural_por(hogares_cond, "nivel_economico")\n'
         'fig = viz.plot_precariedad_estructural_por(precariedad_nivel, "nivel económico")\nfig.show()'
     )
-    return Celda(_markdown(17, "barras_h"), codigo)
+    return Celda(_markdown(17), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m18() -> Celda:
@@ -620,7 +858,7 @@ def _m18() -> Celda:
         'precariedad_depto = analysis.precariedad_estructural_por(hogares_cond, "departamento")\n'
         'fig = viz.plot_precariedad_estructural_por(precariedad_depto, "departamento")\nfig.show()'
     )
-    return Celda(_markdown(18, "barras_h"), codigo)
+    return Celda(_markdown(18), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m19() -> Celda:
@@ -639,7 +877,7 @@ def _m19() -> Celda:
         '    titulo="Precariedad estructural: nivel económico bajo vs. alto", xlabel="% de hogares con carencia",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(19, "dumbbell"), codigo)
+    return Celda(_markdown(19), codigo, _markdown_justificacion("dumbbell"))
 
 
 def _m20() -> Celda:
@@ -647,7 +885,7 @@ def _m20() -> Celda:
         "carencias_frecuentes = analysis.carencias_estructurales_mas_frecuentes(hogares_cond)\n"
         "fig = viz.plot_carencias_estructurales_mas_frecuentes(carencias_frecuentes)\nfig.show()"
     )
-    return Celda(_markdown(20, "barras_h"), codigo)
+    return Celda(_markdown(20), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m21() -> Celda:
@@ -655,7 +893,7 @@ def _m21() -> Celda:
         "prevalencia_fies = analysis.prevalencia_inseguridad_alimentaria(fies_clasificado)\n"
         "fig = viz.plot_prevalencia_inseguridad_alimentaria(prevalencia_fies)\nfig.show()"
     )
-    return Celda(_markdown(21, "barras"), codigo)
+    return Celda(_markdown(21), codigo, _markdown_justificacion("barras"))
 
 
 def _m22() -> Celda:
@@ -671,7 +909,7 @@ def _m22() -> Celda:
         '    titulo="Inseguridad alimentaria moderada o severa por quintil de ingreso", xlabel="Quintil de ingreso",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(22, "barras"), codigo)
+    return Celda(_markdown(22), codigo, _markdown_justificacion("barras"))
 
 
 def _m23() -> Celda:
@@ -682,7 +920,7 @@ def _m23() -> Celda:
         '    titulo="Inseguridad alimentaria moderada o severa por región", xlabel="Región",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(23, "barras"), codigo)
+    return Celda(_markdown(23), codigo, _markdown_justificacion("barras"))
 
 
 def _m24() -> Celda:
@@ -701,7 +939,7 @@ def _m24() -> Celda:
         '    titulo="Inseguridad alimentaria: quintil más pobre vs. más rico", xlabel="% de hogares (ponderado)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(24, "dumbbell"), codigo)
+    return Celda(_markdown(24), codigo, _markdown_justificacion("dumbbell"))
 
 
 def _m25() -> Celda:
@@ -714,7 +952,7 @@ def _m25() -> Celda:
         '    titulo="Inseguridad alimentaria severa por quintil de ingreso", xlabel="Quintil de ingreso",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(25, "barras"), codigo)
+    return Celda(_markdown(25), codigo, _markdown_justificacion("barras"))
 
 
 def _m26() -> Celda:
@@ -730,7 +968,7 @@ def _m26() -> Celda:
         '    titulo="Inseguridad alimentaria en hogares con y sin menores de 18 años", xlabel="",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(26, "barras"), codigo)
+    return Celda(_markdown(26), codigo, _markdown_justificacion("barras"))
 
 
 def _m27() -> Celda:
@@ -746,7 +984,7 @@ def _m27() -> Celda:
         '    titulo="Inseguridad alimentaria en hogares con y sin niños de 0 a 5 años", xlabel="",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(27, "barras"), codigo)
+    return Celda(_markdown(27), codigo, _markdown_justificacion("barras"))
 
 
 def _m28() -> Celda:
@@ -754,7 +992,7 @@ def _m28() -> Celda:
         "tasas_nacionales = analysis.tasas_actividad_empleo_desempleo(empleo_prep)\n"
         "fig = viz.plot_tasas_actividad_empleo_desempleo(tasas_nacionales)\nfig.show()"
     )
-    return Celda(_markdown(28, "barras"), codigo)
+    return Celda(_markdown(28), codigo, _markdown_justificacion("barras"))
 
 
 def _m29() -> Celda:
@@ -765,7 +1003,7 @@ def _m29() -> Celda:
         'fig = viz.plot_tasas_por_grupo(tasas_sexo, "sexo_grupo", "Tasas de actividad, empleo y desempleo por sexo")\n'
         "fig.show()"
     )
-    return Celda(_markdown(29, "barras"), codigo)
+    return Celda(_markdown(29), codigo, _markdown_justificacion("barras"))
 
 
 def _m30() -> Celda:
@@ -774,7 +1012,7 @@ def _m30() -> Celda:
         'fig = viz.plot_tasa_mensual_promedio_por(desempleo_depto, "departamento", "Tasa de desempleo por departamento")\n'
         "fig.show()"
     )
-    return Celda(_markdown(30, "barras_h"), codigo)
+    return Celda(_markdown(30), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m31() -> Celda:
@@ -783,7 +1021,7 @@ def _m31() -> Celda:
         'fig = viz.plot_tasa_mensual_promedio_por(informalidad_sexo, "sexo_grupo", "Informalidad laboral por sexo")\n'
         "fig.show()"
     )
-    return Celda(_markdown(31, "barras_h"), codigo)
+    return Celda(_markdown(31), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m32() -> Celda:
@@ -792,7 +1030,7 @@ def _m32() -> Celda:
         'fig = viz.plot_tasa_mensual_promedio_por(informalidad_educacion, "nivel_educativo", "Informalidad laboral por nivel educativo")\n'
         "fig.show()"
     )
-    return Celda(_markdown(32, "barras_h"), codigo)
+    return Celda(_markdown(32), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m33() -> Celda:
@@ -801,7 +1039,7 @@ def _m33() -> Celda:
         'fig = viz.plot_tasa_mensual_promedio_por(subempleo_sexo, "sexo_grupo", "Subempleo por sexo")\n'
         "fig.show()"
     )
-    return Celda(_markdown(33, "barras_h"), codigo)
+    return Celda(_markdown(33), codigo, _markdown_justificacion("barras_h"))
 
 
 def _m34() -> Celda:
@@ -814,7 +1052,7 @@ def _m34() -> Celda:
         '    "Tasas de actividad, empleo y desempleo: jóvenes vs. resto",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(34, "barras"), codigo)
+    return Celda(_markdown(34), codigo, _markdown_justificacion("barras"))
 
 
 def _m35() -> Celda:
@@ -827,7 +1065,7 @@ def _m35() -> Celda:
         '    titulo="Situación ocupacional dentro de cada sector (formal / informal)", xlabel="Sector",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(35, "barras_100"), codigo)
+    return Celda(_markdown(35), codigo, _markdown_justificacion("barras_100"))
 
 
 def _m36() -> Celda:
@@ -840,7 +1078,7 @@ def _m36() -> Celda:
         '    titulo="Prevalencia de victimización por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(36, "barras"), codigo)
+    return Celda(_markdown(36), codigo, _markdown_justificacion("barras"))
 
 
 def _m37() -> Celda:
@@ -853,7 +1091,7 @@ def _m37() -> Celda:
         '    titulo="Victimización general por sexo", xlabel="Sexo",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(37, "barras"), codigo)
+    return Celda(_markdown(37), codigo, _markdown_justificacion("barras"))
 
 
 def _m38() -> Celda:
@@ -866,7 +1104,7 @@ def _m38() -> Celda:
         '    titulo="Victimización general por departamento", xlabel="Departamento",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(38, "barras"), codigo)
+    return Celda(_markdown(38), codigo, _markdown_justificacion("barras"))
 
 
 def _m39() -> Celda:
@@ -879,7 +1117,7 @@ def _m39() -> Celda:
         '    titulo="Tasa de comunicación a la policía por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(39, "barras"), codigo)
+    return Celda(_markdown(39), codigo, _markdown_justificacion("barras"))
 
 
 def _m40() -> Celda:
@@ -892,7 +1130,7 @@ def _m40() -> Celda:
         '    titulo="Tasa de denuncia formal por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(40, "barras"), codigo)
+    return Celda(_markdown(40), codigo, _markdown_justificacion("barras"))
 
 
 def _m41() -> Celda:
@@ -915,7 +1153,7 @@ def _m41() -> Celda:
         '    titulo="Comunicación informal vs. denuncia formal, por tipo de delito", xlabel="% de víctimas (ponderado)",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(41, "dumbbell"), codigo)
+    return Celda(_markdown(41), codigo, _markdown_justificacion("dumbbell"))
 
 
 def _m42() -> Celda:
@@ -930,7 +1168,7 @@ def _m42() -> Celda:
         '    titulo="Casos con violencia por tipo de delito", xlabel="Tipo de delito",\n'
         ")\nfig.show()"
     )
-    return Celda(_markdown(42, "barras"), codigo)
+    return Celda(_markdown(42), codigo, _markdown_justificacion("barras"))
 
 
 # ============================================================================
@@ -940,12 +1178,24 @@ def _m42() -> Celda:
 GENERADORES: dict[int, Callable[[], Celda]] = {n: globals()[f"_m{n}"] for n in range(1, 43)}
 
 
-def construir_celdas_metrica(numero: int) -> Celda:
+def construir_celdas_metrica(numero: int, terminos_ya_explicados: set[str] | None = None) -> Celda:
     """Punto de entrada para una métrica del catálogo (1-42), año base
     únicamente. Si la persona pidió comparar esta métrica entre años, eso
     se resuelve en código libre (paso 5, criterio ya documentado en
-    docs/CONVENCIONES_DE_GRAFICAS.md), no acá."""
-    return GENERADORES[numero]()
+    docs/CONVENCIONES_DE_GRAFICAS.md), no acá.
+
+    `terminos_ya_explicados` son los que ya explicó la presentación del
+    bloque: no se repiten en la métrica. Si no queda ninguno propio, la
+    métrica directamente no trae sección de términos.
+    """
+    celda = GENERADORES[numero]()
+    if terminos_ya_explicados:
+        return Celda(
+            markdown=_markdown(numero, terminos_ya_explicados),
+            codigo=celda.codigo,
+            markdown_final=celda.markdown_final,
+        )
+    return celda
 
 
 # ============================================================================
@@ -971,7 +1221,8 @@ def celdas_intro_brecha_digital() -> list[Celda]:
     lo que la sección siempre dijo medir.
     """
     panorama = Celda(
-        markdown="## Panorama general de conectividad en Montevideo",
+        # `###` para que cuelgue del "## Brecha Digital" que abre el tema.
+        markdown="### Panorama general de conectividad en Montevideo",
         codigo=(
             "resumen_conectividad_mdeo = analysis.resumen_conectividad(hogares_ext)\n"
             'print(f"Hogares con internet: {resumen_conectividad_mdeo.hogares_con_internet:,} '
@@ -1013,24 +1264,93 @@ def construir_celdas_notebook(
     incluir_fies: bool,
     incluir_empleo: bool,
     incluir_seguridad: bool,
+    celdas_extra: dict[int, list[Celda]] | None = None,
 ) -> list[Celda]:
-    """Arma, en orden, todas las celdas de las métricas fijas del catálogo
-    para `anio_base` (preparación de datos + panorama de Brecha Digital si
-    corresponde + una celda de markdown/código por métrica elegida) — sin
-    escribir nada a disco todavía. Si alguna métrica de `metricas` fue
-    pedida con comparación entre años, el agente la agrega aparte, en
-    código libre, después de llamar a esta función."""
-    celdas = [celda_preparacion_datos(anio_base, incluir_fies)]
+    """Arma el informe completo, en el orden en que se lee — sin escribir
+    nada a disco todavía.
+
+    La estructura es fija (v0.13.0):
+
+    1. **Introducción**: qué se analizó, de dónde salen los datos, qué
+       contiene.
+    2. **Preparación de datos**: la infraestructura técnica.
+    3. **Un tramo por tema**, agrupando las métricas elegidas: nombre del
+       bloque, qué mide, los términos del INE que usan varias de sus
+       métricas, y después cada métrica.
+    4. **Nota metodológica**: qué significa "ponderado".
+
+    Las métricas se **agrupan por bloque**, no se emiten en el orden en que
+    la persona las marcó: antes salían como una lista plana (la 1, la 8, la
+    22 y la 28 una detrás de otra) sin nada que dijera a qué tema pertenecía
+    cada una.
+
+    Las comparaciones entre años y las métricas a medida las escribe el
+    agente a mano — se probó mecanizarlas y no funcionó. Van en
+    `celdas_extra`: `{numero: [celdas]}` inserta esas celdas **justo
+    después** de la métrica `numero`, dentro de su bloque. Así el agente
+    agrega lo suyo sin rearmar la estructura por su cuenta, que es donde se
+    perderían la introducción y la presentación de cada tema.
+    """
+    from . import verificacion_catalogo
+
+    elegidas = list(metricas)
+    extra = celdas_extra or {}
+
+    # Un extra colgado de una métrica que no se eligió no tendría dónde ir y
+    # desaparecería sin dejar rastro: el informe saldría bien formado, sin la
+    # comparación que la persona pidió. Mejor cortar acá.
+    huerfanas = sorted(set(extra) - set(elegidas))
+    if huerfanas:
+        raise ValueError(
+            f"celdas_extra apunta a métricas que no se eligieron: {huerfanas}. "
+            f"Elegidas: {sorted(set(elegidas))}."
+        )
+    # Las métricas se emiten recorriendo los bloques, así que una que no
+    # pertenezca a ninguno no se emitiría: el informe saldría entero y sin
+    # ella, sin ningún aviso. Puede pasar si se agrega una métrica al
+    # catálogo y se olvida el rango en `verificacion_catalogo.BLOQUES`.
+    sin_bloque = sorted(n for n in set(elegidas) if not _bloque_de(n))
+    if sin_bloque:
+        raise ValueError(
+            f"estas métricas no pertenecen a ningún bloque de "
+            f"verificacion_catalogo.BLOQUES y quedarían fuera del informe: {sin_bloque}"
+        )
+    del_bloque = terminos_de_bloque(elegidas)
+
+    # Orden de los bloques: el del catálogo (1 · Brecha Digital, 2 ·
+    # Hogares, ...), no el orden en que la persona marcó las métricas.
+    bloques_presentes = [
+        bloque for bloque in verificacion_catalogo.BLOQUES
+        if any(_bloque_de(n) == bloque for n in elegidas)
+    ]
+
+    celdas = [celda_introduccion(anio_base, elegidas, bloques_presentes)]
+    celdas.append(celda_preparacion_datos(anio_base, incluir_fies))
+
+    # La preparación de Empleo y la de Seguridad abren su propio tema, no el
+    # informe: dejarlas arriba ponía un "## Empleo: preparación específica de
+    # este bloque" entre la preparación general y el primer tema, lejos del
+    # "## Empleo" que le corresponde. Se puede porque ninguna métrica de otro
+    # bloque usa lo que definen (el índice territorial también mira empleo,
+    # pero se lo carga por su cuenta).
+    apertura_de_bloque = {}
     if incluir_empleo:
-        celdas.append(celda_preparacion_empleo(anio_base))
+        apertura_de_bloque["empleo"] = [celda_preparacion_empleo(anio_base)]
     if incluir_seguridad:
-        celdas.append(celda_preparacion_seguridad(anio_base))
+        apertura_de_bloque["seguridad"] = [celda_preparacion_seguridad(anio_base)]
     if incluir_brecha_digital:
-        celdas.extend(celdas_intro_brecha_digital())
+        # El panorama de conectividad es contexto de su tema, no de todos.
+        apertura_de_bloque["brecha_digital"] = celdas_intro_brecha_digital()
 
-    for numero in metricas:
-        celdas.append(construir_celdas_metrica(numero))
+    for bloque in bloques_presentes:
+        terminos = del_bloque.get(bloque, [])
+        celdas.append(celda_presentacion_bloque(bloque, terminos))
+        celdas.extend(apertura_de_bloque.get(bloque, []))
+        for numero in [n for n in elegidas if _bloque_de(n) == bloque]:
+            celdas.append(construir_celdas_metrica(numero, set(terminos)))
+            celdas.extend(extra.get(numero, []))
 
+    celdas.append(celda_nota_metodologica())
     return celdas
 
 
@@ -1042,8 +1362,15 @@ def escribir_notebook(celdas: list[Celda], ruta: Path | str) -> Path:
     nb = new_notebook()
     nb["cells"].append(new_code_cell(_CABECERA))
     for celda in celdas:
-        nb["cells"].append(new_markdown_cell(celda.markdown))
-        nb["cells"].append(new_code_cell(celda.codigo))
+        if celda.markdown:
+            nb["cells"].append(new_markdown_cell(celda.markdown))
+        # Un tramo puede ser solo texto (introducción, presentación de un
+        # bloque, nota metodológica): ahí no se agrega una celda de código
+        # vacía, que en el informe final se vería como un hueco.
+        if celda.codigo:
+            nb["cells"].append(new_code_cell(celda.codigo))
+        if celda.markdown_final:
+            nb["cells"].append(new_markdown_cell(celda.markdown_final))
     entrega.respaldar_si_existe(ruta)
     nbformat.write(nb, str(ruta))
     return ruta

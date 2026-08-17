@@ -206,7 +206,7 @@ con una alternativa válida, para aceptarla, proponer otra, o descartar
 esa métrica del informe.
 
 **Tras confirmar el catálogo, el proceso demora un tiempo variable —
-no es instantáneo.** Las 43 métricas fijas del catálogo se arman de
+no es instantáneo.** Las 42 métricas fijas del catálogo se arman de
 forma mecánica (rápido, típicamente segundos por métrica); lo que sigue
 demorando minutos es que el agente calcule y revise cada gráfica de
 verdad contra los datos, más cualquier comparación entre años o métrica

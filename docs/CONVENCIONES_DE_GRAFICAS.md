@@ -14,18 +14,22 @@ claridad qué significan, los números que respaldan el análisis, las
 preguntas que lo originan, y la fuente estadística que justifica la
 elección.
 
-Cada celda de markdown con una métrica lleva, además de la pregunta guía:
+Toda métrica lleva, además de su nombre y de la pregunta guía:
 
-1. **Por qué ese tipo de gráfica** — con el principio de visualización que
-   lo respalda y, cuando aplique, el autor/fuente (Cleveland & McGill
-   sobre comparación visual de formas; Tufte sobre slopegraphs; Knaflic,
-   *Storytelling with Data*; Few sobre simplicidad — ver la guía de
-   referencia más abajo con la cita concreta de cada patrón).
-2. **La fórmula o definición exacta**, cuando la métrica la tenga (ej. una
+1. **La fórmula o definición exacta**, cuando la métrica la tenga (ej. una
    tasa, un índice compuesto, una razón) — no alcanza con describirla en
    palabras si existe una notación estándar. Ejemplo: "Razón de
    dependencia demográfica = (población de 0 a 14 + población de 65 y
-   más) / población de 15 a 64 × 100".
+   más) / población de 15 a 64 × 100". Va **antes** de la gráfica, salvo
+   que ese término ya lo haya explicado la presentación del tema (ver
+   `METODOLOGIA.md`, sección 1).
+2. **Por qué ese tipo de gráfica** — con el principio de visualización que
+   lo respalda y, cuando aplique, el autor/fuente (Cleveland & McGill
+   sobre comparación visual de formas; Tufte sobre slopegraphs; Knaflic,
+   *Storytelling with Data*; Few sobre simplicidad — ver la guía de
+   referencia más abajo con la cita concreta de cada patrón). Va
+   **después** de la gráfica: primero se ve el dato, después se entiende
+   por qué está presentado así.
 
 **Esto aplica a todas las métricas, sin excepción — no hay métrica
 "demasiado simple" como para saltearse la gráfica o la justificación.**
