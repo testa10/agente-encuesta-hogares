@@ -10,6 +10,31 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.1] — 2026-08-17
+
+### Corregido
+
+- **La "pregunta" de doce métricas no preguntaba nada, o repetía su propio
+  glosario.** Encontrado por el dueño del proyecto leyendo el informe de
+  2023: la métrica 3 decía como pregunta casi textualmente lo mismo que su
+  término ("no es solo tener o no tener: ... solo por celular, o banda
+  ancha fija") — dos veces el mismo texto, ninguna pregunta. Revisadas las
+  42, había ocho con ese defecto a simple vista (3, 5, 7 — "un resumen
+  simple de contexto" —, 9, 11, 13, 14, 28) y un test nuevo mecánico
+  (ninguna secuencia de 6 palabras de la pregunta puede aparecer también
+  en el glosario de sus términos) encontró cuatro más (2, 36, 37, 40).
+  Todas reescritas como preguntas reales; definir el término sigue siendo
+  trabajo del glosario, una sola vez.
+
+- **Las métricas 29 y 34 imprimían una Series cruda de pandas** en el
+  informe final ("tasa_actividad 16.59 ... dtype: float64" — el ruido
+  técnico que prohíbe METODOLOGIA.md sección 3). Lo detectó el agente en
+  una corrida real de 2023, lo parchó a mano en el notebook y dejó la
+  sugerencia registrada en la bitácora — ese parche costó re-ejecutar el
+  notebook entero (~96 s + ~2 min de modelo, un 23% de la corrida). Ahora
+  el builder emite el print formateado en una línea, y un test bloquea el
+  patrón `print` de `:\n{...}` en todo el catálogo.
+
 ## [0.13.0] — 2026-08-17
 
 ### Cambiado

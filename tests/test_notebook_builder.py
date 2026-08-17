@@ -336,6 +336,67 @@ def test_toda_metrica_justifica_su_grafica_citando_una_fuente():
     assert not sin_cita, f"familias de gráfica sin cita: {sin_cita}"
 
 
+def test_la_pregunta_de_una_metrica_no_repite_su_glosario():
+    """La parte b ("¿Qué pregunta responde?") y la parte c (términos) son
+    cosas distintas: una es la pregunta, la otra la definición.
+
+    Nace de un caso real encontrado por el dueño del proyecto leyendo el
+    informe de 2023: la métrica 3 decía como "pregunta" casi textualmente
+    lo mismo que su término del glosario ("no es solo tener o no tener:
+    ... sin conexión, solo por celular, o banda ancha fija") — dos veces
+    el mismo texto, ninguna pregunta. Habían quedado así ocho métricas.
+
+    El chequeo es mecánico: ninguna secuencia de 6 palabras de la
+    descripción puede aparecer también en el glosario de sus propios
+    términos. No puede juzgar si la pregunta es buena — eso sigue siendo
+    de humanos — pero sí que no sea un duplicado.
+    """
+    import re
+
+    def palabras(texto):
+        return re.sub(r"[*_¿?¡!():—·\-]", " ", texto.lower()).split()
+
+    def ngramas(texto, n=6):
+        p = palabras(texto)
+        return {tuple(p[i:i + n]) for i in range(len(p) - n + 1)}
+
+    duplicadas = []
+    for numero in sorted(nb.GENERADORES):
+        _titulo, descripcion = nb._TEXTO_CATALOGO[numero]
+        del_glosario = set()
+        for termino in nb._TERMINOS_POR_METRICA.get(numero, ()):
+            del_glosario |= ngramas(nb._GLOSARIO[termino])
+        repetidos = ngramas(descripcion) & del_glosario
+        if repetidos:
+            ejemplo = " ".join(next(iter(repetidos)))
+            duplicadas.append(f"  - {numero}: repite del glosario «{ejemplo}...»")
+    assert not duplicadas, (
+        "La pregunta de estas métricas repite la definición de su propio "
+        "glosario en vez de preguntar algo:\n" + "\n".join(duplicadas)
+    )
+
+
+def test_ningun_codigo_del_catalogo_imprime_un_objeto_crudo_de_pandas():
+    """`print(f"...:\\n{algo}")` es el patrón de imprimir el repr de una
+    Series/DataFrame en la línea siguiente: en el informe final sale
+    "tasa_actividad 16.59 ... dtype: float64", el ruido técnico que
+    prohíbe METODOLOGIA.md sección 3.
+
+    Nace de una corrida real de 2023: las métricas 29 y 34 lo hacían, el
+    agente lo detectó leyendo el informe generado y lo parchó a mano con
+    nbformat — al costo de re-ejecutar el notebook entero (~96 s + ~2 min
+    de modelo). Este test evita que el patrón vuelva a entrar al builder.
+    """
+    infractoras = [
+        numero for numero in sorted(nb.GENERADORES)
+        if ":\n{" in nb.construir_celdas_metrica(numero).codigo
+    ]
+    assert not infractoras, (
+        f"estas métricas imprimen un objeto crudo de pandas (print de "
+        f"`:\\n{{...}}`): {infractoras} — formatear el print, como en _m29/_m34"
+    )
+
+
 def test_toda_metrica_del_catalogo_explica_sus_terminos():
     """Una métrica nueva no puede quedarse sin entrada en el glosario: si
     se agrega al catálogo y se olvida acá, esto falla en vez de generar un

@@ -272,23 +272,23 @@ function salirDelFlujo() {
 _CATEGORIAS_METRICAS = {
     "brecha_digital": ("1 · Brecha Digital", "", [
         (1, "Brecha digital por nivel económico", "compara, en una sola gráfica, el acceso a internet, computadora y streaming según el nivel económico del hogar."),
-        (2, "Brecha digital por cohorte generacional", "compara el acceso a cada tecnología entre generaciones (baby boomers, generación X, millennials, etc.), según la edad del jefe/a de hogar."),
-        (3, "Calidad de la conexión a internet por nivel económico", "no es solo tener o no tener: compara sin conexión, solo por celular, o banda ancha fija, entre niveles económicos."),
+        (2, "Brecha digital por cohorte generacional", "¿los hogares encabezados por las generaciones más jóvenes están más conectados que los de las generaciones mayores?"),
+        (3, "Calidad de la conexión a internet por nivel económico", "¿los hogares de menos ingresos acceden a internet en las mismas condiciones que los de más, o dependen del celular como única vía de conexión?"),
         (4, "Brecha digital según jefatura de hogar", "compara el acceso a cada tecnología entre hogares con jefe hombre y jefa mujer."),
-        (5, "Índice de acceso digital por nivel económico", "un puntaje de 0 a 3 (cuántas de las tres tecnologías tiene el hogar), comparado entre niveles económicos."),
+        (5, "Índice de acceso digital por nivel económico", "¿el acceso digital se reparte parejo entre niveles económicos, o las tecnologías se acumulan en los hogares de más ingresos?"),
         (6, "Adopción de tablets del Plan Ibirapitá", "en hogares con jefe/a de 65 años o más, qué porcentaje tiene una tablet de este programa estatal de inclusión digital."),
     ]),
     "hogares": ("2 · Hogares", "", [
-        (7, "Cuántos hogares son pobres o indigentes en Montevideo", "un resumen simple de contexto."),
+        (7, "Cuántos hogares son pobres o indigentes en Montevideo", "¿qué porcentaje de los hogares de Montevideo está en situación de pobreza, y cuántos de esos llegan a la indigencia? El punto de partida para leer el resto del informe."),
         (8, "Jefatura de hogar femenina", "qué porcentaje de hogares tiene una jefa mujer, y cómo se relaciona con la pobreza del hogar."),
-        (9, "Hacinamiento", "qué porcentaje de hogares tiene más de 2 personas por cuarto, según su nivel económico."),
+        (9, "Hacinamiento", "¿qué porcentaje de hogares vive hacinado, y eso cambia según el nivel económico?"),
         (10, "Tipos de hogar", "cuántos hogares son unipersonales, nucleares, extendidos, compuestos o sin núcleo."),
-        (11, "Razón de dependencia demográfica", "cuántas personas menores de 15 o mayores de 65 hay por cada 100 en edad activa, comparado entre departamentos."),
+        (11, "Razón de dependencia demográfica", "¿qué departamentos cargan con más población dependiente en relación con su población en edad de trabajar?"),
         (12, "Hogares unipersonales de adultos mayores", "de los hogares de una sola persona, qué porcentaje corresponde a alguien de 65 años o más."),
     ]),
     "territorio": ("3 · Territorio", "", [
-        (13, "Índice de desarrollo territorial por departamento", "un puntaje que combina pobreza, empleo, precariedad de vivienda y nivel económico en una sola mirada, ranking de los 19 departamentos."),
-        (14, "Perfil territorial por departamento", "el detalle de cada componente del índice de desarrollo territorial (pobreza, empleo, precariedad de vivienda y nivel económico), para entender por qué un departamento queda arriba o abajo."),
+        (13, "Índice de desarrollo territorial por departamento", "¿cómo se ordenan los 19 departamentos cuando el desarrollo se mira en su conjunto, y cuáles quedan arriba y abajo?"),
+        (14, "Perfil territorial por departamento", "¿qué explica la posición de cada departamento en el índice: cuál de sus componentes lo empuja hacia arriba o hacia abajo?"),
         (15, "Brecha territorial entre el departamento mejor y peor posicionado", "cuánto separa, en el índice, al departamento con mejor puntaje del que tiene el peor."),
     ]),
     "vivienda": ("4 · Vivienda", "", [
@@ -328,7 +328,7 @@ _CATEGORIA_EMPLEO = ("6 · Empleo",
     "separado y después se promedian, así ningún mes pesa más que otro. No es "
     "una foto de un mes suelto ni una medición única de todo el año.",
     [
-    (28, "Tasas de actividad, empleo y desempleo", "el panorama laboral general del año, promediado entre los 12 meses."),
+    (28, "Tasas de actividad, empleo y desempleo", "¿qué parte de la población está trabajando, buscando trabajo, o fuera del mercado laboral? Las tres tasas que resumen el año."),
     (29, "Brecha de género en el mercado laboral", "compara las tasas de actividad, empleo y desempleo entre hombres y mujeres."),
     (30, "Desempleo por departamento", "en qué departamentos la tasa de desempleo es más alta o más baja."),
     (31, "Informalidad laboral por sexo", "qué porcentaje de ocupados no aporta a la seguridad social, comparando hombres y mujeres."),
@@ -348,11 +348,11 @@ _CATEGORIA_SEGURIDAD = ("7 · Seguridad y victimización",
     "sufrió ese delito en un solo mes. No se puede leer como una cifra anual "
     "ni compararlo con estadísticas anuales de otras fuentes.",
     [
-    (36, "Prevalencia de victimización por tipo de delito", "qué porcentaje de personas sufrió cada tipo de delito en el mes anterior a la entrevista (no es una cifra anual)."),
-    (37, "Victimización general por sexo", "haber sufrido al menos un delito en el mes anterior a la entrevista, comparando hombres y mujeres."),
+    (36, "Prevalencia de victimización por tipo de delito", "¿qué delito es el más frecuente, y a qué porcentaje de personas le tocó sufrirlo?"),
+    (37, "Victimización general por sexo", "¿hombres y mujeres sufren delitos en la misma proporción?"),
     (38, "Victimización general por departamento", "qué porcentaje de personas sufrió al menos un delito, comparando Montevideo con el resto del país."),
     (39, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
-    (40, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, cuántos hicieron la denuncia presencial en la comisaría."),
+    (40, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, ¿cuántos llegaron a formalizar la denuncia?"),
     (41, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
     (42, "Casos con violencia por tipo de delito", "de quienes fueron víctimas, en cuántos casos los autores amenazaron o ejercieron violencia."),
 ])

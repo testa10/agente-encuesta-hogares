@@ -999,7 +999,15 @@ def _m29() -> Celda:
     codigo = (
         'tasas_sexo = analysis.tasas_actividad_empleo_desempleo_por(empleo_prep, "sexo_grupo")\n'
         'brecha_genero = analysis.brecha_por_grupo(tasas_sexo, "sexo_grupo", "1-Hombre", "2-Mujer")\n'
-        'print(f"Brecha de género (hombre menos mujer):\\n{brecha_genero}")\n\n'
+        # print formateado, nunca la Series cruda: imprimir el objeto de
+        # pandas mete "tasa_actividad 16.59 ... dtype: float64" en el
+        # informe final - el ruido tecnico que prohibe METODOLOGIA.md
+        # seccion 3. Encontrado por el agente en una corrida real de 2023
+        # (lo parcho a mano y costo re-ejecutar el notebook entero).
+        'print("Brecha de género (hombre menos mujer, en puntos porcentuales): "\n'
+        '      f"actividad {brecha_genero[\'tasa_actividad\']:+.2f} · "\n'
+        '      f"empleo {brecha_genero[\'tasa_empleo\']:+.2f} · "\n'
+        '      f"desempleo {brecha_genero[\'tasa_desempleo\']:+.2f}")\n\n'
         'fig = viz.plot_tasas_por_grupo(tasas_sexo, "sexo_grupo", "Tasas de actividad, empleo y desempleo por sexo")\n'
         "fig.show()"
     )
@@ -1046,7 +1054,11 @@ def _m34() -> Celda:
     codigo = (
         'tasas_edad_laboral = analysis.tasas_actividad_empleo_desempleo_por(empleo_prep, "grupo_edad_laboral")\n'
         'brecha_edad = analysis.brecha_por_grupo(tasas_edad_laboral, "grupo_edad_laboral", "Joven (14-24)", "Resto")\n'
-        'print(f"Brecha juvenil vs. resto:\\n{brecha_edad}")\n\n'
+        # Mismo criterio que _m29: nunca imprimir la Series cruda.
+        'print("Brecha juvenil (jóvenes menos resto, en puntos porcentuales): "\n'
+        '      f"actividad {brecha_edad[\'tasa_actividad\']:+.2f} · "\n'
+        '      f"empleo {brecha_edad[\'tasa_empleo\']:+.2f} · "\n'
+        '      f"desempleo {brecha_edad[\'tasa_desempleo\']:+.2f}")\n\n'
         'fig = viz.plot_tasas_por_grupo(\n'
         '    tasas_edad_laboral, "grupo_edad_laboral",\n'
         '    "Tasas de actividad, empleo y desempleo: jóvenes vs. resto",\n'
