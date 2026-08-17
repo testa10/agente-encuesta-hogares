@@ -179,6 +179,11 @@ def plot_precariedad_estructural_por(resumen: pd.DataFrame, criterio: str):
     fig.update_layout(
         yaxis_title="", xaxis_title="% de hogares con carencia",
         yaxis={"categoryorder": "total ascending"},
+        # Margen a la derecha de la barra más larga para que su etiqueta no
+        # quede cortada por el borde (mismo motivo, y mismo arreglo, que
+        # plot_pct_por y plot_tasa_mensual_promedio_por) — encontrado en una
+        # corrida real con datos de 2025: "ARTIGAS, 65.0%" salía recortado.
+        xaxis_range=[0, resumen["pct_precariedad"].max() * 1.15],
         width=850, height=550, title_x=0.5, showlegend=False,
     )
     return fig
@@ -197,6 +202,10 @@ def plot_carencias_estructurales_mas_frecuentes(resumen: pd.DataFrame):
     fig.update_layout(
         yaxis_title="", xaxis_title="% de hogares",
         yaxis={"categoryorder": "total ascending"},
+        # Mismo margen que plot_precariedad_estructural_por, por el mismo
+        # motivo: sin él, la etiqueta de la carencia más frecuente queda
+        # cortada por el borde derecho del gráfico.
+        xaxis_range=[0, resumen["pct_hogares"].max() * 1.15],
         width=850, height=500, title_x=0.5, showlegend=False,
     )
     return fig
