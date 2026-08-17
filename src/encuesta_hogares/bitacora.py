@@ -16,6 +16,17 @@ No reemplaza el reporte de la persona - lo complementa. Nunca se sube a
 git (ver .gitignore) y nunca sale de la computadora donde corre: nadie
 más que el dueño del proyecto lo ve, y solo si la persona se lo manda.
 
+**Regla de contenido, para quien agregue formularios o eventos:** este
+archivo registra las respuestas completas de los formularios
+(`formulario_respondido` guarda `respuesta` entera - necesario para
+diagnosticar "marqué X y el informe trajo Y"). Eso es seguro HOY porque
+ningún formulario pide datos personales: un año, números de métrica,
+botones. Si algún día un formulario pidiera un nombre, un mail o
+cualquier dato de la persona, esa respuesta viajaría en el archivo que
+se le pide a la gente que mande - en ese momento, esta línea deja de
+registrar `respuesta` entera y pasa a registrar solo los campos
+inocuos, elegidos a mano.
+
 `medir()` y `medir_comando()` agregan una segunda cosa a esta bitácora:
 cuánto tarda de verdad cada paso pesado del flujo (cargar datos, ejecutar
 el notebook completo, convertir a PDF) - para responder "¿dónde se va el
@@ -178,6 +189,10 @@ class ResumenSesion:
     pasos_medidos: list[dict] = field(default_factory=list)
     sugerencias_catalogo: list[dict] = field(default_factory=list)
     checkpoints_paso5: list[dict] = field(default_factory=list)
+    # Cada re-ejecución del notebook con su motivo (evento
+    # "reejecucion_notebook", ver paso 7 del agente). Sin esto, una corrida
+    # con el notebook ejecutado dos veces mostraba ~4 minutos inexplicables.
+    reejecuciones: list[dict] = field(default_factory=list)
 
 
 def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
@@ -215,4 +230,5 @@ def resumir_sesion(eventos: list[dict]) -> ResumenSesion:
         pasos_medidos=sorted(pasos_medidos, key=lambda p: -p["duracion_segundos"]),
         sugerencias_catalogo=[e for e in eventos if e["tipo"] == "sugerencia_catalogo"],
         checkpoints_paso5=checkpoints_paso5,
+        reejecuciones=[e for e in eventos if e["tipo"] == "reejecucion_notebook"],
     )

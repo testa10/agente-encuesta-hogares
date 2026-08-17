@@ -1141,6 +1141,22 @@ texto entre paréntesis del tipo "(pendiente)", o una sección sin
 completar, es que se saltó un paso — hay que volver y escribirlo con
 números reales antes de seguir.
 
+**Si esta revisión encuentra algo que obliga a corregir el notebook y
+volver a ejecutarlo, registrar el motivo ANTES de re-ejecutar:**
+
+```python
+from encuesta_hogares import bitacora
+bitacora.registrar("reejecucion_notebook", motivo="<qué se corrigió y por qué>")
+```
+
+Nace de una corrida real: el notebook se ejecutó dos veces (~4 minutos, el
+23% de la corrida) y la bitácora no decía por qué — el motivo solo se supo
+porque además se registró una sugerencia de catálogo. Es el mismo punto
+ciego que ya obligó a crear los checkpoints del paso 5: un tramo caro que
+la bitácora no puede explicar. Si la corrección además es un defecto de
+una plantilla del catálogo (no de esta corrida puntual), registrar también
+la sugerencia con `bitacora.sugerir_catalogo(...)`, como siempre.
+
 ### 8. Entregar el informe: siempre PDF y HTML
 
 **Siempre se generan los dos formatos, sin excepción y sin preguntar** —

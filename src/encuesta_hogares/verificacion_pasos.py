@@ -17,7 +17,10 @@ import re
 from pathlib import Path
 
 _RAIZ = Path(__file__).resolve().parents[2]
-_FORMULARIOS = _RAIZ / "src" / "encuesta_hogares" / "formularios.py"
+# Las funciones plantilla_* viven en plantillas.py desde la v0.13.2 (antes
+# estaban en formularios.py, que las reexporta) — este chequeo escanea el
+# archivo donde están los `def` de verdad.
+_FORMULARIOS = _RAIZ / "src" / "encuesta_hogares" / "plantillas.py"
 _AGENTE = _RAIZ / ".claude" / "agents" / "encuesta-hogares.md"
 
 

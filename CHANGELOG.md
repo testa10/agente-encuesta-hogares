@@ -10,6 +10,38 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.2] — 2026-08-17
+
+### Cambiado
+
+- **`formularios.py` se separó en dos** (era el archivo más editado del
+  proyecto, con tres capas mezcladas en más de mil líneas): las plantillas
+  HTML y el catálogo de métricas viven ahora en `plantillas.py` (solo
+  texto), y `formularios.py` queda con el servidor local y el flujo.
+  `formularios.plantilla_*` sigue funcionando igual — es la cara pública
+  y se reexporta — así que ni el agente ni los tests cambian.
+
+- **El servidor de formularios dejó de estar duplicado.** `mostrar_formulario`
+  y `mostrar_finalizacion` repetían ~80 líneas con las mismas decisiones
+  sutiles (validación de origen, tope de tamaño, POST malformado, apertura
+  del navegador): cada arreglo había que acordarse de hacerlo dos veces.
+  Ahora comparten `_servir_y_esperar` y `_responder_post`.
+
+- **Toda re-ejecución del notebook queda registrada con su motivo.** En una
+  corrida real el notebook corrió dos veces (~4 min, 23% de la corrida) y
+  la bitácora no decía por qué. El paso 7 del agente ahora exige registrar
+  `reejecucion_notebook` con el motivo antes de re-correr, el resumen de
+  sesiones lo muestra, y un test ata las dos puntas.
+
+- **`instalar.bat` fija la versión de Claude Code** (`@2.1.233`, la
+  probada de punta a punta) en vez de instalar "lo último que haya hoy" —
+  una versión distinta según el día convierte cualquier cambio de
+  comportamiento en un "no me funciona" indiagnosticable a distancia.
+
+- Regla de contenido explícita en `bitacora.py`: los formularios no piden
+  datos personales, y si algún día uno lo hiciera, ahí está escrito qué
+  hay que cambiar antes (dejar de registrar la respuesta entera).
+
 ## [0.13.1] — 2026-08-17
 
 ### Corregido

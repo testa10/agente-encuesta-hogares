@@ -23,10 +23,17 @@ if errorlevel 1 (
 echo [1/4] Node.js encontrado: OK
 
 REM --- 2. Verificar/instalar Claude Code ---
+REM Version FIJADA a proposito, no "lo ultimo que haya hoy": el proyecto
+REM se probo de punta a punta con esta version, y un instalador que trae
+REM una version distinta segun el dia convierte cualquier cambio de
+REM comportamiento de Claude Code en un "no me funciona" indiagnosticable
+REM a distancia. Para actualizarla: probar el flujo completo con la
+REM version nueva y recien entonces cambiar este numero (misma logica que
+REM fijar el modelo en abrir_agente.bat).
 where claude >nul 2>nul
 if errorlevel 1 (
     echo [2/4] Instalando Claude Code, puede tardar un minuto...
-    call npm install -g @anthropic-ai/claude-code
+    call npm install -g @anthropic-ai/claude-code@2.1.233
     if errorlevel 1 (
         echo.
         echo No se pudo instalar Claude Code. Revisa tu conexion a

@@ -172,6 +172,27 @@ def test_las_instrucciones_no_citan_metricas_fuera_del_catalogo():
     )
 
 
+def test_la_regla_de_registrar_reejecuciones_existe_y_tiene_su_contraparte():
+    """El paso 7 obliga a registrar `reejecucion_notebook` con motivo antes
+    de re-ejecutar el notebook, y `bitacora.resumir_sesion` tiene que
+    saber mostrarlo.
+
+    Nace de una corrida real: el notebook corrió dos veces (~4 min, 23% de
+    la corrida) y la bitácora no decía por qué. Este test ata las dos
+    puntas — si alguien borra la instrucción o el campo del resumen, la
+    otra mitad queda muda sin que nadie lo note.
+    """
+    from encuesta_hogares import bitacora
+
+    assert "reejecucion_notebook" in AGENTE_MD.read_text(encoding="utf-8"), (
+        "el paso 7 tiene que exigir registrar el motivo antes de re-ejecutar"
+    )
+    resumen = bitacora.resumir_sesion([
+        {"timestamp": "2026-08-17T00:00:00+00:00", "tipo": "reejecucion_notebook", "motivo": "prueba"},
+    ])
+    assert resumen.reejecuciones and resumen.reejecuciones[0]["motivo"] == "prueba"
+
+
 def test_la_cantidad_de_metricas_que_dice_la_documentacion_es_la_real():
     """"Las 43 métricas fijas del catálogo" decían las instrucciones y el
     README, cuando son 42 desde que se sacó TV cable.

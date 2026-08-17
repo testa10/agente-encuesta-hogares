@@ -50,6 +50,10 @@ def main() -> None:
             print("  sugerencias para el catálogo permanente (ver 'Curación del catálogo'):")
             for s in r.sugerencias_catalogo:
                 print(f"    - {s.get('metrica', '?')}: {s.get('motivo', '')}")
+        if r.reejecuciones:
+            print("  re-ejecuciones del notebook (cada una cuesta ~2 min — si un motivo se repite entre sesiones, es un defecto del builder a arreglar):")
+            for re_ejec in r.reejecuciones:
+                print(f"    - [{re_ejec['timestamp']}] {re_ejec.get('motivo', 'sin motivo registrado')}")
         if r.pasos_medidos:
             print("  pasos medidos (de mayor a menor duración):")
             for paso in r.pasos_medidos:
