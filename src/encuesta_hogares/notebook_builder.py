@@ -693,7 +693,12 @@ def _m5() -> Celda:
 
 def _m6() -> Celda:
     codigo = (
-        'adopcion_tablet_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_ext_con_jefe, "nivel_economico")\n'
+        "# El Plan Ibirapitá entrega tablets a personas mayores, y la pregunta de\n"
+        "# esta métrica es sobre esos hogares: se filtra a los que tienen jefe/a de\n"
+        "# 65 años o más antes de calcular, para que el porcentaje sea sobre la\n"
+        "# población a la que el programa está dirigido.\n"
+        'hogares_jefe_mayor = hogares_ext_con_jefe[hogares_ext_con_jefe["jefe_edad"] >= 65]\n'
+        'adopcion_tablet_nivel = analysis.adopcion_tablet_ibirapita_por(hogares_jefe_mayor, "nivel_economico")\n'
         'fig = viz.plot_adopcion_tablet_ibirapita(adopcion_tablet_nivel, "nivel económico")\nfig.show()'
     )
     return Celda(_markdown(6), codigo, _markdown_justificacion("barras"))
@@ -1153,11 +1158,7 @@ def _m41() -> Celda:
         'denuncia_delito = analysis.pct_ponderado_por(\n'
         '    victimizados, "tipo_delito", "denuncia_formal", "ponderador_victimizacion"\n'
         ")\n"
-        "brecha_comunicacion_denuncia = analysis.diferencia_entre_tablas(\n"
-        '    comunicacion_delito, denuncia_delito, "tipo_delito", "pct"\n'
-        ")\n"
-        'print(f"Comunicación informal menos denuncia formal, por tipo de delito:\\n{brecha_comunicacion_denuncia}")\n\n'
-        "fig = viz.plot_dumbbell(\n"
+        "\nfig = viz.plot_dumbbell(\n"
         '    categorias=comunicacion_delito["tipo_delito"].tolist(),\n'
         '    valores_a=comunicacion_delito["pct"].tolist(),\n'
         '    valores_b=denuncia_delito.set_index("tipo_delito").loc[comunicacion_delito["tipo_delito"], "pct"].tolist(),\n'

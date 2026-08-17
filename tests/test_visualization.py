@@ -257,3 +257,31 @@ def test_toda_barra_horizontal_con_etiqueta_afuera_fija_su_margen_derecho():
         f"(la etiqueta más larga va a salir cortada del informe): {sin_margen} "
         f"— agregar xaxis_range=[0, maximo * 1.15] como en plot_tipos_hogar"
     )
+
+
+# ============================================================================
+# Guardián de clase: ningún título literal más largo que lo ya verificado en
+# las figuras de 800px.
+#
+# En la corrida real de 2025 un título de 77 caracteres (métrica 6) salió
+# pegado al borde derecho de la figura — la variante "título" del mismo
+# defecto de etiqueta cortada de arriba — y costó una re-ejecución completa
+# del notebook descubrirlo y acortarlo. El título más largo que pasó una
+# revisión visual real tiene 65 caracteres: todo lo que se pase de ahí es
+# territorio no verificado y se acorta antes de entrar, no en la corrida.
+# ============================================================================
+
+LARGO_MAXIMO_TITULO_VERIFICADO = 65
+
+
+def test_ningun_titulo_literal_excede_el_ancho_verificado_de_la_figura():
+    import inspect
+    import re
+
+    fuente = inspect.getsource(viz)
+    patron = re.compile(r'\btitle\s*=\s*f?"([^"\n]*)"')
+    largos = sorted(t for t in set(patron.findall(fuente)) if len(t) > LARGO_MAXIMO_TITULO_VERIFICADO)
+    assert not largos, (
+        f"títulos más largos que los {LARGO_MAXIMO_TITULO_VERIFICADO} caracteres verificados "
+        f"en figuras de 800px (van a salir cortados del informe): {largos} — acortar el título"
+    )

@@ -452,11 +452,13 @@ def plot_indice_acceso_digital_por(resumen: pd.DataFrame, criterio: str):
 
 
 def plot_adopcion_tablet_ibirapita(resumen: pd.DataFrame, criterio: str):
-    """Barras: % de hogares con tablet del Plan Ibirapitá, según un criterio cualquiera."""
+    """Barras: % de hogares con tablet del Plan Ibirapitá, según un criterio
+    cualquiera. El título nombra la población (jefe/a de 65+) porque el
+    catálogo la promete y el dato llega ya filtrado a esos hogares."""
     columna_x = resumen.columns[0]
     fig = px.bar(
         resumen, x=columna_x, y="pct_con_tablet",
-        title="Adopción de tablets del Plan Ibirapitá", text="pct_con_tablet",
+        title="Tablets del Plan Ibirapitá en hogares con jefe/a de 65 años o más", text="pct_con_tablet",
         color_discrete_sequence=["#8d6ab8"],
     )
     fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")

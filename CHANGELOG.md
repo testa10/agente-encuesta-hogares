@@ -10,6 +10,40 @@ análisis original de 2019 hasta la introducción del catálogo por bloques
 opt-in) — el historial completo de esos cambios está en `git log`. Este
 changelog arranca en la versión donde se formalizó el versionado.
 
+## [0.13.5] — 2026-08-17
+
+### Corregido
+
+- **Métrica 6 (tablets del Plan Ibirapitá): calculaba sobre la población
+  equivocada.** El catálogo promete el porcentaje "en hogares con jefe/a de
+  65 años o más", pero la plantilla lo calculaba sobre TODOS los hogares de
+  Montevideo. Detectado por el agente en la revisión final de la primera
+  corrida real de 2025 (al costo de dos re-ejecuciones completas del
+  notebook: la corrección inicial trajo además un título de 77 caracteres
+  que salió cortado del borde de la figura y hubo que acortar). Ahora la
+  plantilla filtra a jefe/a de 65+ antes de calcular y el título de la
+  gráfica — el verificado en esa corrida — nombra la población desde el
+  fuente.
+- **Métrica 41 (brecha comunicación/denuncia): imprimía una Series cruda de
+  pandas** en el informe (`Name: pct, dtype: float64`), el mismo ruido
+  técnico prohibido por `METODOLOGIA.md` §3 que ya se había corregido en las
+  métricas 29 y 34. El guardián existente no la atrapaba porque busca el
+  patrón con salto de línea real y la plantilla lo escribía escapado
+  (`\n` dentro del f-string generado) — el guardián pasaba en verde sin
+  mirar ese caso. El print sobraba (la gráfica dumbbell ya muestra la
+  brecha) y se eliminó junto con el cálculo que solo alimentaba a ese print.
+
+### Agregado
+
+- **El guardián de Series crudas ahora busca las dos formas** del patrón
+  (salto de línea real y escapado), con la métrica 41 como caso de origen.
+- **Guardián de clase nuevo: ningún título literal de gráfica puede superar
+  los 65 caracteres** (en `visualization.py` y en las plantillas de
+  `notebook_builder.py`). Calibrado con datos reales: 65 es el título más
+  largo que pasó una revisión visual en figuras de 800px; el de 77 salió
+  cortado y costó una re-ejecución descubrirlo. Con esto, un título largo
+  falla en los tests antes de entrar, no re-ejecutando un informe.
+
 ## [0.13.4] — 2026-08-17
 
 ### Corregido

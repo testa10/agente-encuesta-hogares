@@ -99,7 +99,7 @@ MANIFEST: dict[int, dict] = {
     38: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     39: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
     40: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
-    41: {"funciones": ["analysis.diferencia_entre_tablas"], "visualizacion": "visualization.plot_dumbbell"},
+    41: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_dumbbell"},
     42: {"funciones": ["analysis.pct_ponderado_por"], "visualizacion": "visualization.plot_pct_por"},
 }
 

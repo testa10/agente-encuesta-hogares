@@ -386,14 +386,47 @@ def test_ningun_codigo_del_catalogo_imprime_un_objeto_crudo_de_pandas():
     agente lo detectó leyendo el informe generado y lo parchó a mano con
     nbformat — al costo de re-ejecutar el notebook entero (~96 s + ~2 min
     de modelo). Este test evita que el patrón vuelva a entrar al builder.
+
+    En la corrida real de 2025 la métrica 41 volvió a pagar la
+    re-ejecución: escribía el mismo patrón pero con el salto de línea
+    escapado (`\\n` dentro del f-string generado), y este guardián solo
+    buscaba el salto de línea real — pasaba en verde sin mirar ese caso.
+    Por eso se buscan las dos formas.
     """
     infractoras = [
         numero for numero in sorted(nb.GENERADORES)
         if ":\n{" in nb.construir_celdas_metrica(numero).codigo
+        or ":\\n{" in nb.construir_celdas_metrica(numero).codigo
     ]
     assert not infractoras, (
         f"estas métricas imprimen un objeto crudo de pandas (print de "
         f"`:\\n{{...}}`): {infractoras} — formatear el print, como en _m29/_m34"
+    )
+
+
+def test_ningun_titulo_de_plantilla_excede_el_ancho_verificado_de_la_figura():
+    """Gemelo del guardián de títulos de `test_visualization.py`, sobre los
+    títulos que las plantillas de este módulo pasan a las gráficas
+    (`titulo=`/`title=` dentro del código generado).
+
+    Mismo origen: en la corrida real de 2025, el título de 77 caracteres de
+    la métrica 6 salió pegado al borde de la figura de 800px y costó una
+    re-ejecución completa acortarlo. El más largo verificado en una revisión
+    visual real tiene 65 — de ahí el límite.
+    """
+    import inspect
+    import re
+
+    limite = 65  # ver LARGO_MAXIMO_TITULO_VERIFICADO en test_visualization.py
+    fuente = inspect.getsource(nb)
+    patron = re.compile(r'\btitle\s*=\s*f?"([^"\n]*)"|\btitulo\s*=\s*f?"([^"\n]*)"')
+    largos = sorted(
+        t for t in {m.group(1) or m.group(2) for m in patron.finditer(fuente)}
+        if len(t) > limite
+    )
+    assert not largos, (
+        f"títulos de plantilla más largos que los {limite} caracteres verificados "
+        f"en figuras de 800px (van a salir cortados del informe): {largos} — acortar el título"
     )
 
 
