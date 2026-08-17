@@ -350,7 +350,7 @@ _CATEGORIA_SEGURIDAD = ("7 · Seguridad y victimización",
     [
     (36, "Prevalencia de victimización por tipo de delito", "¿qué delito es el más frecuente, y a qué porcentaje de personas le tocó sufrirlo?"),
     (37, "Victimización general por sexo", "¿hombres y mujeres sufren delitos en la misma proporción?"),
-    (38, "Victimización general por departamento", "qué porcentaje de personas sufrió al menos un delito, comparando Montevideo con el resto del país."),
+    (38, "Victimización general por departamento", "¿en qué departamentos es más frecuente haber sufrido al menos un delito, y en cuáles menos?"),
     (39, "Tasa de comunicación a la policía por tipo de delito", "de quienes fueron víctimas, cuántos avisaron a la policía de algún modo."),
     (40, "Tasa de denuncia formal por tipo de delito", "de quienes fueron víctimas, ¿cuántos llegaron a formalizar la denuncia?"),
     (41, "Brecha entre comunicación informal y denuncia formal", "cuántos avisan a la policía pero no llegan a denunciar formalmente — la \"cifra negra\"."),
