@@ -53,16 +53,15 @@ ambos.
 1. Instale [Anaconda](https://www.anaconda.com/download) (incluye
    Python) — es el único programa que hay que instalar a mano antes de
    empezar. Use las opciones por defecto del instalador.
-2. Vaya a la página de este proyecto en GitHub:
-   https://github.com/testa10/agente-encuesta-hogares — haga clic en el
-   botón verde **"Code"** y después en **"Download ZIP"**. Se descarga
-   un archivo `agente-encuesta-hogares-main.zip` (normalmente a la
-   carpeta Descargas).
+2. Descargue este proyecto desde este enlace directo:
+   <https://github.com/testa10/agente-encuesta-hogares/releases/latest/download/agente-encuesta-hogares.zip>
+   — se descarga un archivo `agente-encuesta-hogares.zip`
+   (normalmente a la carpeta Descargas).
 3. Descomprímalo: haga clic derecho sobre el archivo ZIP descargado →
    **"Extraer todo..."** (Windows lo hace sin necesidad de instalar
    nada aparte) → elija como destino la carpeta **Documentos** y
    confirme. Esto crea la carpeta
-   `Documentos\agente-encuesta-hogares-main` con el proyecto adentro.
+   `Documentos\agente-encuesta-hogares` con el proyecto adentro.
 4. Abra esa carpeta y haga doble clic en **`instalar.bat`**. Se abre una
    ventana que verifica qué falta e instala automáticamente lo
    necesario (puede tardar unos minutos la primera vez). Si en el
